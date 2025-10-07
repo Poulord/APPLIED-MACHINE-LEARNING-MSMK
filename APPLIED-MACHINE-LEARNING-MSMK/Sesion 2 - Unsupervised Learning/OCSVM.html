@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: One-Class Support Vector Machine (OC-SVM)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: #118AB2;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-[#073B4C]">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#073B4C] mb-2">One-Class Support Vector Machine</h1>
+            <p class="text-xl text-[#118AB2]">Aprendiendo a detectar lo inusual a partir de lo normal</p>
+        </header>
+
+        <main class="space-y-12">
+            
+            <section id="objective" class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-[#073B4C] mb-4 text-center">1. El Objetivo Principal: Aislar Anomalías</h2>
+                <p class="text-lg text-gray-700 mb-6 text-center max-w-3xl mx-auto">
+                    A diferencia de los algoritmos de clasificación tradicionales que aprenden a separar dos o más clases, el OC-SVM tiene una misión única: aprender la forma y los límites de una sola clase de datos "normales". Su objetivo es construir una frontera que encierre estos datos, de modo que cualquier punto que caiga fuera de ella pueda ser identificado como una anomalía o un valor atípico.
+                </p>
+                <div class="chart-container">
+                    <canvas id="mainSvmChart"></canvas>
+                </div>
+                <p class="text-center mt-4 text-gray-600">Este gráfico muestra cómo el OC-SVM crea una frontera para rodear el clúster de datos normales (verdes), dejando los puntos anómalos (rojos) fuera. Este es el principio fundamental de la detección de anomalías con una sola clase.</p>
+            </section>
+
+            <section id="components">
+                <h2 class="text-3xl font-bold text-[#073B4C] mb-6 text-center">2. Componentes Clave del Modelo</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center">
+                        <h3 class="text-2xl font-bold text-[#118AB2] mb-3">El Truco del Kernel</h3>
+                        <p class="text-gray-700 mb-4 flex-grow">Para manejar distribuciones complejas, el OC-SVM proyecta los datos a un espacio de mayor dimensión donde es más fácil separarlos del origen con un hiperplano simple.</p>
+                        <div class="w-full flex items-center justify-center space-x-2 md:space-x-4">
+                            <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                <span class="text-3xl">🧩</span>
+                                <p class="font-semibold">Datos 2D</p>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="text-center p-3 bg-green-50 rounded-lg">
+                                <span class="text-3xl">🌌</span>
+                                <p class="font-semibold">Espacio 3D+</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center">
+                        <h3 class="text-2xl font-bold text-[#118AB2] mb-3">Vectores de Soporte</h3>
+                        <p class="text-gray-700 mb-4 flex-grow">No todos los puntos son igualmente importantes. Los Vectores de Soporte son los puntos de datos que se encuentran en el borde de la frontera. Estos puntos críticos son los únicos que definen la forma del límite.</p>
+                        <div class="w-full text-center p-3 bg-yellow-50 rounded-lg">
+                            <span class="text-3xl">📍</span>
+                            <p class="font-semibold">Puntos clave que definen la frontera</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 md:col-span-2 lg:col-span-1 flex flex-col text-center">
+                        <h3 class="text-2xl font-bold text-[#118AB2] mb-3">El Parámetro Nu (ν)</h3>
+                        <p class="text-gray-700 mb-4 flex-grow">Este parámetro crucial (un valor entre 0 y 1) controla la sensibilidad del modelo. Define el porcentaje máximo de anomalías que se espera en los datos de entrenamiento, ajustando así la rigidez de la frontera.</p>
+                         <div class="w-full text-center p-3 bg-red-50 rounded-lg">
+                             <span class="text-3xl">🎛️</span>
+                            <p class="font-semibold">Ajusta la tolerancia a los outliers</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="nu-comparison" class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-[#073B4C] mb-2 text-center">El Efecto de Nu (ν) en la Práctica</h2>
+                <p class="text-lg text-gray-700 mb-6 text-center max-w-3xl mx-auto">
+                    La elección de `ν` tiene un impacto directo en la forma de la frontera. Un **ν bajo** crea un límite ajustado que trata de abarcar casi todos los puntos, mientras que un **ν más alto** resulta en una frontera más suave y generalizada, permitiendo que algunos puntos de entrenamiento queden fuera.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="chart-container h-[250px] md:h-[300px]">
+                            <canvas id="lowNuChart"></canvas>
+                        </div>
+                        <h4 class="text-center mt-3 font-bold text-xl text-[#118AB2]">ν Bajo (Ej: 0.01)</h4>
+                        <p class="text-center text-gray-600">Frontera ajustada y sensible. Captura más la forma del clúster pero puede ser propensa al sobreajuste.</p>
+                    </div>
+                    <div>
+                        <div class="chart-container h-[250px] md:h-[300px]">
+                            <canvas id="highNuChart"></canvas>
+                        </div>
+                        <h4 class="text-center mt-3 font-bold text-xl text-[#FF6B6B]">ν Alto (Ej: 0.1)</h4>
+                        <p class="text-center text-gray-600">Frontera más suave y generalizada. Permite más "ruido" y es menos sensible a la estructura fina de los datos.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="unsupervised" class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-[#073B4C] mb-6 text-center">3. ¿Por Qué es Aprendizaje No Supervisado?</h2>
+                <p class="text-lg text-gray-700 mb-8 text-center max-w-3xl mx-auto">
+                    El OC-SVM se considera un método de aprendizaje no supervisado porque no requiere que los datos estén etiquetados como "normales" y "anómalos" durante el entrenamiento. El algoritmo aprende la estructura inherente de los datos que se le proporcionan, asumiendo que todos pertenecen a la misma clase.
+                </p>
+                <div class="flex flex-col md:flex-row justify-center gap-8">
+                    <div class="w-full md:w-1/2 bg-blue-50 border-l-4 border-[#118AB2] p-6 rounded-r-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#073B4C]">Aprendizaje Supervisado (Clasificación)</h4>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-start"><span class="text-[#FF6B6B] mr-2 font-bold text-xl">❌</span> Requiere datos etiquetados para cada clase (normal Y anómalo).</li>
+                            <li class="flex items-start"><span class="text-[#FF6B6B] mr-2 font-bold text-xl">❌</span> El objetivo es encontrar un límite QUE SEPARE las clases.</li>
+                        </ul>
+                    </div>
+                    <div class="w-full md:w-1/2 bg-green-50 border-l-4 border-[#06D6A0] p-6 rounded-r-lg">
+                        <h4 class="font-bold text-xl mb-2 text-[#073B4C]">One-Class SVM (No Supervisado)</h4>
+                        <ul class="list-none space-y-2">
+                           <li class="flex items-start"><span class="text-[#06D6A0] mr-2 font-bold text-xl">✔️</span> Solo necesita datos de la clase "normal" para entrenar.</li>
+                           <li class="flex items-start"><span class="text-[#06D6A0] mr-2 font-bold text-xl">✔️</span> El objetivo es encontrar un límite QUE ENVUELVA una sola clase.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-12 py-6 border-t border-gray-200">
+            <p class="text-gray-600">Infografía generada para ilustrar los principios de One-Class SVM.</p>
+        </footer>
+
+    </div>
+
+<script>
+    const nuBoundaryPlugin = {
+        id: 'nuBoundary',
+        beforeDatasetsDraw(chart, args, options) {
+            const { ctx, chartArea: { left, top, right, bottom } } = chart;
+            ctx.save();
+
+            const centerX = (left + right) / 2;
+            const centerY = (top + bottom) / 2;
+            const radius = options.radius;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = options.fillColor || 'rgba(17, 138, 178, 0.1)';
+            ctx.fill();
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = options.borderColor || '#118AB2';
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    };
+    
+document.addEventListener('DOMContentLoaded', function () {
+    Chart.register(nuBoundaryPlugin);
+
+    const tooltipTitleCallback = {
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        const item = tooltipItems[0];
+                        let label = item.chart.data.labels[item.dataIndex];
+                        if (Array.isArray(label)) {
+                          return label.join(' ');
+                        } else {
+                          return label;
+                        }
+                    }
+                }
+            }
+        }
+    };
+    
+    function generateNormalData(count, centerX, centerY, spread) {
+        const data = [];
+        for (let i = 0; i < count; i++) {
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+            data.push({ x: centerX + z1 * spread, y: centerY + z2 * spread });
+        }
+        return data;
+    }
+
+    function generateAnomalyData(count, minX, maxX, minY, maxY) {
+        const data = [];
+        for (let i = 0; i < count; i++) {
+             data.push({
+                x: minX + Math.random() * (maxX - minX),
+                y: minY + Math.random() * (maxY - minY)
+            });
+        }
+        return data;
+    }
+
+    // Data for Main Chart
+    const normalDataMain = generateNormalData(150, 5, 5, 1.5);
+    const anomalyDataMain = generateAnomalyData(10, -5, 15, -5, 15);
+    
+    // Data for Nu Comparison Charts (centered for better visual of the circle boundary)
+    const normalDataNu = generateNormalData(150, 0, 0, 1.0);
+    const colors = {
+        normal: '#06D6A0',
+        anomaly: '#FF6B6B',
+        support: '#FFD166',
+        boundaryLowNu: 'rgba(17, 138, 178, 0.1)',
+        boundaryHighNu: 'rgba(255, 107, 107, 0.1)',
+        borderLowNu: '#118AB2',
+        borderHighNu: '#FF6B6B'
+    };
+
+    // Main SVM Chart
+    const mainSvmCtx = document.getElementById('mainSvmChart').getContext('2d');
+    new Chart(mainSvmCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Datos Normales',
+                    data: normalDataMain,
+                    backgroundColor: colors.normal,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                },
+                {
+                    label: 'Anomalías',
+                    data: anomalyDataMain,
+                    backgroundColor: colors.anomaly,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { display: false },
+                y: { display: false }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                 ...tooltipTitleCallback.plugins
+            },
+        }
+    });
+
+    // Low Nu Chart (TIGHT BOUNDARY)
+    const lowNuCtx = document.getElementById('lowNuChart').getContext('2d');
+    new Chart(lowNuCtx, {
+        type: 'scatter',
+        data: {
+             datasets: [{
+                    label: 'Datos',
+                    data: normalDataNu,
+                    backgroundColor: colors.normal
+                }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { display: false, min: -3, max: 3 }, y: { display: false, min: -3, max: 3 } },
+            plugins: {
+                legend: { display: false },
+                ...tooltipTitleCallback.plugins,
+                nuBoundary: {
+                    radius: 120, // Tighter circle
+                    fillColor: colors.boundaryLowNu,
+                    borderColor: colors.borderLowNu
+                }
+            },
+            elements: {
+                point: { radius: 3 }
+            }
+        }
+    });
+
+    // High Nu Chart (LOOSE BOUNDARY)
+    const highNuCtx = document.getElementById('highNuChart').getContext('2d');
+    new Chart(highNuCtx, {
+        type: 'scatter',
+        data: {
+             datasets: [{
+                    label: 'Datos',
+                    data: normalDataNu,
+                    backgroundColor: colors.normal
+                }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { display: false, min: -3, max: 3 }, y: { display: false, min: -3, max: 3 } },
+            plugins: {
+                legend: { display: false },
+                ...tooltipTitleCallback.plugins,
+                nuBoundary: {
+                    radius: 180, // Looser circle
+                    fillColor: colors.boundaryHighNu,
+                    borderColor: colors.borderHighNu
+                }
+            },
+            elements: {
+                point: { radius: 3 }
+            }
+        }
+    });
+
+});
+</script>
+</body>
+</html>
+

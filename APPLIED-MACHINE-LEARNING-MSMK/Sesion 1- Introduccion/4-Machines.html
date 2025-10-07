@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: Infraestructura para Data Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #F3F4F6;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .flowchart-step {
+            background-color: #1F2937;
+            border: 2px solid #9B5DE5;
+            color: #FEE440;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .flowchart-arrow {
+            color: #9B5DE5;
+            font-size: 2.5rem;
+            line-height: 1;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.5rem 0;
+            transform: rotate(90deg);
+        }
+        @media (min-width: 768px) {
+            .flowchart-arrow {
+                transform: rotate(0deg);
+                margin: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#00F5D4] via-[#9B5DE5] to-[#F15BB5]">Máquinas para Mover Data Science</h1>
+            <p class="mt-4 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">Una guía visual sobre la infraestructura, componentes y arquitecturas que impulsan el análisis de datos moderno.</p>
+        </header>
+
+        <main>
+            <section id="data-scale" class="mb-20">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">El Punto de Partida: La Escala de tus Datos</h2>
+                    <p class="mt-2 text-gray-400 max-w-2xl mx-auto">La primera decisión de infraestructura depende directamente del volumen y la complejidad de los datos. No todos los problemas requieren la misma solución.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold text-[#00BBF9] mb-4">Small Data</h3>
+                        <p class="mb-6 text-gray-300">Conjuntos de datos manejables, procesables en una sola máquina. Perfectos para prototipado, análisis rápidos y negocios que empiezan a explorar sus datos.</p>
+                        <ul class="space-y-4 text-gray-300">
+                            <li class="flex items-center"><span class="text-2xl mr-4">💽</span><div><strong class="text-white">Volumen:</strong> Kilobytes a Megabytes</div></li>
+                            <li class="flex items-center"><span class="text-2xl mr-4">🛠️</span><div><strong class="text-white">Herramientas:</strong> Excel, Pandas, Bases de datos relacionales</div></li>
+                            <li class="flex items-center"><span class="text-2xl mr-4">💻</span><div><strong class="text-white">Infraestructura:</strong> PC o Laptop de alto rendimiento</div></li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-700 transform hover:scale-105 transition-transform duration-300">
+                        <h3 class="text-2xl font-bold text-[#F15BB5] mb-4">Big Data</h3>
+                        <p class="mb-6 text-gray-300">Volúmenes masivos de datos que se caracterizan por su gran <strong class="text-white">Volumen</strong>, alta <strong class="text-white">Velocidad</strong> de generación y amplia <strong class="text-white">Variedad</strong> de formatos.</p>
+                        <ul class="space-y-4 text-gray-300">
+                           <li class="flex items-center"><span class="text-2xl mr-4">💽</span><div><strong class="text-white">Volumen:</strong> Terabytes a Petabytes</div></li>
+                           <li class="flex items-center"><span class="text-2xl mr-4">🛠️</span><div><strong class="text-white">Herramientas:</strong> Apache Spark, Hadoop, Sistemas distribuidos</div></li>
+                           <li class="flex items-center"><span class="text-2xl mr-4">💻</span><div><strong class="text-white">Infraestructura:</strong> Clusters de servidores, Servicios en la Nube</div></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="components" class="mb-20">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">El Corazón de la Máquina: CPU, RAM y GPU</h2>
+                    <p class="mt-2 text-gray-400 max-w-2xl mx-auto">Los componentes internos definen la velocidad y capacidad de tus análisis. Cada uno juega un papel especializado y fundamental.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700 col-span-1 lg:col-span-3">
+                        <h3 class="text-xl font-bold text-white mb-2">CPU: El Maestro de Orquesta Secuencial</h3>
+                        <p class="text-gray-400 mb-6">La CPU es esencial para tareas que deben ejecutarse en un orden estricto, como la preparación y limpieza de datos, donde un paso depende del anterior.</p>
+                        <div class="flex flex-col md:flex-row items-center justify-center md:space-x-4">
+                            <div class="flowchart-step">1. Leer Datos</div>
+                            <div class="flowchart-arrow">→</div>
+                            <div class="flowchart-step">2. Limpiar Datos</div>
+                             <div class="flowchart-arrow">→</div>
+                            <div class="flowchart-step">3. Transformar</div>
+                             <div class="flowchart-arrow">→</div>
+                            <div class="flowchart-step">4. Analizar</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700">
+                        <h3 class="text-xl font-bold text-white mb-2">RAM: El Espacio de Trabajo</h3>
+                        <p class="text-gray-400 mb-4">La memoria RAM determina cuántos datos puedes analizar a la vez. Si el dataset no cabe en la RAM, el rendimiento cae drásticamente.</p>
+                        <div class="chart-container h-64 sm:h-80">
+                            <canvas id="ramChart"></canvas>
+                        </div>
+                    </div>
+
+                     <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700">
+                        <h3 class="text-xl font-bold text-white mb-2">GPU: La Potencia del Paralelismo</h3>
+                        <p class="text-gray-400 mb-4">Las GPUs aceleran masivamente el entrenamiento de modelos complejos (Deep Learning) al ejecutar miles de cálculos simultáneamente.</p>
+                        <div class="chart-container h-64 sm:h-80">
+                            <canvas id="gpuVsCpuChart"></canvas>
+                        </div>
+                    </div>
+
+                     <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700">
+                        <h3 class="text-xl font-bold text-white mb-2">TPU: La Especialista en Deep Learning</h3>
+                        <p class="text-gray-400 mb-4">Las TPUs (Tensor Processing Units) son chips de hardware optimizados por Google específicamente para ejecutar tareas de machine learning y deep learning con el framework TensorFlow. Ofrecen un rendimiento superior a las GPUs en ciertos tipos de cargas de trabajo. </p>
+                        <div class="chart-container h-64 sm:h-80">
+                            <canvas id="tpuPerformanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="environment" class="mb-12">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white">El Ecosistema: Cloud vs. On-Premise</h2>
+                    <p class="mt-2 text-gray-400 max-w-2xl mx-auto">¿Dónde vivirá tu infraestructura? La elección entre la nube y servidores locales tiene implicaciones estratégicas en coste, control y agilidad.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700">
+                        <h3 class="text-xl font-bold text-white mb-2">Análisis Comparativo de Arquitecturas</h3>
+                        <p class="text-gray-400 mb-4">Cada modelo tiene fortalezas distintas. La nube destaca en flexibilidad y bajo coste inicial, mientras que On-Premise ofrece un control total sobre la seguridad y los datos.</p>
+                        <div class="chart-container">
+                            <canvas id="cloudVsOnPremChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900 p-6 rounded-xl shadow-2xl border border-gray-700">
+                        <h3 class="text-xl font-bold text-white mb-2">El Coste Elástico de la Nube</h3>
+                        <p class="text-gray-400 mb-4">Una de las mayores ventajas de la nube es su modelo de pago por uso. Los costes se alinean directamente con la demanda del proyecto, evitando grandes inversiones iniciales.</p>
+                        <div class="chart-container">
+                            <canvas id="cloudCostChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-20 pt-8 border-t border-gray-700">
+            <p class="text-gray-500">&copy; 2025 Infografía de Infraestructura para Data Science. Tomar la decisión correcta impulsa la innovación.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const processLabels = (labels) => {
+            const maxLen = 16;
+            return labels.map(label => {
+                if (label.length <= maxLen) return label;
+                const words = label.split(' ');
+                let lines = [];
+                let currentLine = '';
+                for (const word of words) {
+                    if ((currentLine + ' ' + word).length > maxLen) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = currentLine ? currentLine + ' ' + word : word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            });
+        };
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            return Array.isArray(label) ? label.join(' ') : label;
+        };
+        
+        const defaultChartOptions = {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#D1D5DB'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: tooltipTitleCallback
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: { color: '#9CA3AF' },
+                    grid: { color: '#374151' }
+                },
+                x: {
+                    ticks: { color: '#9CA3AF' },
+                    grid: { color: 'rgba(0,0,0,0)' }
+                }
+            }
+        };
+
+        const colors = {
+            blue: '#00BBF9',
+            purple: '#9B5DE5',
+            pink: '#F15BB5',
+            yellow: '#FEE440',
+            cyan: '#00F5D4',
+            darkCyan: '#00CCBF',
+            gray: '#4B5563',
+            red: '#EF4444'
+        };
+
+        function renderRamChart() {
+            const ctx = document.getElementById('ramChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['RAM Disponible (64GB)'],
+                    datasets: [
+                        {
+                            label: 'Dataset A (50GB)',
+                            data: [50],
+                            backgroundColor: colors.cyan,
+                            borderColor: colors.darkCyan,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: 'Dataset B (Excede)',
+                            data: [14],
+                            backgroundColor: colors.red,
+                            borderColor: colors.red,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: 64,
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: '#374151' },
+                            title: {
+                                display: true,
+                                text: 'Uso de Memoria (GB)',
+                                color: '#D1D5DB'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                             ticks: { color: '#9CA3AF' },
+                             grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderGpuVsCpuChart() {
+            const ctx = document.getElementById('gpuVsCpuChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['CPU (Secuencial)', 'GPU (Paralelo)'],
+                    datasets: [{
+                        label: 'Tiempo de Procesamiento (Horas)',
+                        data: [100, 5],
+                        backgroundColor: [colors.pink, colors.blue],
+                        borderColor: [colors.pink, colors.blue],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                     plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: tooltipTitleCallback } }
+                    }
+                }
+            });
+        }
+
+        function renderTpuPerformanceChart() {
+            const ctx = document.getElementById('tpuPerformanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: processLabels(['Tiempo de Entrenamiento (GPU)', 'Tiempo de Entrenamiento (TPU)']),
+                    datasets: [{
+                        label: 'Tiempo relativo',
+                        data: [100, 10],
+                        backgroundColor: [colors.yellow, colors.cyan],
+                        borderColor: [colors.yellow, colors.cyan],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        y: {
+                             ...defaultChartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Tiempo Relativo',
+                                color: '#D1D5DB'
+                            }
+                        },
+                        x: {
+                             ...defaultChartOptions.scales.x
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: tooltipTitleCallback } }
+                    }
+                }
+            });
+        }
+
+        function renderCloudVsOnPremChart() {
+            const ctx = document.getElementById('cloudVsOnPremChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: processLabels(['Escalabilidad', 'Bajo Costo Inicial', 'Control Total', 'Seguridad y Cumplimiento']),
+                    datasets: [
+                        {
+                            label: 'Cloud',
+                            data: [9, 8, 4, 7],
+                            fill: true,
+                            backgroundColor: 'rgba(0, 187, 249, 0.2)',
+                            borderColor: colors.blue,
+                            pointBackgroundColor: colors.blue,
+                        },
+                        {
+                            label: 'On-Premise',
+                            data: [3, 2, 9, 9],
+                            fill: true,
+                            backgroundColor: 'rgba(241, 91, 181, 0.2)',
+                            borderColor: colors.pink,
+                            pointBackgroundColor: colors.pink,
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                         legend: { labels: { color: '#D1D5DB' } },
+                         tooltip: { callbacks: { title: tooltipTitleCallback } }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#4B5563' },
+                            grid: { color: '#4B5563' },
+                            pointLabels: {
+                                color: '#F3F4F6',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                backdropColor: 'rgba(0,0,0,0)',
+                                color: '#9CA3AF'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCloudCostChart() {
+            const ctx = document.getElementById('cloudCostChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Fase Inicial', 'Pico de Demanda', 'Fase Estable', 'Post-Pico'],
+                    datasets: [{
+                        label: 'Costo en la Nube',
+                        data: [100, 800, 500, 150],
+                        fill: true,
+                        borderColor: colors.purple,
+                        backgroundColor: 'rgba(155, 93, 229, 0.2)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                     ...defaultChartOptions,
+                    scales: {
+                        y: {
+                            ...defaultChartOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: 'Costo Mensual ($)',
+                                color: '#D1D5DB'
+                            }
+                        },
+                        x: {
+                            ...defaultChartOptions.scales.x
+                        }
+                    },
+                     plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: tooltipTitleCallback } }
+                    }
+                }
+            });
+        }
+
+        window.onload = () => {
+            renderRamChart();
+            renderGpuVsCpuChart();
+            renderTpuPerformanceChart();
+            renderCloudVsOnPremChart();
+            renderCloudCostChart();
+        };
+
+    </script>
+</body>
+</html>

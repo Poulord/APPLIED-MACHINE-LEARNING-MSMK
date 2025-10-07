@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Ecosistema de la Ciencia de Datos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .deep-learning-container, .computer-vision-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .deep-learning-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .deep-learning-diagram .layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .deep-learning-diagram .node {
+            width: 20px;
+            height: 20px;
+            background-color: #F8961E;
+            border-radius: 50%;
+            margin: 5px;
+        }
+        .deep-learning-diagram .line {
+            width: 50px;
+            height: 2px;
+            background-color: #ccc;
+        }
+        .deep-learning-diagram .arrow {
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5-px solid transparent;
+            border-left: 10px solid #ccc;
+        }
+        .computer-vision-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        .cv-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        .cv-image {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .cv-arrow {
+            font-size: 2rem;
+            color: #ccc;
+            margin: 0.5rem 0;
+        }
+        .cv-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .llm-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .llm-table th, .llm-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .llm-table th {
+            background-color: #f1f5f9;
+        }
+        .vlm-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .vlm-step {
+            text-align: center;
+            width: 100%;
+        }
+        .vlm-step-title {
+            font-weight: bold;
+            color: #577590;
+            margin-bottom: 0.5rem;
+        }
+        .vlm-connector {
+            width: 2px;
+            height: 2rem;
+            background-color: #577590;
+        }
+        /* New styles for Generative AI diagrams */
+        .gen-ai-diagram-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 1rem;
+        }
+        .gen-ai-model-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            padding: 1rem;
+            background-color: #f0f4f8;
+            border-radius: 0.5rem;
+        }
+        .model-component {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 120px;
+        }
+        .model-box {
+            background-color: #43AA8B;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .arrow-right {
+            font-size: 2rem;
+            color: #577590;
+        }
+        .training-flow-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .flow-box {
+            background-color: #577590;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#577590]">El Ecosistema de la Ciencia de Datos</h1>
+            <p class="text-lg text-gray-600 mt-2">Un viaje visual a través de los conceptos, herramientas y tecnologías que definen el campo.</p>
+        </header>
+
+        <main>
+            <section id="conceptos" class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#43AA8B]">1. ¿IA, ML o Estadística?</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Estadística -->
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <h3 class="text-2xl font-semibold mb-4 text-[#F94144] border-b-2 border-[#F94144] pb-2">Estadística: La Base</h3>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F94144]">Agregación de números</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">La estadística es el pilar de la ciencia de datos. Su principal objetivo es analizar y entender las relaciones entre variables, enfocándose en la inferencia. Las técnicas como la regresión y los modelos de series de tiempo nos permiten resumir datos y extraer conclusiones robustas sobre una población, con un enfoque en la interpretabilidad del modelo.</p>
+                        <p class="text-gray-600 text-sm mt-4">La agregación de números incluye el cálculo de medidas como la media, la mediana y la moda para resumir conjuntos de datos complejos en valores simples que sean fáciles de entender.</p>
+                        <div class="chart-container h-64 md:h-72"><canvas id="agregacionChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F94144]">Regresión lineal</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Modela la relación entre una variable dependiente y una o más variables independientes. Es una herramienta clásica de la estadística que busca predecir un valor continuo.</p>
+                        <div class="chart-container h-64 md:h-72"><canvas id="statsChart"></canvas></div>
+                    </div>
+
+                    <!-- Machine Learning -->
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <h3 class="text-2xl font-semibold mb-4 text-[#F3722C] border-b-2 border-[#F3722C] pb-2">Machine Learning: El Aprendizaje</h3>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Clasificación</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">A partir de datos etiquetados, el modelo aprende a categorizar nuevos puntos. Por ejemplo, clasificar un correo electrónico como "spam" o "no spam".</p>
+                        <div class="chart-container h-64 md:h-72"><canvas id="classificationChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Regresión</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">El modelo se entrena con datos históricos para predecir un valor numérico futuro, como el precio de una casa o las ventas de un producto.</p>
+                        <div class="chart-container h-64 md:h-72"><canvas id="regressionChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Aprendizaje No Supervisado</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Descubre patrones ocultos en datos sin etiquetas. Se usa para tareas como la agrupación de datos (clustering) y la reducción de dimensionalidad, permitiendo encontrar estructuras intrínsecas.</p>
+                        <div class="chart-container h-64 md:h-72"><canvas id="unsupervisedChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Deep Learning</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Una rama del ML que usa redes neuronales profundas para aprender de patrones muy complejos y abstractos. Ha revolucionado campos como el procesamiento de imágenes y el lenguaje.</p>
+                        <div class="deep-learning-container">
+                            <h5 class="text-lg font-semibold text-gray-700">De Input a Output Sintetizado</h5>
+                                <img src="/home/ra/NN.png" alt="Modelo NN" class="rounded-lg mt-4 w-full h-auto">                            
+                            <p class="text-sm text-gray-500 text-center mt-4">Una red neuronal aprende a generar nuevos datos (imágenes, texto) a partir de los datos de entrenamiento. Se muestra cómo un input se transforma en un output sintetizado a través de sus capas.</p>
+                        </div>
+                    </div>
+                     
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Computer Vision</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Aplica el Machine Learning para interpretar y analizar imágenes y vídeos. Esta disciplina se apoya fuertemente en el deep learning, utilizando redes neuronales convolucionales para extraer y analizar características de las imágenes de manera automatizada. Es crucial en vehículos autónomos, reconocimiento facial y diagnóstico médico por imagen.</p>
+                        <div class="computer-vision-container">
+                            <h5 class="text-lg font-semibold text-gray-700">De Píxeles a la Comprensión</h5>
+                            <div class="computer-vision-diagram">
+                                <img src="/home/ra/tensorflow-keras-cnn-vgg-architecture-1825878432.png" alt="Modelo VGG" class="rounded-lg mt-4 w-full h-auto">
+                            </div>
+                        </div>
+                    </div>
+                     
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F3722C]">Reinforcement Learning</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Un agente aprende a tomar decisiones en un entorno a través de un sistema de recompensas y castigos, sin necesidad de datos etiquetados. Normalmente, el deep learning se aplica de manera complementaria a los modelos de aprendizaje por refuerzo, lo que permite a los agentes procesar entornos complejos y tomar decisiones más sofisticadas. Es la base de los sistemas que ganan partidas de ajedrez o Go.</p>
+                        <img src="/home/ra/cart-pole-neural-network.gif" alt="Animación de un agente de Aprendizaje por Refuerzo" class="rounded-lg mt-4 w-full h-auto">
+                    </div>
+
+                    <!-- Inteligencia Artificial -->
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <h3 class="text-2xl font-semibold mb-4 text-[#F8961E] border-b-2 border-[#F8961E] pb-2">Inteligencia Artificial: La Frontera</h3>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F8961E]">LLMs (Large Language Models)</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Modelos entrenados con vastas cantidades de texto para comprender y generar lenguaje humano. Son la base de los chatbots y asistentes virtuales modernos.</p>
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner mt-4">
+                            <h5 class="text-lg font-semibold text-gray-700 text-center mb-4">Arquitectura de un LLM como Gemini</h5>
+                            <div class="flex flex-col items-center">
+                                <p class="text-sm font-semibold text-gray-600">Input: Texto, Código, Imagen</p>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-gray-400 mt-2 mb-2"><path d="M12 2L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                <p class="text-sm font-semibold text-gray-600">Tokenización</p>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-gray-400 mt-2 mb-2"><path d="M12 2L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                <p class="text-sm font-semibold text-gray-600">Modelo Transformer (Encoder & Decoder)</p>
+                                <div class="w-full max-w-sm bg-[#577590] rounded-lg p-4 text-white text-center shadow-lg">
+                                    <p class="font-bold">Capas de Atención</p>
+                                    <p class="text-xs mt-1">Procesan la secuencia de tokens</p>
+                                </div>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-gray-400 mt-2 mb-2"><path d="M12 2L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                <p class="text-sm font-semibold text-gray-600">Decodificación</p>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-gray-400 mt-2 mb-2"><path d="M12 2L12 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                <p class="text-sm font-semibold text-gray-600">Output: Texto, Código, Imágenes</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner mt-4">
+                            <h5 class="text-lg font-semibold text-gray-700 text-center mb-4">Tamaño de Modelos (en billones de parámetros)</h5>
+                            <table class="llm-table">
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th>Parámetros (B)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Gemini (Ultra)</td>
+                                        <td>1T+</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ChatGPT (GPT-4)</td>
+                                        <td>1.7T</td>
+                                    </tr>
+                                    <tr>
+                                        <td>DeepSeek Coder</td>
+                                        <td>7-67</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LLaMA 3</td>
+                                        <td>8-70</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F8961E]">VLMs (Vision-Language Models)</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Modelos multimodales que procesan texto e imágenes simultáneamente. Pueden describir el contenido de una imagen o responder preguntas basadas en lo que ven.</p>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner mt-4">
+                            <h5 class="text-lg font-semibold text-gray-700 text-center mb-4">Arquitectura VLM</h5>
+                            <div class="vlm-flow">
+                                <!-- Step 1: Input -->
+                                <div class="vlm-step">
+                                    <div class="vlm-step-title">Inputs</div>
+                                    <div class="flex justify-center items-center gap-1">
+                                        <div class="p-2 bg-white border rounded-md shadow-sm">
+                                            <p class="text-sm">"¿Qué fruta es?"</p>
+                                        </div>
+                                        <div class="w-16 h-16 bg-gray-300 rounded-md shadow-sm flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-500" viewBox="0 0 24 24" fill="currentColor"><path d="M22 16V4a2 2 0 00-2-2H8a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2zm-11-4L8.5 9.5 6 12V4h12v12h-8z" /></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="vlm-connector"></div>
+
+                                <!-- Step 2: Modality Encoders -->
+                                <div class="vlm-step">
+                                    <div class="vlm-step-title">Codificadores</div>
+                                    <div class="flex justify-center items-center gap-8">
+                                        <div class="text-center">
+                                            <p class="text-sm text-gray-500">Texto</p>
+                                            <p class="text-xs font-semibold">Encoder de Texto</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-sm text-gray-500">Imagen</p>
+                                            <p class="text-xs font-semibold">Encoder de Visión</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="vlm-connector"></div>
+                                
+                                <!-- Step 3: Fusion -->
+                                <div class="vlm-step">
+                                    <div class="vlm-step-title">Fusión</div>
+                                    <p class="text-sm text-gray-600">Representaciones unificadas en un espacio común.</p>
+                                </div>
+                                <div class="vlm-connector"></div>
+
+                                <!-- Step 4: Core Model -->
+                                <div class="vlm-step">
+                                    <div class="vlm-step-title">Modelo Central</div>
+                                    <p class="text-xs font-semibold text-gray-600">Procesa la información combinada.</p>
+                                </div>
+                                <div class="vlm-connector"></div>
+                                
+                                <!-- Step 5: Output -->
+                                <div class="vlm-step">
+                                    <div class="vlm-step-title">Output</div>
+                                    <div class="p-2 bg-white border rounded-md shadow-sm">
+                                        <p class="text-sm">"Es una manzana."</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner mt-4">
+                            <h5 class="text-lg font-semibold text-gray-700 text-center mb-4">Tamaño de Modelos VLM (en billones de parámetros)</h5>
+                            <table class="llm-table">
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th>Parámetros (B)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Gemini (Pro)</td>
+                                        <td>3.25T</td>
+                                    </tr>
+                                    <tr>
+                                        <td>GPT-4o</td>
+                                        <td>~1.7T</td>
+                                    </tr>
+                                    <tr>
+                                        <td>PaliGemma</td>
+                                        <td>3</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LlaVA</td>
+                                        <td>7-34</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+                        <h4 class="text-xl font-semibold mb-2 text-[#F8961E]">IA Generativa</h4>
+                        <p class="text-gray-600 mb-4 flex-grow">Algoritmos capaces de crear contenido nuevo como imágenes, texto o música a partir de un simple texto o un conjunto de datos. Este campo está en la vanguardia de la IA actual.</p>
+                        
+                        <div class="gen-ai-diagram-container">
+                            <h5 class="text-lg font-semibold text-gray-700 text-center mt-8">Flujo de Entrenamiento</h5>
+                            <div class="training-flow-diagram">
+                                <div class="flow-step">
+                                    <div class="flow-box">1. Datos de Entrenamiento</div>
+                                    <p class="text-sm text-gray-600 mt-2">Se utiliza un gran conjunto de datos para que el modelo aprenda la distribución subyacente.</p>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-500">↓</span>
+                                <div class="flow-step">
+                                    <div class="flow-box">2. Proceso de Generación y Predicción</div>
+                                    <p class="text-sm text-gray-600 mt-2">El modelo crea nuevas muestras y las compara con datos reales (o viceversa).</p>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-500">↓</span>
+                                <div class="flow-step">
+                                    <div class="flow-box">3. Ajuste de Parámetros</div>
+                                    <p class="text-sm text-gray-600 mt-2">Se utiliza una función de pérdida para medir el error y optimizar el modelo.</p>
+                                </div>
+                                <span class="text-2xl font-bold text-gray-500">↓</span>
+                                <div class="flow-step">
+                                    <div class="flow-box">4. Generación Final</div>
+                                    <p class="text-sm text-gray-600 mt-2">Una vez entrenado, el modelo puede generar nuevos datos que son indistinguibles de los reales.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chart-container h-64 md:h-72 mt-4"><canvas id="aiChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">Infografía creada para visualizar el panorama de la Ciencia de Datos con ayuda de Gemini</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const colors = {
+                red: '#F94144',
+                orange: '#F3722C',
+                yellowOrange: '#F8961E',
+                yellow: '#F9C74F',
+                green: '#90BE6D',
+                teal: '#43AA8B',
+                blue: '#577590'
+            };
+
+            const colorPalette = Object.values(colors);
+
+            function wrapLabels(labels, maxWidth) {
+                return labels.map(label => {
+                    if (label.length <= maxWidth) {
+                        return label;
+                    }
+                    const words = label.split(' ');
+                    const lines = [];
+                    let currentLine = '';
+                    words.forEach(word => {
+                        if ((currentLine + ' ' + word).trim().length > maxWidth) {
+                            lines.push(currentLine.trim());
+                            currentLine = word;
+                        } else {
+                            currentLine = (currentLine + ' ' + word).trim();
+                        }
+                    });
+                    if (currentLine) {
+                        lines.push(currentLine.trim());
+                    }
+                    return lines;
+                });
+            }
+
+            const tooltipTitleCallback = (tooltipItems) => {
+                const item = tooltipItems[0];
+                let label = item.chart.data.labels[item.dataIndex];
+                if (Array.isArray(label)) {
+                    return label.join(' ');
+                } else {
+                    return label;
+                }
+            };
+            
+            const defaultChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback
+                        }
+                    }
+                }
+            };
+
+            // Calculate Mean, Median, and Mode for a new chart
+            const dataSet = [1, 2, 2, 3, 4, 4, 4, 5, 6, 7];
+
+            // Calculate Mean
+            const mean = dataSet.reduce((sum, val) => sum + val, 0) / dataSet.length;
+
+            // Calculate Median
+            const sortedData = [...dataSet].sort((a, b) => a - b);
+            const mid = Math.floor(sortedData.length / 2);
+            const median = sortedData.length % 2 !== 0 ? sortedData[mid] : (sortedData[mid - 1] + sortedData[mid]) / 2;
+
+            // Calculate Mode
+            const frequency = {};
+            dataSet.forEach(val => frequency[val] = (frequency[val] || 0) + 1);
+            let mode = [];
+            let maxFreq = 0;
+            for (const key in frequency) {
+                if (frequency[key] > maxFreq) {
+                    maxFreq = frequency[key];
+                    mode = [parseInt(key)];
+                } else if (frequency[key] === maxFreq) {
+                    mode.push(parseInt(key));
+                }
+            }
+            const modeText = mode.join(', ');
+
+            // Prepare data for the bar chart
+            const labels = [...new Set(sortedData)];
+            const counts = labels.map(label => dataSet.filter(val => val === label).length);
+
+            // Plugin to draw lines for Mean, Median, and Mode
+            const linePlugin = {
+                id: 'meanMedianModeLines',
+                beforeDraw(chart, args, options) {
+                    const { ctx, chartArea: { left, right, top, bottom, width, height }, scales: { x, y } } = chart;
+                    ctx.save();
+                    
+                    const drawLine = (value, color, label) => {
+                        const position = x.getPixelForValue(value);
+                        if (position > left && position < right) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([5, 5]);
+                            ctx.moveTo(position, top);
+                            ctx.lineTo(position, bottom);
+                            ctx.stroke();
+
+                            ctx.setLineDash([]);
+                            ctx.fillStyle = color;
+                            ctx.textAlign = 'center';
+                            ctx.fillText(label, position, top - 10);
+                        }
+                    };
+
+                    // Draw Median line
+                    drawLine(median, 'blue', `Mediana: ${median}`);
+
+                    // Draw Mean line
+                    drawLine(mean, 'red', `Media: ${mean.toFixed(2)}`);
+
+                    // Draw Mode line(s)
+                    mode.forEach(val => drawLine(val, 'green', `Moda: ${val}`));
+
+                    ctx.restore();
+                }
+            };
+
+
+            new Chart(document.getElementById('agregacionChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frecuencia de valores',
+                        data: counts,
+                        backgroundColor: colors.blue
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Valores' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            title: { display: true, text: 'Frecuencia' },
+                            beginAtZero: true
+                        }
+                    }
+                },
+                plugins: [linePlugin]
+            });
+
+            // Linear Regression Chart Update
+            const regressionData = [{ x: 1, y: 3 }, { x: 2, y: 5 }, { x: 3, y: 6 }, { x: 4, y: 8 }, { x: 5, y: 10 }];
+            const slope = 1.7; // Example slope
+            const intercept = 1.5; // Example intercept
+            const regressionLine = regressionData.map(point => ({
+                x: point.x,
+                y: slope * point.x + intercept
+            }));
+
+            // Custom plugin to draw residual lines
+            const residualPlugin = {
+                id: 'residualLines',
+                beforeDraw: (chart) => {
+                    const { ctx, chartArea, scales: { x, y } } = chart;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 2]);
+                    ctx.strokeStyle = colors.blue;
+                    regressionData.forEach(point => {
+                        const xPos = x.getPixelForValue(point.x);
+                        const yPoint = y.getPixelForValue(point.y);
+                        const yLine = y.getPixelForValue(slope * point.x + intercept);
+                        ctx.moveTo(xPos, yPoint);
+                        ctx.lineTo(xPos, yLine);
+                    });
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            };
+
+            new Chart(document.getElementById('statsChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Puntos de Datos',
+                        data: regressionData,
+                        backgroundColor: colors.orange,
+                        pointRadius: 6,
+                        order: 2,
+                    }, {
+                        label: 'Línea de Regresión',
+                        data: regressionLine,
+                        backgroundColor: colors.red,
+                        borderColor: colors.red,
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0,
+                        order: 1,
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Variable Independiente' } },
+                        y: { title: { display: true, text: 'Variable Dependiente' } }
+                    },
+                },
+                plugins: [residualPlugin]
+            });
+
+            // Supervised Classification Chart
+            const classA = [{x: 1, y: 3}, {x: 2, y: 4}, {x: 3, y: 2}, {x: 4, y: 5}];
+            const classB = [{x: 6, y: 7}, {x: 7, y: 8}, {x: 8, y: 6}, {x: 9, y: 7}];
+            const decisionBoundary = [{x: 4.5, y: 0}, {x: 4.5, y: 10}];
+
+            new Chart(document.getElementById('classificationChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Aprobado',
+                        data: classA,
+                        backgroundColor: colors.green,
+                        pointRadius: 6
+                    }, {
+                        label: 'Reprobado',
+                        data: classB,
+                        backgroundColor: colors.red,
+                        pointRadius: 6
+                    },
+                    {
+                        label: 'Límite de Decisión',
+                        data: decisionBoundary,
+                        borderColor: colors.blue,
+                        borderDash: [5, 5],
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0
+                    }]
+                },
+                options: { 
+                    ...defaultChartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Horas de Estudio' }, min: 0, max: 10 },
+                        y: { title: { display: true, text: 'Asistencia' }, min: 0, max: 10 }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Supervised Regression Chart
+            const supRegData = [{ x: 1, y: 2.5 }, { x: 2, y: 4.2 }, { x: 3, y: 5.8 }, { x: 4, y: 7.1 }, { x: 5, y: 9.5 }];
+            const supRegSlope = 1.7;
+            const supRegIntercept = 1.0;
+            const supRegLine = supRegData.map(point => ({
+                x: point.x,
+                y: supRegSlope * point.x + supRegIntercept
+            }));
+
+            new Chart(document.getElementById('regressionChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Puntos de Datos',
+                        data: supRegData,
+                        backgroundColor: colors.orange,
+                        pointRadius: 6,
+                        order: 2,
+                    }, {
+                        label: 'Línea de Predicción',
+                        data: supRegLine,
+                        backgroundColor: colors.red,
+                        borderColor: colors.red,
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0,
+                        order: 1,
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Tamaño de la Casa' } },
+                        y: { title: { display: true, text: 'Precio (miles)' } }
+                    },
+                }
+            });
+
+
+            // Unsupervised Learning Chart
+            const cluster1 = [{x: 5, y: 15}, {x: 6, y: 16}, {x: 7, y: 14}, {x: 8, y: 17}, {x: 6.5, y: 15.5}];
+            const cluster2 = [{x: 20, y: 25}, {x: 22, y: 26}, {x: 23, y: 24}, {x: 21, y: 27}, {x: 22.5, y: 25.5}];
+            const cluster3 = [{x: 10, y: 5}, {x: 11, y: 6}, {x: 12, y: 4}, {x: 13, y: 7}, {x: 11.5, y: 5.5}];
+
+            new Chart(document.getElementById('unsupervisedChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Grupo A',
+                        data: cluster1,
+                        backgroundColor: colors.orange,
+                        pointRadius: 6
+                    }, {
+                        label: 'Grupo B',
+                        data: cluster2,
+                        backgroundColor: colors.teal,
+                        pointRadius: 6
+                    }, {
+                        label: 'Grupo C',
+                        data: cluster3,
+                        backgroundColor: colors.red,
+                        pointRadius: 6
+                    }]
+                },
+                options: { 
+                    ...defaultChartOptions,
+                    scales: {
+                        x: { title: { display: true, text: 'Característica 1' } },
+                        y: { title: { display: true, text: 'Característica 2' } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('visualizationImpactChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Producto A', 'Producto B', 'Producto C', 'Producto D'],
+                    datasets: [{
+                        label: 'Ventas (en miles)',
+                        data: [52, 78, 45, 65],
+                        backgroundColor: [colors.green, colors.teal, colors.blue, colors.yellow],
+                    }]
+                },
+                options: { ...defaultChartOptions, indexAxis: 'y' }
+            });
+
+            new Chart(document.getElementById('licensesChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: wrapLabels(['MIT (Permisividad)', 'Apache 2.0 (Equilibrio)', 'Creative Commons (Contenido)'], 16),
+                    datasets: [{
+                        label: 'Licencias de Software',
+                        data: [9, 7, 5],
+                        backgroundColor: [colors.red, colors.orange, colors.yellowOrange],
+                    }]
+                },
+                options: { ...defaultChartOptions }
+            });
+            
+             new Chart(document.getElementById('languagesChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Python', 'R', 'Scala & Otros'],
+                    datasets: [{
+                        label: 'Uso en Ciencia de Datos',
+                        data: [75, 15, 10],
+                        backgroundColor: [colors.blue, colors.teal, colors.green],
+                    }]
+                },
+                options: { ...defaultChartOptions }
+            });
+
+            new Chart(document.getElementById('hardwareChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Tareas Secuenciales', 'Tareas Paralelas'],
+                    datasets: [{
+                        label: 'CPU',
+                        data: [95, 30],
+                        backgroundColor: colors.red,
+                    }, {
+                        label: 'GPU',
+                        data: [50, 98],
+                        backgroundColor: colors.orange,
+                    }]
+                },
+                options: { ...defaultChartOptions }
+            });
+
+            new Chart(document.getElementById('dbChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Flexibilidad', 'Escalabilidad', 'Estructura Rígida', 'Consistencia'],
+                    datasets: [{
+                        label: 'SQL (PostgreSQL)',
+                        data: [4, 7, 9, 9],
+                        backgroundColor: 'rgba(67, 170, 139, 0.2)',
+                        borderColor: colors.teal,
+                        pointBackgroundColor: colors.teal,
+                    }, {
+                        label: 'NoSQL (MongoDB)',
+                        data: [9, 9, 3, 6],
+                        backgroundColor: 'rgba(87, 117, 144, 0.2)',
+                        borderColor: colors.blue,
+                        pointBackgroundColor: colors.blue,
+                    }]
+                },
+                options: { ...defaultChartOptions }
+            });
+
+            new Chart(document.getElementById('sourcesChart'), {
+                type: 'bar',
+                data: {
+                    labels: wrapLabels(['Kaggle', 'Hugging Face', 'Datos Públicos Gob.', 'DrivenData', 'DataCamp'], 16),
+                    datasets: [{
+                        label: 'Popularidad de Fuentes (estimada)',
+                        data: [90, 85, 70, 60, 75],
+                        backgroundColor: colorPalette,
+                    }]
+                },
+                options: { ...defaultChartOptions, indexAxis: 'y', plugins: { legend: { display: false } } }
+            });
+
+            new Chart(document.getElementById('libsChart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [
+                        { label: 'Pandas', data: [{x: 4, y: 8, r: 25}], backgroundColor: colors.red },
+                        { label: 'Scikit-Learn', data: [{x: 6, y: 7, r: 30}], backgroundColor: colors.orange },
+                        { label: 'TensorFlow', data: [{x: 8, y: 5, r: 40}], backgroundColor: colors.yellowOrange },
+                        { label: 'PyTorch', data: [{x: 7, y: 6, r: 38}], backgroundColor: colors.yellow },
+                        { label: 'Streamlit', data: [{x: 2, y: 9, r: 15}], backgroundColor: colors.green },
+                        { label: 'Polars', data: [{x: 9, y: 8, r: 20}], backgroundColor: colors.teal },
+                    ]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        y: { title: { display: true, text: 'Facilidad de Uso' } },
+                        x: { title: { display: true, text: 'Rendimiento/Complejidad' } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('openSourceChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Costo', 'Comunidad', 'Flexibilidad', 'Seguridad', 'Soporte'],
+                    datasets: [{
+                        label: 'Código Abierto',
+                        data: [9, 8, 9, 6, 7],
+                        backgroundColor: 'rgba(87, 117, 144, 0.2)',
+                        borderColor: colors.blue,
+                        pointBackgroundColor: colors.blue,
+                    }, {
+                        label: 'Software Propietario',
+                        data: [2, 4, 3, 9, 9],
+                        backgroundColor: 'rgba(249, 65, 68, 0.2)',
+                        borderColor: colors.red,
+                        pointBackgroundColor: colors.red,
+                    }]
+                },
+                options: { ...defaultChartOptions, scales: { r: { suggestedMin: 0, suggestedMax: 10 } } }
+            });
+
+        });
+    </script>
+</body>
+</html>
+

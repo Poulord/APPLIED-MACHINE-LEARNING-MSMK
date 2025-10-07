@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consideraciones de Bases de Datos para Machine Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F4F8;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#1A202C] mb-2">Bases de Datos para Machine Learning</h1>
+            <p class="text-lg text-gray-600">Más allá de la elección entre Relacional y NoSQL</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <div class="md:col-span-2 lg:col-span-3 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#3B82F6] mb-4">1. Escalabilidad: Creciendo con tus Datos</h2>
+                <p class="text-gray-600 mb-4">
+                    La escalabilidad define cómo una base de datos maneja el aumento de datos y usuarios. La elección entre un enfoque vertical (más potencia en un servidor) y horizontal (más servidores) es fundamental para el rendimiento a largo plazo y el control de costos.
+                </p>
+                <div class="chart-container">
+                    <canvas id="scalabilityChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 flex flex-col justify-center items-center text-center">
+                 <h2 class="text-2xl font-bold text-[#3B82F6] mb-4">2. Latencia y Velocidad</h2>
+                <p class="text-gray-600 mb-6">Una baja latencia es crítica para modelos en tiempo real, permitiendo respuestas casi instantáneas.</p>
+                <div class="flex justify-around w-full">
+                    <div class="text-center">
+                        <span class="text-6xl">⚡</span>
+                        <h3 class="font-bold text-xl text-emerald-500 mt-2">Baja Latencia</h3>
+                        <p class="text-gray-500">&lt;10ms</p>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-6xl">🐌</span>
+                        <h3 class="font-bold text-xl text-amber-500 mt-2">Alta Latencia</h3>
+                        <p class="text-gray-500">&gt;100ms</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#3B82F6] mb-4">3. Pilares de la Seguridad de Datos</h2>
+                 <p class="text-gray-600 mb-6">Proteger los datos es vital. Un sistema seguro se basa en tres pilares que garantizan la confidencialidad e integridad de la información.</p>
+                <div class="flex flex-col space-y-4">
+                    <div class="flex items-center bg-blue-50 p-3 rounded-lg">
+                        <span class="text-3xl mr-4">👤</span>
+                        <div>
+                            <h3 class="font-bold">Autenticación</h3>
+                            <p class="text-sm text-gray-600">Verifica quién eres.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-green-50 p-3 rounded-lg">
+                        <span class="text-3xl mr-4">🔑</span>
+                        <div>
+                            <h3 class="font-bold">Autorización</h3>
+                            <p class="text-sm text-gray-600">Define a qué tienes acceso.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-yellow-50 p-3 rounded-lg">
+                        <span class="text-3xl mr-4">🔒</span>
+                        <div>
+                            <h3 class="font-bold">Encriptación</h3>
+                            <p class="text-sm text-gray-600">Protege tus datos de miradas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#3B82F6] mb-4">4. Costo Total de Propiedad (TCO)</h2>
+                <p class="text-gray-600 mb-4">El costo real va más allá de la licencia inicial. El mantenimiento y la operación a menudo constituyen la mayor parte de la inversión a lo largo del tiempo.</p>
+                <div class="chart-container h-[300px] max-h-[350px]">
+                    <canvas id="tcoChart"></canvas>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#3B82F6] mb-4">5. Tipos de Datos y Estructura de Consulta</h2>
+                 <p class="text-gray-600 mb-4">
+                    La elección de la base de datos debe alinearse con la naturaleza de tus datos y las preguntas que necesitas responder. Cada tipo de base de datos especializada tiene fortalezas únicas para diferentes tareas analíticas.
+                </p>
+                <div class="chart-container">
+                    <canvas id="dataTypeChart"></canvas>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>Infografía generada para ilustrar las consideraciones clave en la selección de bases de datos para proyectos de Machine Learning.</p>
+        </footer>
+    </div>
+
+    <script>
+        const tooltipTitleCallback = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        function wrapLabels(label, maxLength) {
+            if (label.length <= maxLength) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + word).length > maxLength) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            });
+            lines.push(currentLine.trim());
+            return lines;
+        }
+
+        const primaryColor = '#3B82F6';
+        const secondaryColor = '#10B981';
+        const tertiaryColor = '#F59E0B';
+        const indigoColor = '#6366F1';
+
+        
+        const scalabilityCtx = document.getElementById('scalabilityChart').getContext('2d');
+        new Chart(scalabilityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Límite de Crecimiento', 'Complejidad de Gestión', 'Costo Inicial'],
+                datasets: [
+                    {
+                        label: 'Escalabilidad Horizontal',
+                        data: [9, 7, 4],
+                        backgroundColor: primaryColor,
+                        borderColor: primaryColor,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Escalabilidad Vertical',
+                        data: [3, 9, 7],
+                        backgroundColor: secondaryColor,
+                        borderColor: secondaryColor,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { ...tooltipTitleCallback.plugins },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' / 10';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const tcoCtx = document.getElementById('tcoChart').getContext('2d');
+        new Chart(tcoCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Costo Total de Propiedad'],
+                datasets: [
+                    {
+                        label: 'Costos Iniciales',
+                        data: [30],
+                        backgroundColor: primaryColor,
+                    },
+                    {
+                        label: 'Costos de Mantenimiento',
+                        data: [50],
+                        backgroundColor: secondaryColor,
+                    },
+                    {
+                        label: 'Costos Operativos',
+                        data: [20],
+                        backgroundColor: tertiaryColor,
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { ...tooltipTitleCallback.plugins,
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.x !== null) {
+                                    label += context.parsed.x + '%';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y: {
+                        stacked: true
+                    }
+                }
+            }
+        });
+
+        const dataTypeCtx = document.getElementById('dataTypeChart').getContext('2d');
+        const rawLabels = ['Análisis de Tendencias Temporales', 'Análisis de Relaciones Complejas', 'Consultas Analíticas Masivas'];
+        const processedLabels = rawLabels.map(label => wrapLabels(label, 16));
+
+        new Chart(dataTypeCtx, {
+            type: 'radar',
+            data: {
+                labels: processedLabels,
+                datasets: [
+                    {
+                        label: 'Bases de Datos de Series Temporales',
+                        data: [9, 3, 6],
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: primaryColor,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: primaryColor
+                    },
+                    {
+                        label: 'Bases de Datos de Grafos',
+                        data: [4, 10, 5],
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: secondaryColor,
+                        pointBackgroundColor: secondaryColor,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: secondaryColor
+                    },
+                    {
+                        label: 'Data Warehouses',
+                        data: [7, 2, 9],
+                        fill: true,
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: indigoColor,
+                        pointBackgroundColor: indigoColor,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: indigoColor
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) {
+                                  return label.join(' ');
+                                } else {
+                                  return label;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 10,
+                        pointLabels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

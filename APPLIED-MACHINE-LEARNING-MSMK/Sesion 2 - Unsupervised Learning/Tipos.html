@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: Conceptos de Aprendizaje No Supervisado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 320px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#2f4b7c] mb-2">Explorando el Aprendizaje No Supervisado</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">Una guía visual de las técnicas clave que descubren patrones y estructuras ocultas en los datos sin necesidad de etiquetas.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#665191] mb-3">1. Clustering: Agrupando lo Similar</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Los algoritmos de clustering agrupan puntos de datos basándose en su similitud. El objetivo es que los puntos dentro de un mismo grupo sean muy parecidos entre sí y distintos a los de otros grupos. El gráfico de dispersión muestra tres clusters claramente definidos por su cercanía.</p>
+                <div class="chart-container">
+                    <canvas id="clusteringChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#a05195] mb-3">2. Reducción de Dimensionalidad</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Esta técnica reduce el número de variables en un conjunto de datos, conservando la información más crítica. Ayuda a simplificar los modelos y visualizar datos complejos, pasando de un espacio de alta dimensionalidad a uno más manejable, como se ilustra en el siguiente proceso.</p>
+                <div class="flex-grow flex flex-col items-center justify-center space-y-4 p-4">
+                    <div class="bg-[#a05195] text-white p-4 rounded-lg shadow-md text-center">
+                        <span class="font-bold text-lg">Datos de Alta Dimensión</span>
+                        <span class="block text-sm">(ej. 100+ Características)</span>
+                    </div>
+                    <div class="text-4xl font-bold text-[#d45087] animate-bounce">↓</div>
+                    <div class="bg-[#d45087] text-white p-4 rounded-lg shadow-md text-center">
+                        <span class="font-bold text-lg">Técnica Aplicada</span>
+                        <span class="block text-sm">(PCA, t-SNE, Autoencoder)</span>
+                    </div>
+                    <div class="text-4xl font-bold text-[#f95d6a]">↓</div>
+                    <div class="bg-[#f95d6a] text-white p-4 rounded-lg shadow-md text-center">
+                        <span class="font-bold text-lg">Datos de Baja Dimensión</span>
+                        <span class="block text-sm">(ej. 2-3 Características)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#d45087] mb-3">3. Detección de Anomalías</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Identifica instancias raras o eventos que se desvían significativamente de la mayoría de los datos. Es crucial para la detección de fraudes, fallos en sistemas o ciberataques. El punto rojo en el gráfico representa una anomalía, alejada del comportamiento normal del grupo.</p>
+                <div class="chart-container">
+                    <canvas id="anomalyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#f95d6a] mb-3">4. Reglas de Asociación</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Busca relaciones interesantes entre variables en grandes bases de datos. El ejemplo clásico es el análisis de la cesta de la compra para descubrir qué productos se compran juntos con frecuencia. Las métricas clave como Soporte, Confianza y Lift miden la fuerza de estas asociaciones.</p>
+                <div class="chart-container">
+                     <canvas id="associationChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#ff7c43] mb-3">5. Modelos Generativos</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Estos modelos aprenden la distribución de probabilidad de un conjunto de datos para generar nuevos datos sintéticos que son indistinguibles de los reales. Tienen aplicaciones en la generación de imágenes, texto y aumento de datos para entrenar otros modelos.</p>
+                 <div class="flex-grow flex flex-col items-center justify-center space-y-4 p-4">
+                    <div class="bg-[#ff7c43] text-white p-4 rounded-lg shadow-md text-center">
+                        <span class="font-bold">1. Datos Reales</span>
+                    </div>
+                    <div class="text-4xl font-bold text-[#ffa600]">→</div>
+                    <div class="border-4 border-dashed border-[#ffa600] p-4 rounded-lg text-center">
+                        <span class="font-bold text-lg text-[#2f4b7c]">Modelo Generativo</span>
+                         <span class="block text-sm text-gray-600">(GAN, VAE)</span>
+                    </div>
+                     <div class="text-4xl font-bold text-[#ffa600]">→</div>
+                    <div class="bg-[#ffa600] text-white p-4 rounded-lg shadow-md text-center">
+                        <span class="font-bold">2. Datos Sintéticos</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col transform hover:scale-105 transition-transform duration-300">
+                <h2 class="text-2xl font-bold text-[#ffa600] mb-3">6. Estimación de Densidad</h2>
+                <p class="text-gray-700 mb-4 flex-grow">Estima la distribución de probabilidad subyacente de los datos. Ayuda a entender dónde se concentran los datos. En el gráfico de burbujas, las burbujas más grandes indican regiones de mayor densidad de puntos de datos, similar a los picos en un mapa topográfico.</p>
+                <div class="chart-container">
+                    <canvas id="densityChart"></canvas>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="text-center mt-12 py-6 border-t border-gray-300">
+            <p class="text-gray-600">Infografía creada para visualizar los conceptos clave del Aprendizaje No Supervisado.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const energeticPalette = {
+                color1: '#665191',
+                color2: '#a05195',
+                color3: '#d45087',
+                color4: '#f95d6a',
+                color5: '#ff7c43',
+                color6: '#ffa600',
+                gray: '#a9a9a9',
+                anomaly: '#ff0000',
+                text: '#2f4b7c'
+            };
+
+            const defaultChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) {
+                                    return label.join(' ');
+                                } else {
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: energeticPalette.text },
+                        grid: { display: false }
+                    },
+                    y: {
+                        ticks: { color: energeticPalette.text },
+                        grid: { color: '#e0e0e0' }
+                    }
+                }
+            };
+
+            function generateClusterData(numPoints, centerX, centerY, radius, color) {
+                const data = [];
+                for (let i = 0; i < numPoints; i++) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const r = Math.random() * radius;
+                    data.push({
+                        x: centerX + r * Math.cos(angle),
+                        y: centerY + r * Math.sin(angle),
+                        backgroundColor: color
+                    });
+                }
+                return data;
+            }
+            
+            const clusteringCtx = document.getElementById('clusteringChart').getContext('2d');
+            const cluster1 = generateClusterData(50, 20, 30, 15, energeticPalette.color1);
+            const cluster2 = generateClusterData(50, 80, 70, 18, energeticPalette.color2);
+            const cluster3 = generateClusterData(50, 40, 80, 12, energeticPalette.color3);
+            new Chart(clusteringCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Cluster 1',
+                        data: cluster1.map(p => ({x: p.x, y: p.y})),
+                        backgroundColor: energeticPalette.color1,
+                        pointRadius: 6,
+                    }, {
+                        label: 'Cluster 2',
+                        data: cluster2.map(p => ({x: p.x, y: p.y})),
+                        backgroundColor: energeticPalette.color2,
+                        pointRadius: 6,
+                    }, {
+                        label: 'Cluster 3',
+                        data: cluster3.map(p => ({x: p.x, y: p.y})),
+                        backgroundColor: energeticPalette.color3,
+                        pointRadius: 6,
+                    }]
+                },
+                options: { ...defaultChartOptions, plugins: { ...defaultChartOptions.plugins, legend: { display: true, position: 'bottom' } } }
+            });
+
+            const anomalyCtx = document.getElementById('anomalyChart').getContext('2d');
+            const normalData = generateClusterData(100, 50, 50, 30, energeticPalette.gray);
+            const anomalyData = [{ x: 95, y: 5, backgroundColor: energeticPalette.anomaly }];
+            new Chart(anomalyCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Datos Normales',
+                        data: normalData.map(p => ({x: p.x, y: p.y})),
+                        backgroundColor: energeticPalette.gray,
+                        pointRadius: 5,
+                    }, {
+                        label: 'Anomalía',
+                        data: anomalyData.map(p => ({x: p.x, y: p.y})),
+                        backgroundColor: energeticPalette.anomaly,
+                        pointRadius: 8,
+                        borderColor: '#000',
+                        borderWidth: 2,
+                    }]
+                },
+                options: { ...defaultChartOptions, plugins: { ...defaultChartOptions.plugins, legend: { display: true, position: 'bottom' } } }
+            });
+            
+            const associationCtx = document.getElementById('associationChart').getContext('2d');
+            new Chart(associationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Soporte', 'Confianza', 'Lift'],
+                    datasets: [{
+                        label: 'Valor de Métrica',
+                        data: [0.05, 0.75, 2.5],
+                        backgroundColor: [energeticPalette.color4, energeticPalette.color5, energeticPalette.color6],
+                        borderColor: 'rgba(0,0,0,0.1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { ...defaultChartOptions.scales.x, grid: { display: true, color: '#e0e0e0' }, beginAtZero: true },
+                        y: { ...defaultChartOptions.scales.y, grid: { display: false } }
+                    }
+                }
+            });
+
+            const densityCtx = document.getElementById('densityChart').getContext('2d');
+            new Chart(densityCtx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Alta Densidad',
+                        data: [{ x: 20, y: 30, r: 25 }, { x: 30, y: 40, r: 15 }],
+                        backgroundColor: energeticPalette.color1
+                    }, {
+                        label: 'Media Densidad',
+                        data: [{ x: 60, y: 70, r: 20 }, { x: 50, y: 20, r: 12 }, { x: 80, y: 40, r: 18 }],
+                        backgroundColor: energeticPalette.color2
+                    }, {
+                        label: 'Baja Densidad',
+                        data: [{ x: 10, y: 80, r: 8 }, { x: 90, y: 90, r: 10 }, { x: 90, y: 10, r: 5 }],
+                        backgroundColor: energeticPalette.color3
+                    }]
+                },
+                options: { ...defaultChartOptions, plugins: { ...defaultChartOptions.plugins, legend: { display: true, position: 'bottom' } } }
+            });
+
+        });
+    </script>
+</body>
+</html>
+

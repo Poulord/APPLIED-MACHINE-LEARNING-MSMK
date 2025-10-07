@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmo K-means: Principios y Pasos</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fuente Inter */
+        html { font-family: 'Inter', sans-serif; }
+        /* Estilos específicos del Canvas */
+        #kmeansCanvas {
+            border: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+        }
+        .step-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold text-blue-800 md:text-5xl">K-means: Principios y Visualización</h1>
+            <p class="mt-2 text-xl text-gray-600">Un algoritmo de clustering no supervisado en 4 pasos iterativos.</p>
+        </header>
+
+        <!-- Sección de Simulación Interactiva -->
+        <div class="bg-white p-6 rounded-xl shadow-2xl mb-12">
+            <h2 class="text-3xl font-bold text-blue-700 mb-6 border-b pb-3">Simulación Interactiva</h2>
+            
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Controles -->
+                <div class="lg:w-1/3 space-y-4">
+                    <label for="kInput" class="block text-lg font-medium text-gray-700">Número de Clústeres (k):</label>
+                    <input type="number" id="kInput" value="3" min="2" max="6" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg">
+                    
+                    <button onclick="initializeKMeans()" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                        1. Inicializar Puntos y Centroides
+                    </button>
+                    
+                    <button onclick="iterateKMeans()" class="w-full bg-green-600 text-white p-3 rounded-lg font-semibold text-lg hover:bg-green-700 transition duration-150 shadow-md disabled:bg-green-300" disabled id="iterateBtn">
+                        2. & 3. Iterar Asignación y Recálculo
+                    </button>
+
+                    <p id="statusMessage" class="mt-4 text-center text-lg font-medium text-gray-800 p-3 bg-yellow-100 rounded-lg"></p>
+                    <p class="text-sm text-gray-500 mt-2">Haz clic en el canvas para agregar puntos de datos manualmente.</p>
+                </div>
+
+                <!-- Canvas -->
+                <div class="lg:w-2/3">
+                    <canvas id="kmeansCanvas" width="600" height="400" class="w-full h-auto"></canvas>
+                    <p id="wcssMetric" class="mt-3 text-lg font-semibold text-gray-700">WCSS (Inercia): Esperando inicialización...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Principios y Pasos -->
+        <div class="bg-white p-6 rounded-xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-blue-700 mb-8 border-b pb-3">Los 4 Pasos Iterativos y el Principio Clave</h2>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <!-- Principio Clave -->
+                <div class="step-card bg-purple-50 p-5 rounded-lg border-2 border-purple-200 col-span-2 lg:col-span-1">
+                    <div class="flex items-center mb-3">
+                        <svg class="w-8 h-8 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.204A9 9 0 0115.618 8"></path></svg>
+                        <h3 class="text-xl font-bold text-purple-700">Principio Clave</h3>
+                    </div>
+                    <p class="text-gray-700">Minimizar la Suma de los Cuadrados Dentro del Clúster (WCSS). El objetivo es que los puntos estén lo más cerca posible de su centroide, haciendo los clústeres compactos.</p>
+                    <p class="text-sm mt-2 text-purple-500">La función de coste busca minimizar: Suma(Distancia(punto, centroide)^2)</p>
+                </div>
+                
+                <!-- Paso 1 -->
+                <div class="step-card bg-blue-50 p-5 rounded-lg border-2 border-blue-200">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl font-black text-blue-600 mr-3">1.</span>
+                        <h3 class="text-xl font-bold text-blue-700">Inicialización</h3>
+                    </div>
+                    <p class="text-gray-700">Se selecciona el número k (clústeres). Se colocan k centroides en posiciones aleatorias del espacio de datos. </p>
+                </div>
+
+                <!-- Paso 2 -->
+                <div class="step-card bg-green-50 p-5 rounded-lg border-2 border-green-200">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl font-black text-green-600 mr-3">2.</span>
+                        <h3 class="text-xl font-bold text-green-700">Asignación (E-step)</h3>
+                    </div>
+                    <p class="text-gray-700">Cada punto de datos se asigna al centroide más cercano. Se usa la distancia euclidiana como métrica de proximidad. </p>
+                </div>
+
+                <!-- Paso 3 -->
+                <div class="step-card bg-yellow-50 p-5 rounded-lg border-2 border-yellow-200">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl font-black text-yellow-600 mr-3">3.</span>
+                        <h3 class="text-xl font-bold text-yellow-700">Actualización (M-step)</h3>
+                    </div>
+                    <p class="text-gray-700">Los centroides se recalculan. Cada nuevo centroide es la media (centro de masa) de todos los puntos de datos asignados a su clúster. </p>
+                </div>
+
+                <!-- Paso 4 -->
+                <div class="step-card bg-red-50 p-5 rounded-lg border-2 border-red-200">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl font-black text-red-600 mr-3">4.</span>
+                        <h3 class="text-xl font-bold text-red-700">Convergencia</h3>
+                    </div>
+                    <p class="text-gray-700">Los pasos 2 y 3 se repiten hasta que los centroides se estabilizan o se alcanza un límite de iteraciones. El algoritmo ha finalizado. </p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Variables Globales ---
+        const canvas = document.getElementById('kmeansCanvas');
+        const ctx = canvas.getContext('2d');
+        const kInput = document.getElementById('kInput');
+        const iterateBtn = document.getElementById('iterateBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const wcssMetric = document.getElementById('wcssMetric');
+        
+        const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f97316', '#a855f7', '#facc15']; // Rojo, Azul, Verde, Naranja, Púrpura, Amarillo
+        
+        let dataPoints = [];
+        let centroids = [];
+        let k = 3;
+        let iteration = 0;
+        let converged = false;
+
+        // --- Funciones de Utilidad ---
+
+        // Distancia Euclidiana al cuadrado
+        function distanceSq(p1, p2) {
+            return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2);
+        }
+        
+        // Dibuja el estado actual
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar Puntos de Datos
+            dataPoints.forEach(point => {
+                const color = COLORS[point.clusterId % COLORS.length];
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = color || '#000000';
+                ctx.fill();
+                ctx.closePath();
+            });
+
+            // Dibujar Centroides
+            centroids.forEach((centroid, index) => {
+                const color = COLORS[index % COLORS.length];
+                ctx.beginPath();
+                ctx.arc(centroid.x, centroid.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.strokeStyle = '#374151'; // Borde oscuro
+                ctx.lineWidth = 3;
+                ctx.fill();
+                ctx.stroke();
+                ctx.closePath();
+            });
+        }
+        
+        // Calcula WCSS (Inercia)
+        function calculateWCSS() {
+            let wcss = 0;
+            dataPoints.forEach(point => {
+                if (point.clusterId !== undefined) {
+                    const centroid = centroids[point.clusterId];
+                    wcss += distanceSq(point, centroid);
+                }
+            });
+            wcssMetric.textContent = `WCSS (Inercia): ${wcss.toFixed(2)}`;
+            return wcss;
+        }
+
+        // --- Lógica K-means ---
+        
+        // Paso 1: Inicialización
+        function initializeKMeans() {
+            k = parseInt(kInput.value);
+            if (isNaN(k) || k < 2 || k > COLORS.length) {
+                statusMessage.textContent = `Por favor, elige un valor k entre 2 y ${COLORS.length}.`;
+                return;
+            }
+
+            // Generar 50 puntos aleatorios si no hay ninguno, o usar los existentes
+            if (dataPoints.length === 0) {
+                for (let i = 0; i < 50; i++) {
+                    dataPoints.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        clusterId: undefined
+                    });
+                }
+            }
+            
+            // Inicializar centroides (K-means++ estilo, o aleatorios si es la primera vez)
+            centroids = [];
+            for (let i = 0; i < k; i++) {
+                // Simplemente tomamos puntos de datos aleatorios como iniciales
+                const randomIndex = Math.floor(Math.random() * dataPoints.length);
+                centroids.push({
+                    x: dataPoints[randomIndex].x,
+                    y: dataPoints[randomIndex].y
+                });
+            }
+
+            iteration = 0;
+            converged = false;
+            iterateBtn.disabled = false;
+            statusMessage.textContent = `Inicialización completa. K=${k}. Puntos: ${dataPoints.length}.`;
+            
+            // Re-asignar para dibujar, aunque la primera asignación ocurre en la primera iteración
+            assignClusters();
+            draw();
+            calculateWCSS();
+        }
+
+        // Paso 2: Asignación (E-step)
+        function assignClusters() {
+            let changed = false;
+            dataPoints.forEach(point => {
+                let minDistance = Infinity;
+                let newClusterId = -1;
+
+                // Calcular la distancia a cada centroide
+                centroids.forEach((centroid, id) => {
+                    const dist = distanceSq(point, centroid);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        newClusterId = id;
+                    }
+                });
+
+                // Si el clúster ha cambiado, marcamos que hubo movimiento
+                if (point.clusterId !== newClusterId) {
+                    point.clusterId = newClusterId;
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+
+        // Paso 3: Actualización (M-step)
+        function updateCentroids() {
+            // Calcular la suma de coordenadas y el conteo por clúster
+            const sums = Array(k).fill(0).map(() => ({ x: 0, y: 0, count: 0 }));
+            
+            dataPoints.forEach(point => {
+                const id = point.clusterId;
+                if (id !== undefined && sums[id]) {
+                    sums[id].x += point.x;
+                    sums[id].y += point.y;
+                    sums[id].count++;
+                }
+            });
+
+            // Recalcular la media para obtener el nuevo centroide
+            let moved = false;
+            centroids.forEach((centroid, id) => {
+                const clusterSum = sums[id];
+                if (clusterSum.count > 0) {
+                    const newX = clusterSum.x / clusterSum.count;
+                    const newY = clusterSum.y / clusterSum.count;
+                    
+                    // Comprobar si se ha movido
+                    if (distanceSq(centroid, {x: newX, y: newY}) > 0.01) { // 0.01 es un umbral pequeño
+                        moved = true;
+                        centroid.x = newX;
+                        centroid.y = newY;
+                    }
+                }
+            });
+            return moved;
+        }
+
+        // Paso 4: Iteración
+        function iterateKMeans() {
+            if (converged) {
+                statusMessage.textContent = `¡El algoritmo ha convergido en ${iteration} iteraciones!`;
+                return;
+            }
+
+            iteration++;
+            let pointsChanged = assignClusters();
+            let centroidsMoved = updateCentroids();
+
+            draw();
+            calculateWCSS();
+
+            if (!pointsChanged && !centroidsMoved) {
+                converged = true;
+                iterateBtn.disabled = true;
+                statusMessage.textContent = `¡CONVERGENCIA! El algoritmo se detuvo en ${iteration} iteraciones.`;
+            } else {
+                statusMessage.textContent = `Iteración ${iteration}: Puntos asignados y centroides reubicados.`;
+            }
+        }
+        
+        // --- Event Listeners ---
+        
+        // Agregar puntos al hacer clic en el canvas
+        canvas.addEventListener('click', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            dataPoints.push({ x: x, y: y, clusterId: undefined });
+            draw();
+            
+            // Si ya está inicializado, re-inicializar para incluir el nuevo punto
+            if (centroids.length > 0 && !converged) {
+                statusMessage.textContent = `Se agregó un punto. Por favor, reinicializa el algoritmo o continúa iterando.`;
+            } else if (centroids.length > 0 && converged) {
+                 // Si convergió, asignamos el nuevo punto al clúster más cercano
+                assignClusters();
+                draw();
+                calculateWCSS();
+                statusMessage.textContent = `Punto agregado y asignado al clúster más cercano.`;
+            }
+            
+            if (centroids.length === 0) {
+                statusMessage.textContent = `Punto agregado. Haz clic en "Inicializar" para comenzar.`;
+            }
+        });
+
+        // Inicializar el canvas al cargar
+        window.onload = () => {
+             // Adaptar el tamaño del canvas a la pantalla (responsive)
+             const parent = canvas.parentElement;
+             canvas.width = parent.clientWidth;
+             canvas.height = Math.min(400, parent.clientWidth * (2/3)); // Proporción 3:2
+             initializeKMeans();
+        };
+
+        window.onresize = () => {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth;
+            canvas.height = Math.min(400, parent.clientWidth * (2/3)); // Proporción 3:2
+            draw(); // Redibujar en el nuevo tamaño
+        };
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storytelling con Datos: Una Infografía Interactiva</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 380px;
+            }
+        }
+        .flowchart-item {
+            border: 2px solid;
+            transition: all 0.3s ease-in-out;
+        }
+        .flowchart-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .arrow {
+            font-size: 2rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center my-12">
+            <h1 class="text-4xl md:text-6xl font-black text-[#005f73]">¿Se pueden contar historias interesantes con datos?</h1>
+            <p class="mt-4 text-xl md:text-2xl text-[#0a9396]">Convirtiendo información en conocimiento a través de la narrativa visual.</p>
+        </header>
+
+        <main>
+            <section id="storytelling" class="mb-16">
+                <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#005f73] mb-4">1. Storytelling: Construyendo Narrativas con Números</h2>
+                    <p class="text-lg mb-6">Contar una historia con datos va más allá de un simple gráfico. Se trata de dar contexto y significado a los números para construir una narrativa que conecte e inspire. Un dato aislado es solo un hecho; una narrativa lo convierte en una visión clara.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="text-center p-6 bg-gray-50 rounded-lg">
+                            <h3 class="text-xl font-bold text-[#ca6702] mb-2">El Dato Crudo</h3>
+                            <p class="text-7xl font-black text-[#ee9b00]">20%</p>
+                            <p class="mt-2 text-gray-600">Las ventas subieron un 20%.</p>
+                        </div>
+                        <div class="text-center p-6 bg-gray-50 rounded-lg">
+                            <h3 class="text-xl font-bold text-[#0a9396] mb-2">La Narrativa</h3>
+                            <p class="text-2xl font-bold text-[#005f73]">"Gracias a la inversión en nuevas estrategias de marketing digital, logramos un crecimiento del 20% en ventas, superando nuestro objetivo trimestral."</p>
+                        </div>
+                    </div>
+                     <div class="mt-10">
+                        <h3 class="text-2xl font-bold text-center text-[#005f73] mb-6">Los Elementos Clave de la Historia</h3>
+                        <div class="flex flex-col md:flex-row justify-around items-center space-y-4 md:space-y-0 md:space-x-4">
+                            <div class="flowchart-item text-center p-4 rounded-lg border-[#94d2bd] bg-[#94d2bd] bg-opacity-10 w-full md:w-1/4">
+                                <span class="text-3xl">🎯</span>
+                                <h4 class="font-bold text-[#005f73]">Protagonista</h4><p>El problema central</p>
+                            </div>
+                            <div class="arrow text-[#94d2bd] hidden md:block">&rarr;</div>
+                            <div class="flowchart-item text-center p-4 rounded-lg border-[#e9d8a6] bg-[#e9d8a6] bg-opacity-20 w-full md:w-1/4">
+                                <span class="text-3xl">❓</span>
+                                <h4 class="font-bold text-[#ca6702]">Conflicto</h4><p>La pregunta a responder</p>
+                            </div>
+                            <div class="arrow text-[#e9d8a6] hidden md:block">&rarr;</div>
+                            <div class="flowchart-item text-center p-4 rounded-lg border-[#ee9b00] bg-[#ee9b00] bg-opacity-20 w-full md:w-1/4">
+                                 <span class="text-3xl">📈</span>
+                                <h4 class="font-bold text-[#ca6702]">Trama</h4><p>La secuencia del análisis</p>
+                            </div>
+                            <div class="arrow text-[#ee9b00] hidden md:block">&rarr;</div>
+                            <div class="flowchart-item text-center p-4 rounded-lg border-[#0a9396] bg-[#0a9396] bg-opacity-10 w-full md:w-1/4">
+                                 <span class="text-3xl">💡</span>
+                                <h4 class="font-bold text-[#005f73]">Resolución</h4><p>La conclusión clave</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="scientific-method" class="mb-16">
+                 <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#005f73] mb-4">2. El Método Científico: La Base de Nuestra Narrativa</h2>
+                    <p class="text-lg mb-8">Una buena historia de datos no se basa en opiniones, sino en un proceso riguroso. Aplicar el método científico asegura que nuestra narrativa sea creíble, sólida y esté fundamentada en evidencia.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                           <h3 class="text-xl font-bold text-[#005f73] mb-2">Observación: "¿Qué está pasando?"</h3>
+                           <p class="mb-4">Todo comienza con una observación. En este caso, notamos una caída preocupante en las ventas durante el último trimestre. La visualización nos permite identificar el problema de un vistazo.</p>
+                           <div class="chart-container">
+                                <canvas id="salesTrendChart"></canvas>
+                           </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-[#005f73] mb-4">El Proceso de Descubrimiento</h3>
+                            <div class="space-y-4">
+                                <div class="flowchart-item p-4 rounded-lg border-[#94d2bd] bg-[#94d2bd] bg-opacity-10">
+                                    <h4 class="font-bold">1. Pregunta</h4>
+                                    <p>¿Por qué bajaron las ventas en el último trimestre?</p>
+                                </div>
+                                <div class="text-center text-2xl text-[#94d2bd]">&darr;</div>
+                                <div class="flowchart-item p-4 rounded-lg border-[#e9d8a6] bg-[#e9d8a6] bg-opacity-20">
+                                    <h4 class="font-bold">2. Hipótesis</h4>
+                                    <p>Creemos que la entrada de un nuevo competidor al mercado es la causa principal.</p>
+                                </div>
+                                <div class="text-center text-2xl text-[#e9d8a6]">&darr;</div>
+                                <div class="flowchart-item p-4 rounded-lg border-[#ee9b00] bg-[#ee9b00] bg-opacity-20">
+                                    <h4 class="font-bold">3. Análisis</h4>
+                                    <p>Recopilamos y analizamos datos de mercado, ventas y encuestas a clientes.</p>
+                                </div>
+                                 <div class="text-center text-2xl text-[#ee9b00]">&darr;</div>
+                                <div class="flowchart-item p-4 rounded-lg border-[#0a9396] bg-[#0a9396] bg-opacity-10">
+                                    <h4 class="font-bold">4. Conclusión</h4>
+                                    <p>Nuestra hipótesis se confirma. La "trama" es el viaje que nos llevó a esta conclusión sólida.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="visualization" class="mb-16">
+                 <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+                    <h2 class="text-3xl font-bold text-[#005f73] mb-4">3. La Importancia de la Visualización</h2>
+                    <p class="text-lg mb-8">El cerebro humano procesa imágenes de forma significativamente más rápida que el texto. Una visualización efectiva no solo presenta datos; los hace comprensibles, revelando patrones y tendencias que de otro modo pasarían desapercibidos.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-12">
+                         <div>
+                            <h3 class="text-xl font-bold text-[#005f73] mb-2">Haciendo lo Complejo Simple</h3>
+                            <p class="mb-4">Comparar el rendimiento entre cuatro regiones puede ser confuso en una tabla. Un gráfico de barras, en cambio, ofrece una claridad instantánea sobre quién lidera y quién necesita apoyo.</p>
+                            <div class="chart-container">
+                                <canvas id="regionComparisonChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-[#005f73] mb-2">Revelando Proporciones</h3>
+                             <p class="mb-4">Entender la contribución de cada producto a las ventas totales es clave. Un gráfico de dona muestra de forma clara y atractiva qué productos son los más importantes para el negocio.</p>
+                            <div class="chart-container">
+                                <canvas id="productMixChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="conclusion" class="text-center my-16">
+                <h2 class="text-3xl md:text-4xl font-black text-[#005f73]">Los datos te dan la razón. La historia inspira la acción.</h2>
+                <p class="mt-4 text-xl text-[#0a9396] max-w-3xl mx-auto">El storytelling con datos es el puente entre el análisis y la toma de decisiones. No se trata solo de mostrar lo que pasó, sino de explicar por qué pasó y qué podemos hacer al respecto. Convierte tus datos en el catalizador del cambio.</p>
+            </section>
+
+        </main>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const brilliantBlues = {
+                darkBlue: '#005f73',
+                teal: '#0a9396',
+                lightTeal: '#94d2bd',
+                sand: '#e9d8a6',
+                orange: '#ee9b00',
+                darkOrange: '#ca6702',
+                red: '#bb3e03',
+                darkRed: '#ae2012',
+                black: '#001219'
+            };
+
+            const wrapLabel = (label, maxWidth = 16) => {
+                if (typeof label !== 'string' || label.length <= maxWidth) {
+                    return label;
+                }
+                const words = label.split(' ');
+                const lines = [];
+                let currentLine = '';
+                words.forEach(word => {
+                    if ((currentLine + word).length > maxWidth) {
+                        lines.push(currentLine.trim());
+                        currentLine = '';
+                    }
+                    currentLine += word + ' ';
+                });
+                lines.push(currentLine.trim());
+                return lines;
+            };
+
+            const tooltipTitleCallback = {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) {
+                                    return label.join(' ');
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const salesTrendCtx = document.getElementById('salesTrendChart').getContext('2d');
+            new Chart(salesTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
+                    datasets: [{
+                        label: 'Ventas Mensuales (en miles)',
+                        data: [120, 135, 140, 110, 95, 80],
+                        borderColor: brilliantBlues.darkOrange,
+                        backgroundColor: brilliantBlues.orange,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    ...tooltipTitleCallback,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            const regionComparisonCtx = document.getElementById('regionComparisonChart').getContext('2d');
+            new Chart(regionComparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Región Norte', 'Región Sur', 'Región Este', 'Región Oeste'].map(l => wrapLabel(l)),
+                    datasets: [{
+                        label: 'Ventas por Región (en millones)',
+                        data: [12, 19, 8, 15],
+                        backgroundColor: [
+                            brilliantBlues.darkBlue,
+                            brilliantBlues.teal,
+                            brilliantBlues.lightTeal,
+                            brilliantBlues.sand
+                        ],
+                        borderColor: brilliantBlues.black,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...tooltipTitleCallback,
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            const productMixCtx = document.getElementById('productMixChart').getContext('2d');
+            new Chart(productMixCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Producto Alpha', 'Producto Beta', 'Producto Gamma', 'Otros Productos'].map(l => wrapLabel(l)),
+                    datasets: [{
+                        label: 'Mix de Ventas por Producto',
+                        data: [45, 25, 15, 15],
+                         backgroundColor: [
+                            brilliantBlues.darkBlue,
+                            brilliantBlues.teal,
+                            brilliantBlues.orange,
+                            brilliantBlues.lightTeal,
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    ...tooltipTitleCallback,
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

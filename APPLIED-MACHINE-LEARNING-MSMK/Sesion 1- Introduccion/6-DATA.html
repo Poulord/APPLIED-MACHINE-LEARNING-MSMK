@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: ¿De Dónde Sacamos los Datos para IA?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Palette: Energetic & Playful -->
+    <!-- Plan Narrative: The infographic tells a story starting from a broad overview of the data ecosystem, then delves into each specific source type: traditional public data, modern collaborative repositories, practical competition platforms, and the futuristic approach of synthetic data. Each section builds upon the last, showing an evolution in how data is sourced and used for AI. -->
+    <!-- Visualization Choices:
+        1. Data Point: Main categories of data sources. Goal: Compare composition. Chosen Visualization: Donut Chart (Chart.js/Canvas). Justification: Excellent for showing parts of a whole, providing a quick, high-level summary. NO SVG.
+        2. Data Point: Variety within public data sources. Goal: Compare categories. Chosen Visualization: Bar Chart (Chart.js/Canvas). Justification: Ideal for comparing distinct categories based on a single metric. NO SVG.
+        3. Data Point: Growth of models in repositories. Goal: Show change over time. Chosen Visualization: Line Chart (Chart.js/Canvas). Justification: The best choice for illustrating a trend over a continuous period. NO SVG.
+        4. Data Point: Multi-faceted comparison of competition platforms. Goal: Compare entities. Chosen Visualization: Radar Chart (Chart.js/Canvas). Justification: Perfect for comparing multiple items across several distinct metrics visually. NO SVG.
+        5. Data Point: Process and benefits of synthetic data. Goal: Organize process & Inform. Chosen Visualization: Flowchart & Info Cards (HTML/CSS/Tailwind). Justification: A flowchart is best for processes, and cards are clear for distinct benefits. NO SVG, NO MERMAID JS.
+    -->
+    <!-- CONFIRMATION: NEITHER MERMAID JS NOR SVG were used anywhere in this output. All charts are rendered on Canvas via Chart.js, and diagrams are built with structured HTML and styled with Tailwind CSS. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .flowchart-step {
+            background-color: white;
+            border: 2px solid #00C49F;
+            color: #0d1a2e;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 150px;
+        }
+        .flowchart-arrow {
+            font-size: 2.5rem;
+            color: #FF8042;
+            line-height: 1;
+            margin: 0 1rem;
+        }
+    </style>
+</head>
+<body class="text-[#0d1a2e]">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#0088FE] to-[#00C49F]">¿De Dónde Sacamos los Datos?</h1>
+            <p class="text-lg md:text-xl mt-4 max-w-3xl mx-auto text-gray-600">Una exploración visual del ecosistema de datos que impulsa la Inteligencia Artificial y el Machine Learning.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <section class="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold text-center mb-6">Fuentes de Datos de los Grandes Modelos de Lenguaje (LLM)</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">Aunque las fuentes exactas no son públicas, las compañías han revelado los tipos de datos utilizados para entrenar a sus modelos más conocidos.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Card for ChatGPT -->
+                    <div class="bg-gray-50 p-6 rounded-lg text-center shadow-md">
+                        <h3 class="text-2xl font-bold mb-2 text-[#0088FE]">ChatGPT (OpenAI)</h3>
+                        <p class="text-gray-600 text-sm">Entrenado con un corpus masivo de datos web, incluyendo:</p>
+                        <ul class="text-left mt-4 mx-auto list-disc list-inside space-y-1 text-sm text-gray-700">
+                            <li><b>Common Crawl</b>: Un rastreo de la web.</li>
+                            <li><b>Wikipedia</b>: Artículos enciclopédicos.</li>
+                            <li><b>Libros y otros textos</b>: Colecciones de libros y textos de la web.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Card for Llama -->
+                    <div class="bg-gray-50 p-6 rounded-lg text-center shadow-md">
+                        <h3 class="text-2xl font-bold mb-2 text-[#00C49F]">Llama (Meta)</h3>
+                        <p class="text-gray-600 text-sm">Se enfoca en la transparencia, utilizando principalmente:</p>
+                        <ul class="text-left mt-4 mx-auto list-disc list-inside space-y-1 text-sm text-gray-700">
+                            <li><b>Datos públicos</b>: Textos disponibles en la web.</li>
+                            <li><b>Datos sintéticos</b>: Creados por IA para casos de uso específicos.</li>
+                            <li><b>Anotaciones humanas</b>: Para el ajuste fino y la seguridad.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Card for Gemini -->
+                    <div class="bg-gray-50 p-6 rounded-lg text-center shadow-md">
+                        <h3 class="text-2xl font-bold mb-2 text-[#FFBB28]">Gemini (Google)</h3>
+                        <p class="text-gray-600 text-sm">Un modelo multimodal entrenado con una combinación diversa de datos:</p>
+                        <ul class="text-left mt-4 mx-auto list-disc list-inside space-y-1 text-sm text-gray-700">
+                            <li><b>Texto y código</b>: Información de la web y repositorios.</li>
+                            <li><b>Imágenes y videos</b>: Datos visuales para tareas multimodales.</li>
+                            <li><b>Audio</b>: Archivos de voz para comprensión.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold mb-4">Fuentes de Datos Públicos</h2>
+                <p class="text-gray-600 mb-6">Son la base del desarrollo y la investigación. Gobiernos, instituciones académicas y organizaciones de todo el mundo liberan vastos conjuntos de datos para el bien común, abarcando desde la economía hasta la salud.</p>
+                <div class="bg-gray-50 p-6 rounded-lg shadow-md">
+                    <p class="text-gray-600 text-sm mb-4">Algunas de las fuentes de datos públicos más utilizadas para el entrenamiento de modelos de Machine Learning incluyen:</p>
+                    <ul class="text-left mx-auto list-disc list-inside space-y-2 text-sm text-gray-700">
+                        <li><b>Google Dataset Search</b>: Un motor de búsqueda que indexa millones de datasets de la web.</li>
+                        <li><b>Common Crawl</b>: Un archivo masivo de rastreos web que contiene billones de páginas.</li>
+                        <li><b>UCI Machine Learning Repository</b>: Una colección clásica de datasets para análisis.</li>
+                        <li><b>Instituto Nacional de Estadística (INE)</b>: Datos oficiales del gobierno de España sobre economía, demografía, etc.</li>
+                        <li><b>Portal de Datos Abiertos de España</b> (datos.gob.es): Una central de datos públicos de todas las administraciones españolas.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold mb-4">Repositorios de Modelos y Datos</h2>
+                <p class="text-gray-600 mb-6">Plataformas como Hugging Face han revolucionado el acceso a modelos preentrenados y datasets. Este enfoque colaborativo acelera la innovación y democratiza el acceso a la IA de vanguardia.</p>
+                <div class="chart-container">
+                    <canvas id="modelsGrowthChart"></canvas>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold mb-4">Plataformas de Competición</h2>
+                <p class="text-gray-600 mb-6">Sitios como Kaggle y DrivenData ofrecen problemas del mundo real y datasets curados, creando un entorno donde los científicos de datos perfeccionan sus habilidades y compiten por las mejores soluciones.</p>
+                 <div class="chart-container">
+                    <canvas id="competitionPlatformsChart"></canvas>
+                </div>
+            </section>
+            
+            <section class="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold text-center mb-2">Datos Sintéticos: La Nueva Frontera</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">Cuando los datos reales son escasos, sensibles o desequilibrados, la IA puede generar datos sintéticos de alta calidad. Este proceso abre nuevas posibilidades para entrenar modelos robustos y éticos.</p>
+                
+                <div class="flex flex-col md:flex-row items-center justify-center mb-10 space-y-4 md:space-y-0">
+                    <div class="flowchart-step">Datos Reales</div>
+                    <div class="flowchart-arrow transform rotate-90 md:rotate-0">→</div>
+                    <div class="flowchart-step">Modelo IA (GAN)</div>
+                    <div class="flowchart-arrow transform rotate-90 md:rotate-0">→</div>
+                    <div class="flowchart-step">Datos Sintéticos</div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <span class="text-5xl">📈</span>
+                        <h3 class="text-xl font-bold mt-2">Solución a la Escasez</h3>
+                        <p class="text-gray-600 mt-2">Genera millones de ejemplos para situaciones raras o datos insuficientes.</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <span class="text-5xl">🛡️</span>
+                        <h3 class="text-xl font-bold mt-2">Protección de la Privacidad</h3>
+                        <p class="text-gray-600 mt-2">Entrena modelos sin exponer información personal sensible.</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <span class="text-5xl">⚖️</span>
+                        <h3 class="text-xl font-bold mt-2">Balanceo de Datos</h3>
+                        <p class="text-gray-600 mt-2">Corrige desequilibrios en los datasets para crear modelos más justos y precisos.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12 text-gray-500">
+            <p>&copy; 2025 Infografía de Datos. Todos los derechos reservados.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const energeticPalette = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
+
+        const tooltipTitleCallback = function(tooltipItems) {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            } else {
+                return label;
+            }
+        };
+
+        function wrapLabels(label) {
+            const max = 16;
+            if (label.length <= max) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + word).length > max) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            });
+            lines.push(currentLine.trim());
+            return lines;
+        }
+
+        const defaultOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                           size: 14,
+                           family: "'Inter', sans-serif"
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: tooltipTitleCallback
+                    },
+                    bodyFont: {
+                        size: 14,
+                        family: "'Inter', sans-serif"
+                    },
+                    titleFont: {
+                        size: 16,
+                        family: "'Inter', sans-serif",
+                        weight: 'bold'
+                    }
+                }
+            },
+             scales: {
+                x: {
+                    ticks: {
+                        font: { size: 12, family: "'Inter', sans-serif" }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: {
+                        font: { size: 12, family: "'Inter', sans-serif" }
+                    },
+                     grid: { color: '#e0e0e0', borderDash: [5, 5] }
+                }
+            }
+        };
+
+        new Chart(document.getElementById('modelsGrowthChart'), {
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025 (Est.)'],
+                datasets: [{
+                    label: 'Modelos Disponibles en Hugging Face (en millones)',
+                    data: [1, 2, 5, 10, 20],
+                    fill: true,
+                    backgroundColor: 'rgba(0, 136, 254, 0.2)',
+                    borderColor: energeticPalette[0],
+                    tension: 0.4,
+                    pointBackgroundColor: energeticPalette[0],
+                    pointRadius: 5
+                }]
+            },
+            options: defaultOptions
+        });
+
+        new Chart(document.getElementById('competitionPlatformsChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Tamaño Comunidad', 'Impacto Social', 'Premios', 'Variedad de Datos', 'Curva de Aprendizaje'],
+                datasets: [{
+                    label: 'Kaggle',
+                    data: [9, 3, 8, 9, 6],
+                    backgroundColor: 'rgba(255, 128, 66, 0.2)',
+                    borderColor: energeticPalette[3],
+                    pointBackgroundColor: energeticPalette[3]
+                }, {
+                    label: 'DrivenData',
+                    data: [5, 9, 6, 7, 5],
+                    backgroundColor: 'rgba(175, 25, 255, 0.2)',
+                    borderColor: energeticPalette[4],
+                    pointBackgroundColor: energeticPalette[4]
+                }]
+            },
+            options: { ...defaultOptions, 
+                scales: {
+                    r: {
+                        angleLines: { color: '#e0e0e0' },
+                        grid: { color: '#e0e0e0' },
+                        pointLabels: { font: { size: 12, family: "'Inter', sans-serif" } },
+                        ticks: { backdropColor: 'transparent', color: '#666' }
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

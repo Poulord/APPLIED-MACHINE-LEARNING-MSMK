@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código Abierto vs. Propietario</title>
+    <!-- Enlace a la fuente Inter -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+    <!-- Enlace a la librería de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .bg-gradient-custom {
+            background: linear-gradient(to right, #4c51bf, #6b46c1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="min-h-screen flex flex-col items-center justify-center p-6 sm:p-10">
+        <!-- Contenedor principal de la presentación -->
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full">
+            
+            <!-- Título de la presentación -->
+            <header class="bg-gradient-custom text-white p-8 rounded-t-3xl text-center">
+                <h1 class="text-4xl sm:text-5xl font-bold mb-2">Código Abierto vs. Propietario</h1>
+                <p class="text-lg sm:text-xl font-light">Un vistazo a las plataformas y licencias de software</p>
+            </header>
+
+            <main class="p-6 sm:p-10 space-y-12">
+                
+                <!-- Sección 1: Código Abierto vs. Propietario -->
+                <section>
+                    <div class="flex flex-col sm:flex-row items-stretch justify-center gap-6">
+                        <div class="bg-indigo-50 p-6 rounded-2xl w-full sm:w-1/2 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-700 mb-2">Código Abierto</h2>
+                            <p class="text-gray-600 leading-relaxed mb-4">
+                                El código abierto (Open Source) es software con un código fuente disponible para que cualquiera lo vea, modifique y distribuya. Promueve la colaboración, la transparencia y la innovación.
+                            </p>
+                            <div class="bg-indigo-100 p-4 rounded-xl">
+                                <h3 class="text-xl font-semibold text-indigo-800 mb-2">Contribución a la Ciencia de Datos</h3>
+                                <p class="text-gray-700 leading-relaxed mb-4">
+                                    El código abierto ha democratizado la ciencia de datos, proporcionando herramientas esenciales y promoviendo la colaboración global.
+                                </p>
+                                <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                    <li>**Python:** Bibliotecas como **NumPy**, **Pandas**, y **Scikit-learn** son la base de la computación científica y el aprendizaje automático.</li>
+                                    <li>**R:** Un lenguaje fundamental en estadísticas, impulsado por paquetes como **Tidyverse** y **ggplot2**.</li>
+                                    <li>**Reproducibilidad:** El código abierto permite a los científicos compartir sus metodologías, haciendo que la investigación sea más transparente y reproducible.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 p-6 rounded-2xl w-full sm:w-1/2 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <h2 class="text-2xl sm:text-3xl font-bold text-purple-700 mb-2">Código Propietario</h2>
+                            <p class="text-gray-600 leading-relaxed mb-4">
+                                El código propietario (Proprietary Software) tiene su código fuente restringido. Generalmente, es desarrollado y mantenido por una empresa que posee los derechos y cobra por su uso.
+                            </p>
+                            <div class="bg-purple-100 p-4 rounded-xl">
+                                <h3 class="text-xl font-semibold text-purple-800 mb-2">Contribución a la Ciencia de Datos</h3>
+                                <p class="text-gray-700 leading-relaxed mb-4">
+                                    Las herramientas propietarias ofrecen soluciones robustas con soporte técnico y funcionalidades avanzadas para entornos empresariales.
+                                </p>
+                                <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                    <li>**MATLAB:** Esencial en ingeniería y simulación científica, con herramientas específicas para computación numérica y visualización.</li>
+                                    <li>**SAS:** Un líder histórico en análisis estadístico y minería de datos para empresas, conocido por su fiabilidad en análisis complejos.</li>
+                                    <li>**Tableau:** Una herramienta de visualización de datos de alto rendimiento y fácil uso, muy popular para crear cuadros de mando (dashboards) y análisis interactivos.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-t border-gray-300">
+
+                <!-- Sección 2: Plataformas para compartir código -->
+                <section>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Plataformas para compartir código</h2>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <!-- Card: GitHub -->
+                        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300">
+                            <img src="https://placehold.co/100x100/1a202c/ffffff?text=GitHub" alt="Logo de GitHub" class="rounded-full mb-4">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Github</h3>
+                            <p class="text-gray-500">
+                                La plataforma más popular para el desarrollo de software colaborativo y el control de versiones utilizando Git.
+                            </p>
+                        </div>
+                        <!-- Card: Bitbucket -->
+                        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300">
+                            <img src="https://placehold.co/100x100/1a202c/ffffff?text=Bitbucket" alt="Logo de Bitbucket" class="rounded-full mb-4">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Bitbucket</h3>
+                            <p class="text-gray-500">
+                                Ofrece control de versiones para equipos con un enfoque en la integración continua (CI/CD) y gestión de proyectos.
+                            </p>
+                        </div>
+                        <!-- Card: GitLab -->
+                        <div class="bg-gray-50 p-6 rounded-2xl shadow-lg flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300">
+                            <img src="https://placehold.co/100x100/1a202c/ffffff?text=GitLab" alt="Logo de GitLab" class="rounded-full mb-4">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">GitLab</h3>
+                            <p class="text-gray-500">
+                                Una plataforma completa para el ciclo de vida DevOps, con repositorios, CI/CD, seguridad y monitoreo integrados.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+                
+                <hr class="border-t border-gray-300">
+
+                <!-- Sección 3: Licencias de software -->
+                <section>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Licencias de software</h2>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <!-- Card: MIT License -->
+                        <div class="bg-blue-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <h3 class="text-2xl font-semibold text-blue-700 mb-2">MIT</h3>
+                            <p class="text-gray-600 leading-relaxed">
+                                Una licencia permisiva que permite a los usuarios hacer prácticamente lo que quieran con el código, siempre que se incluya la nota de copyright original.
+                            </p>
+                        </div>
+                        <!-- Card: Apache 2.0 License -->
+                        <div class="bg-green-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <h3 class="text-2xl font-semibold text-green-700 mb-2">Apache 2.0</h3>
+                            <p class="text-gray-600 leading-relaxed">
+                                Otra licencia permisiva que es un poco más larga que la MIT. Requiere la retención de avisos de copyright y patente y un aviso de "CHANGES".
+                            </p>
+                        </div>
+                        <!-- Card: Creative Commons -->
+                        <div class="bg-yellow-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <h3 class="text-2xl font-semibold text-yellow-700 mb-2">Creative Commons</h3>
+                            <p class="text-gray-600 leading-relaxed">
+                                Aunque no es exclusiva para software, estas licencias son populares para contenido creativo y de conocimiento, permitiendo la flexibilidad en los derechos de autor.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+</body>
+</html>

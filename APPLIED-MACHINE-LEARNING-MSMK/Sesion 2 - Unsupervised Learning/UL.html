@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: Aprendizaje No Supervisado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-[#005f73] text-white text-center p-8 shadow-lg">
+        <h1 class="text-4xl md:text-5xl font-bold mb-2">Desbloqueando los Secretos de tus Datos</h1>
+        <p class="text-lg md:text-xl text-[#94d2bd]">Una Guía Visual del Aprendizaje No Supervisado</p>
+    </header>
+
+    <main class="container mx-auto p-6 md:p-12">
+        
+        <section id="intro" class="mb-16 text-center">
+            <h2 class="text-3xl font-bold text-[#005f73] mb-4">¿Qué es el Aprendizaje No Supervisado?</h2>
+            <p class="max-w-3xl mx-auto text-lg">Es una rama del Machine Learning donde el algoritmo explora datos <strong>sin etiquetar</strong>, con el objetivo de descubrir por sí mismo patrones ocultos, estructuras y relaciones. En lugar de predecir un resultado conocido, la máquina aprende a "entender" la data desde cero.</p>
+        </section>
+
+        <section id="comparison" class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-[#0a9396]">
+                    <h3 class="text-2xl font-bold mb-3 text-[#0a9396]">Aprendizaje Supervisado</h3>
+                    <div class="text-center mb-4">
+                        <img src="https://placehold.co/150x150/0a9396/ffffff?text=Datos+Etiquetados" alt="Ilustración de datos etiquetados" class="mx-auto rounded-full p-2 bg-gray-50"/>
+                    </div>
+                    <p class="mb-4">El modelo aprende de datos <strong>etiquetados</strong>. Se le proporciona un conjunto de ejemplos correctos (entrada → salida) para que aprenda a predecir resultados para datos nuevos.</p>
+                    <div class="bg-gray-100 p-4 rounded-md">
+                        <p class="font-mono text-center">🎯 <strong class="text-[#ca6702]">Objetivo:</strong> Predecir y Clasificar</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-[#ee9b00]">
+                    <h3 class="text-2xl font-bold mb-3 text-[#ee9b00]">Aprendizaje No Supervisado</h3>
+                    <div class="text-center mb-4">
+                        <img src="https://placehold.co/150x150/ee9b00/ffffff?text=Datos+Sin+Etiquetas" alt="Ilustración de datos sin etiquetas" class="mx-auto rounded-full p-2 bg-gray-50"/>
+                    </div>
+                    <p class="mb-4">El modelo trabaja con datos <strong>sin etiquetar</strong>. Su tarea es encontrar la estructura inherente en los datos, sin ninguna guía sobre los "resultados correctos".</p>
+                    <div class="bg-gray-100 p-4 rounded-md">
+                        <p class="font-mono text-center">🔎 <strong class="text-[#bb3e03]">Objetivo:</strong> Descubrir y Explorar</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="applications" class="mb-16">
+            <h2 class="text-3xl font-bold text-[#005f73] mb-8 text-center">Aplicaciones Clave</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
+                    <h3 class="text-2xl font-bold text-[#0a9396] mb-4">Clustering: Encontrando Grupos Naturales</h3>
+                    <p class="mb-6">El clustering agrupa datos de tal manera que los elementos en un mismo grupo son más similares entre sí que con los de otros grupos. Es fundamental para la segmentación de clientes, la detección de anomalías o la organización de documentos.</p>
+                    <div class="chart-container h-96 max-h-[500px]">
+                        <canvas id="clusteringChart"></canvas>
+                    </div>
+                     <p class="text-center text-sm text-gray-500 mt-2">Ejemplo de K-Means: los puntos de datos se asignan a los 3 clusters más cercanos.</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-2xl font-bold text-[#ee9b00] mb-4">Reducción de Dimensionalidad</h3>
+                    <p class="mb-6">Simplifica datos complejos reduciendo el número de variables (dimensiones) pero conservando la información esencial. Esto es crucial para visualizar data de alta dimensionalidad y mejorar la eficiencia de otros modelos.</p>
+                    <div id="pcaPlot" class="w-full h-96"></div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Visualización 3D: los datos se pueden proyectar en 2D para un análisis más simple.</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-2xl font-bold text-[#ca6702] mb-4">Exploración de Datos (EDA)</h3>
+                    <p class="mb-6">Las técnicas no supervisadas son una herramienta poderosa en la fase de exploración para descubrir la estructura subyacente de un conjunto de datos, validar hipótesis y preparar la información para un análisis más profundo o modelos supervisados.</p>
+                     <div class="chart-container h-96">
+                        <canvas id="edaChart"></canvas>
+                    </div>
+                    <p class="text-center text-sm text-gray-500 mt-2">Ejemplo: Varianza explicada por Componentes Principales (PCA).</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="summary" class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-3xl font-bold text-[#005f73] mb-6 text-center">En Resumen</h2>
+            <div class="flex flex-wrap justify-center gap-6">
+                <div class="text-center p-4 rounded-lg bg-gray-100 flex-grow">
+                    <p class="text-xl font-bold text-[#0a9396]">Reducción de Dimensionalidad</p>
+                    <p><strong>Objetivo:</strong> Simplificar y visualizar</p>
+                    <p class="font-mono text-sm text-[#ca6702]">Técnica: PCA</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-gray-100 flex-grow">
+                    <p class="text-xl font-bold text-[#ee9b00]">Clustering</p>
+                    <p><strong>Objetivo:</strong> Encontrar grupos naturales</p>
+                    <p class="font-mono text-sm text-[#ca6702]">Técnica: K-Means</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-gray-100 flex-grow">
+                    <p class="text-xl font-bold text-[#ca6702]">Exploración de Datos</p>
+                    <p><strong>Objetivo:</strong> Entender la estructura</p>
+                    <p class="font-mono text-sm text-[#ca6702]">Técnica: Proyecciones</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-6 mt-8 bg-[#005f73] text-white">
+        <p>Infografía generada para ilustrar los conceptos clave del Aprendizaje No Supervisado.</p>
+    </footer>
+
+    <script>
+        const tooltipTitleCallback = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            } else {
+                              return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        function wrapLabels(label, maxLength) {
+            if (label.length <= maxLength) {
+                return label;
+            }
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + word).length > maxLength) {
+                    lines.push(currentLine.trim());
+                    currentLine = '';
+                }
+                currentLine += word + ' ';
+            }
+            lines.push(currentLine.trim());
+            return lines;
+        }
+
+        const dataPoints = Array.from({ length: 150 }, () => ({
+            x: Math.random() * 100,
+            y: Math.random() * 100
+        }));
+
+        const centroids = [
+            { x: 20, y: 75, color: '#0a9396' },
+            { x: 80, y: 60, color: '#ee9b00' },
+            { x: 50, y: 20, color: '#ae2012' }
+        ];
+
+        function getClosestCentroid(point, centroids) {
+            let minDistance = Infinity;
+            let closestCentroid = null;
+            centroids.forEach(centroid => {
+                const distance = Math.sqrt(Math.pow(point.x - centroid.x, 2) + Math.pow(point.y - centroid.y, 2));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCentroid = centroid;
+                }
+            });
+            return closestCentroid;
+        }
+
+        const clusteredData = dataPoints.map(point => {
+            const centroid = getClosestCentroid(point, centroids);
+            return {
+                x: point.x + (Math.random() - 0.5) * 20,
+                y: point.y + (Math.random() - 0.5) * 20,
+                color: centroid.color
+            };
+        });
+
+        const clusteringCtx = document.getElementById('clusteringChart').getContext('2d');
+        new Chart(clusteringCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Cluster 1',
+                    data: clusteredData.filter(d => d.color === '#0a9396'),
+                    backgroundColor: '#0a9396'
+                }, {
+                    label: 'Cluster 2',
+                    data: clusteredData.filter(d => d.color === '#ee9b00'),
+                    backgroundColor: '#ee9b00'
+                }, {
+                    label: 'Cluster 3',
+                    data: clusteredData.filter(d => d.color === '#ae2012'),
+                    backgroundColor: '#ae2012'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                ...tooltipTitleCallback,
+                scales: {
+                    x: { title: { display: true, text: 'Característica 1' } },
+                    y: { title: { display: true, text: 'Característica 2' } }
+                }
+            }
+        });
+
+        const edaLabelsRaw = ['Componente Principal 1', 'Componente Principal 2', 'Componente Principal 3', 'Componente Principal 4', 'Otros Componentes'];
+        const edaLabels = edaLabelsRaw.map(label => wrapLabels(label, 16));
+        const edaCtx = document.getElementById('edaChart').getContext('2d');
+        new Chart(edaCtx, {
+            type: 'bar',
+            data: {
+                labels: edaLabels,
+                datasets: [{
+                    label: 'Varianza Explicada Acumulada (%)',
+                    data: [45, 75, 88, 95, 100],
+                    backgroundColor: ['#0a9396', '#94d2bd', '#e9d8a6', '#ee9b00', '#ca6702'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                ...tooltipTitleCallback,
+                plugins: {
+                    ...tooltipTitleCallback.plugins,
+                    legend: { display: false },
+                    title: { display: true, text: 'Importancia de Componentes en EDA' }
+                }
+            }
+        });
+
+        function generate3DData() {
+            const data = [];
+            for (let i = 0; i < 100; i++) {
+                data.push({
+                    x: Math.random() * 10 - 5,
+                    y: Math.random() * 10 - 5,
+                    z: Math.random() * 10 - 5,
+                });
+            }
+            return data;
+        }
+
+        const trace1 = {
+            x: generate3DData().map(d => d.x),
+            y: generate3DData().map(d => d.y),
+            z: generate3DData().map(d => d.z),
+            mode: 'markers',
+            type: 'scatter3d',
+            marker: {
+                color: '#0a9396',
+                size: 5,
+                opacity: 0.8
+            }
+        };
+
+        const layout = {
+            title: 'Visualización de Datos 3D',
+            autosize: true,
+            margin: { l: 0, r: 0, b: 0, t: 40 }
+        };
+
+        Plotly.newPlot('pcaPlot', [trace1], layout, {responsive: true});
+
+    </script>
+</body>
+</html>
+

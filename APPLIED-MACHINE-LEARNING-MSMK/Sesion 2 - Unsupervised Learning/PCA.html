@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía Interactiva: PCA 2D a 1D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; 
+            max-height: 400px;
+        }
+        /* Eliminamos .rotated-text ya que causaba confusión en la gráfica de proyección 1D */
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#004e92]">Análisis de Componentes Principales (PCA)</h1>
+            <p class="text-lg text-gray-600 mt-4 max-w-3xl mx-auto">Una guía interactiva para entender la reducción de dimensionalidad de **2D a 1D**, basada en los 6 principios fundamentales.</p>
+        </header>
+
+        <main>
+            <section id="step1-2" class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#000428]">1. Visualización y Centrado de Datos</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                        <h3 class="text-xl font-bold mb-2 text-[#004e92]">Paso 1: Datos Originales (X vs Y)</h3>
+                        <p class="text-gray-600 mb-4 flex-grow">Partimos de un conjunto de datos con dos variables (X, Y) que muestran una clara correlación. El objetivo es encontrar una nueva representación que simplifique esta estructura.</p>
+                        <div class="chart-container">
+                            <canvas id="originalDataChartCanvas"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                        <h3 class="text-xl font-bold mb-2 text-[#004e92]">Paso 2: Centrado de Datos</h3>
+                        <p class="text-gray-600 mb-4 flex-grow">Restamos la media de cada variable para centrar la nube de puntos en el origen (0,0). Este paso es crucial para que el PCA identifique correctamente las direcciones de varianza.</p>
+                        <div class="chart-container">
+                            <canvas id="centeredDataChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="step3-4" class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#000428]">2. Descubriendo la Varianza</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                        <h3 class="text-xl font-bold mb-2 text-[#004e92]">Pasos 3 y 4: Eigenvectores (Componentes Principales)</h3>
+                        <p class="text-gray-600 mb-4 flex-grow">Tras calcular la matriz de covarianza, obtenemos los eigenvectores. La línea azul (PC1) representa la dirección de máxima varianza, mientras que la línea clara (PC2) es ortogonal y captura la varianza restante.</p>
+                        <div class="chart-container">
+                            <canvas id="eigenvectorsChartCanvas"></canvas>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                        <h3 class="text-xl font-bold mb-2 text-[#004e92]">Paso 5: Selección de Componentes (Varianza Explicada)</h3>
+                        <p class="text-gray-600 mb-4 flex-grow">El "Scree Plot" muestra cuánta información (varianza) captura cada componente. Aquí, PC1 explica la gran mayoría, justificando la eliminación de PC2 para reducir la dimensionalidad.</p>
+                        <div class="chart-container">
+                            <canvas id="screePlotChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="step6" class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#000428]">3. Reducción y Proyección Final</h2>
+                 <div class="bg-white rounded-lg shadow-lg p-6 md:col-span-2">
+                    <h3 class="text-xl font-bold mb-2 text-[#004e92]">Paso 6: Datos Proyectados en 1D</h3>
+                    <p class="text-gray-600 mb-4">Finalmente, los puntos 2D se proyectan ("aplastan") sobre el eje de PC1. El resultado es un nuevo conjunto de datos de una sola dimensión que conserva la máxima información posible del original. El **eje horizontal** representa ahora directamente el score del Componente Principal 1.</p>
+                    <div class="chart-container relative">
+                        <canvas id="projectionChart"></canvas>
+                        <!-- El texto giratorio fue eliminado para evitar confusión. El título del eje X ahora es el PC1 Score. -->
+                    </div>
+                </div>
+            </section>
+            
+            <section id="flowchart" class="mb-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-[#000428]">El Proceso de PCA en Resumen</h2>
+                <div class="flex flex-wrap justify-center items-center gap-4 md:gap-0">
+                    <div class="bg-white p-4 rounded-lg shadow-md text-center min-w-[120px]">
+                        <div class="text-2xl font-bold text-[#4285f4]">1</div>
+                        <div>Datos 2D</div>
+                    </div>
+                    <div class="text-2xl text-[#76b6ff] mx-4">➔</div>
+                    <div class="bg-white p-4 rounded-lg shadow-md text-center min-w-[120px]">
+                        <div class="text-2xl font-bold text-[#4285f4]">2</div>
+                        <div>Centrar Datos</div>
+                    </div>
+                    <div class="text-2xl text-[#76b6ff] mx-4">➔</div>
+                    <div class="bg-white p-4 rounded-lg shadow-md text-center min-w-[120px]">
+                        <div class="text-2xl font-bold text-[#4285f4]">3</div>
+                        <div>Calcular Eigenvectores</div>
+                    </div>
+                    <div class="text-2xl text-[#76b6ff] mx-4">➔</div>
+                    <div class="bg-white p-4 rounded-lg shadow-md text-center min-w-[120px]">
+                        <div class="text-2xl font-bold text-[#4285f4]">4</div>
+                        <div>Seleccionar PC1</div>
+                    </div>
+                    <div class="text-2xl text-[#76b6ff] mx-4">➔</div>
+                    <div class="bg-white p-4 rounded-lg shadow-md text-center min-w-[120px]">
+                        <div class="text-2xl font-bold text-[#4285f4]">5</div>
+                        <div>Proyectar en 1D</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">Infografía interactiva creada para ilustrar los principios del PCA.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const wrapLabels = (label) => {
+            const maxLen = 16;
+            if (label.length <= maxLen) return label;
+            const words = label.split(' ');
+            let lines = [];
+            let currentLine = '';
+            words.forEach(word => {
+                if ((currentLine + ' ' + word).trim().length > maxLen) {
+                    lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine + ' ' + word).trim();
+                }
+            });
+            if (currentLine) lines.push(currentLine.trim());
+            return lines;
+        };
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+              return label.join(' ');
+            } else {
+              return label;
+            }
+        };
+        
+        const commonChartjsOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: tooltipTitleCallback
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { color: '#333' }
+                },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { color: '#333' }
+                }
+            }
+        };
+
+        function generate2DCorrelatedData(count) {
+            let data = [];
+            for (let i = 0; i < count; i++) {
+                const t = (Math.random() - 0.5) * 20;
+                const noise = (Math.random() - 0.5) * 4;
+                const x = t;
+                const y = 1.2 * t + noise;
+                data.push({ x, y });
+            }
+            return data;
+        }
+
+        const originalData2D = generate2DCorrelatedData(60);
+        const meanX = originalData2D.reduce((acc, p) => acc + p.x, 0) / originalData2D.length;
+        const meanY = originalData2D.reduce((acc, p) => acc + p.y, 0) / originalData2D.length;
+        const centeredData2D = originalData2D.map(p => ({ x: p.x - meanX, y: p.y - meanY }));
+        
+        const pc1_x_comp = 0.64;
+        const pc1_y_comp = 0.768;
+        const pc2_x_comp = -0.768;
+        const pc2_y_comp = 0.64;
+        const scale = 15;
+
+        const pc1_line_data = [{ x: -pc1_x_comp * scale, y: -pc1_y_comp * scale }, { x: pc1_x_comp * scale, y: pc1_y_comp * scale }];
+        const pc2_line_data = [{ x: -pc2_x_comp * scale, y: -pc2_y_comp * scale }, { x: pc2_x_comp * scale, y: pc2_y_comp * scale }];
+        
+        const projected1DData = centeredData2D.map(p => ({
+            pc1_score: p.x * pc1_x_comp + p.y * pc1_y_comp 
+        })).sort((a, b) => a.pc1_score - b.pc1_score);
+
+        const projectionScatterData = projected1DData.map(p => ({ x: p.pc1_score, y: 0 }));
+
+        new Chart(document.getElementById('originalDataChartCanvas'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Datos Originales',
+                    data: originalData2D,
+                    backgroundColor: '#4285f4',
+                    pointRadius: 5
+                }]
+            },
+            options: { ...commonChartjsOptions, scales: { x: { title: { display: true, text: 'Variable X' } }, y: { title: { display: true, text: 'Variable Y' } } } }
+        });
+
+        new Chart(document.getElementById('centeredDataChartCanvas'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Datos Centrados',
+                    data: centeredData2D,
+                    backgroundColor: '#4285f4',
+                    pointRadius: 5
+                }]
+            },
+            options: { ...commonChartjsOptions, scales: { x: { title: { display: true, text: 'X Centrada' } }, y: { title: { display: true, text: 'Y Centrada' } } } }
+        });
+
+        new Chart(document.getElementById('eigenvectorsChartCanvas'), {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    { label: 'Datos Centrados', data: centeredData2D, backgroundColor: 'rgba(66, 133, 244, 0.5)', pointRadius: 5 },
+                    { label: 'PC1', data: pc1_line_data, type: 'line', borderColor: '#004e92', borderWidth: 3, pointRadius: 0, fill: false },
+                    { label: 'PC2', data: pc2_line_data, type: 'line', borderColor: 'rgba(118, 182, 255, 0.7)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false }
+                ]
+            },
+            options: { ...commonChartjsOptions, scales: { x: { min: -scale, max: scale }, y: { min: -scale, max: scale } } }
+        });
+
+        new Chart(document.getElementById('screePlotChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Componente Principal 1', 'Componente Principal 2'],
+                datasets: [{
+                    label: 'Varianza Explicada (%)',
+                    data: [97, 3],
+                    backgroundColor: ['#004e92', '#76b6ff'],
+                    borderColor: ['#000428', '#4285f4'],
+                    borderWidth: 1
+                }]
+            },
+            options: { ...commonChartjsOptions, scales: { y: { title: { display: true, text: '% Varianza Total' }, min: 0, max: 100 } } }
+        });
+        
+        new Chart(document.getElementById('projectionChart'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Scores Proyectados en PC1',
+                    data: projectionScatterData,
+                    backgroundColor: '#4285f4',
+                    pointRadius: 6,
+                    pointStyle: 'rectRot'
+                }]
+            },
+            options: { 
+                ...commonChartjsOptions, 
+                scales: { 
+                    x: { 
+                        title: { display: true, text: 'Score en Componente Principal 1 (Eje Final 1D)' } 
+                    }, 
+                    y: { 
+                        display: false, 
+                        min: -1, 
+                        max: 1 
+                    } 
+                } 
+            }
+        });
+    </script>
+</body>
+</html>
+
