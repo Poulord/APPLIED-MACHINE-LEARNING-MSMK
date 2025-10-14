@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introducción a la Clasificación</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #eef2ff; /* Indigo-50 */
+        }
+        .card-shadow {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+        .tab-active {
+            border-bottom: 3px solid #06b6d4; /* Teal-500 */
+            color: #0e7490; /* Teal-700 */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl card-shadow p-6 md:p-12">
+        
+        <!-- HEADER: Título y Definición -->
+        <header class="text-center mb-10 border-b pb-6 border-indigo-100">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
+                Introducción a la <span class="text-indigo-600">Clasificación</span>
+            </h1>
+            <p class="mt-3 text-lg text-gray-600 max-w-3xl mx-auto">
+                El proceso de predecir una <strong>etiqueta de clase</strong> discreta para una instancia de datos. Es como ponerle una etiqueta a una cosa.
+            </p>
+        </header>
+
+        <!-- GRID PRINCIPAL DE CONCEPTOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- TARJETA 1: QUÉ ES CLASIFICACIÓN (Base) -->
+            <div class="lg:col-span-1 bg-indigo-50 border border-indigo-200 rounded-2xl p-6 flex flex-col justify-between h-full transition duration-300 hover:shadow-lg">
+                <div>
+                    <div class="text-indigo-600 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.222 2.222 0 0 0 3.144 0l7.172-7.172a2.222 2.222 0 0 0 0-3.144l-8.704-8.704Z"/><line x1="9" x2="9.01" y1="9" y2="9"/></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">1. Concepto Central</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        La clasificación se utiliza cuando la variable de salida es <strong>categórica</strong>. El modelo aprende de datos etiquetados (datos de entrenamiento) para asignar la categoría correcta a nuevos datos.
+                    </p>
+                    <div class="mt-4 bg-indigo-100 p-3 rounded-lg border border-indigo-300">
+                        <p class="font-semibold text-indigo-800 text-sm">Ejemplo Clave:</p>
+                        <p class="text-indigo-700 text-sm">Identificar si un correo electrónico es <strong>SPAM</strong> o <strong>No SPAM</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETA 2: TIPOS DE CLASIFICACIÓN (Interactiva) -->
+            <div id="typeCard" class="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-2xl p-6 transition duration-300 hover:shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">2. Tipos: Binario vs. Multiclase</h2>
+                
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <button id="btnBinary" class="flex-1 px-4 py-2 text-sm rounded-lg border-2 border-indigo-400 bg-indigo-500 text-white font-semibold transition duration-150 shadow-md hover:bg-indigo-600" onclick="toggleClassificationType('binary')">
+                        Clasificación Binaria
+                    </button>
+                    <button id="btnMulti" class="flex-1 px-4 py-2 text-sm rounded-lg border-2 border-slate-300 bg-white text-gray-700 font-semibold transition duration-150 hover:bg-slate-100" onclick="toggleClassificationType('multi')">
+                        Clasificación Multiclase
+                    </button>
+                </div>
+
+                <!-- Contenido Dinámico -->
+                <div id="dynamicContent" class="flex items-start space-x-6">
+                    <!-- Icono Dinámico -->
+                    <div id="dynamicIcon" class="p-4 rounded-full flex-shrink-0">
+                        <!-- SVG para Binaria (default) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                    </div>
+                    <!-- Texto Dinámico -->
+                    <div class="flex-grow">
+                        <h3 id="dynamicTitle" class="text-xl font-extrabold text-indigo-700 mb-2">Clasificación Binaria</h3>
+                        <p id="dynamicText" class="text-gray-700">
+                            Predice entre <strong>solo dos</strong> posibles clases o resultados mutuamente excluyentes (0 o 1). Es la forma más sencilla de clasificación.
+                        </p>
+                        <p id="dynamicExample" class="mt-2 text-sm bg-green-100 p-3 rounded-lg border border-green-300">
+                            <strong>Ejemplo:</strong> ¿Tiene el paciente la enfermedad (Sí/No)?
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETA 3: ALGORITMOS CLAVE (Pestañas Interactivas) -->
+            <div class="lg:col-span-3 bg-teal-50 border border-teal-200 rounded-2xl p-8 transition duration-300 hover:shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-5">3. Algoritmos Comunes: ¿Cómo se Clasifica?</h2>
+
+                <!-- Pestañas de Navegación -->
+                <div class="flex border-b border-teal-300 mb-6">
+                    <button id="tabKnn" class="px-6 py-3 text-gray-600 hover:bg-teal-100 tab-active" onclick="toggleAlgorithm('knn')">
+                        K-Vecinos más Cercanos (K-NN)
+                    </button>
+                    <button id="tabDt" class="px-6 py-3 text-gray-600 hover:bg-teal-100" onclick="toggleAlgorithm('dt')">
+                        Árboles de Decisión
+                    </button>
+                </div>
+
+                <!-- Contenido de Pestañas -->
+                <div id="algoContent" class="grid md:grid-cols-3 gap-6">
+                    <!-- Contenido del Algoritmo (Se actualiza dinámicamente) -->
+                    <div id="algoDescription" class="md:col-span-2 text-gray-700 space-y-3">
+                        <h3 class="text-xl font-bold text-teal-700 mb-2">La Clasificación por Proximidad</h3>
+                        <p>
+                            Un algoritmo simple y perezoso (lazy) que clasifica un nuevo punto basándose en la <strong>mayoría de votos</strong> de sus <strong><i>K</i> vecinos más cercanos</strong> en el espacio de características.
+                        </p>
+                        <p class="bg-teal-100 p-3 rounded-lg border border-teal-300 text-sm">
+                            <strong>Clave:</strong> La elección de <i>K</i> (un hiperparámetro) es crucial. Un <i>K</i> pequeño hace el modelo sensible al ruido (alta varianza), mientras que un <i>K</i> grande puede ignorar detalles importantes (alto sesgo).
+                        </p>
+                    </div>
+                    
+                    <!-- Visual del Algoritmo (Se actualiza dinámicamente) -->
+                    <div id="algoVisual" class="md:col-span-1 flex items-center justify-center p-4 bg-white rounded-xl border border-teal-300 shadow-inner">
+                        <!-- SVG para K-NN (default) -->
+                        <svg width="100%" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+                            <style>
+                                .point-red { fill: #ef4444; }
+                                .point-blue { fill: #3b82f6; }
+                                .new-point { fill: #f97316; stroke: #f97316; stroke-width: 3; }
+                                .circle { fill: none; stroke: #f97316; stroke-dasharray: 4 2; stroke-width: 1; }
+                            </style>
+                            <!-- Puntos de la Clase Azul -->
+                            <circle cx="20" cy="30" r="5" class="point-blue"/>
+                            <circle cx="50" cy="10" r="5" class="point-blue"/>
+                            <circle cx="45" cy="55" r="5" class="point-blue"/>
+                            <circle cx="70" cy="40" r="5" class="point-blue"/>
+                            <!-- Puntos de la Clase Roja -->
+                            <circle cx="120" cy="110" r="5" class="point-red"/>
+                            <circle cx="150" cy="130" r="5" class="point-red"/>
+                            <circle cx="170" cy="100" r="5" class="point-red"/>
+                            <circle cx="180" cy="135" r="5" class="point-red"/>
+                            <!-- Puntos Cercanos a la Nueva Clase (Mixto) -->
+                            <circle cx="95" cy="80" r="5" class="point-red"/>
+                            <circle cx="85" cy="95" r="5" class="point-blue"/>
+                            <circle cx="110" cy="90" r="5" class="point-red"/>
+                            <!-- Nuevo Punto (a clasificar) -->
+                            <circle cx="100" cy="100" r="6" class="new-point"/>
+                            <!-- Círculo de Vecinos (K=3) -->
+                            <circle cx="100" cy="100" r="30" class="circle"/>
+                            <text x="5" y="145" class="text-xs font-semibold text-gray-600">KNN: Círculo de Proximidad</text>
+                        </svg>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TARJETA 4: EL FLUJO DE TRABAJO (Corregido con Flexbox) -->
+            <div class="lg:col-span-3 bg-gray-50 border border-gray-300 rounded-2xl p-8 mt-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-5 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-workflow text-gray-600 mr-2"><path d="M22 7H14"/><path d="M14 17h8"/><path d="M8 12h8"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M6 16v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2"/><path d="M4 12c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h2"/><path d="M4 12c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2h2"/></svg>
+                    4. El Flujo Típico de Clasificación
+                </h2>
+
+                <!-- Contenedor Flexbox: vertical en móvil (default), horizontal en md: -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-center">
+
+                    <!-- Paso 1: Entrenamiento -->
+                    <div class="flex-1 p-4 bg-white rounded-lg border-t-4 border-blue-500 shadow-md">
+                        <span class="text-3xl font-extrabold text-blue-500">1</span>
+                        <h3 class="text-lg font-bold mt-2 mb-1 text-gray-700">Entrenamiento</h3>
+                        <p class="text-sm text-gray-600">El modelo aprende de los datos históricos (con etiquetas conocidas). <strong>Ajuste de Parámetros</strong>.</p>
+                    </div>
+
+                    <!-- Flecha 1 -> 2 (Solo visible en desktop) -->
+                    <div class="hidden md:block flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </div>
+                    <!-- Flecha 1 -> 2 (Solo visible en mobile) -->
+                    <div class="md:hidden flex items-center justify-center w-full my-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                    </div>
+
+                    <!-- Paso 2: Predicción -->
+                    <div class="flex-1 p-4 bg-white rounded-lg border-t-4 border-purple-500 shadow-md">
+                        <span class="text-3xl font-extrabold text-purple-500">2</span>
+                        <h3 class="text-lg font-bold mt-2 mb-1 text-gray-700">Predicción</h3>
+                        <p class="text-sm text-gray-600">Se ingresan nuevos datos (sin etiqueta) para que el modelo asigne una clase.</p>
+                    </div>
+                    
+                    <!-- Flecha 2 -> 3 (Solo visible en desktop) -->
+                    <div class="hidden md:block flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </div>
+                    <!-- Flecha 2 -> 3 (Solo visible en mobile) -->
+                    <div class="md:hidden flex items-center justify-center w-full my-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                    </div>
+
+                    <!-- Paso 3: Evaluación -->
+                    <div class="flex-1 p-4 bg-white rounded-lg border-t-4 border-green-500 shadow-md">
+                        <span class="text-3xl font-extrabold text-green-500">3</span>
+                        <h3 class="text-lg font-bold mt-2 mb-1 text-gray-700">Evaluación</h3>
+                        <p class="text-sm text-gray-600">Se mide el rendimiento del modelo con métricas (e.g., Accuracy, F1-Score, Matriz de Confusión).</p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- LÓGICA DE INTERACTIVIDAD ---
+
+        // ----------------------------------------------------
+        // 1. Alternar entre Clasificación Binaria y Multiclase
+        // ----------------------------------------------------
+        const state = {
+            currentType: 'binary',
+            currentAlgo: 'knn'
+        };
+
+        const typeElements = {
+            btnBinary: document.getElementById('btnBinary'),
+            btnMulti: document.getElementById('btnMulti'),
+            dynamicIcon: document.getElementById('dynamicIcon'),
+            dynamicTitle: document.getElementById('dynamicTitle'),
+            dynamicText: document.getElementById('dynamicText'),
+            dynamicExample: document.getElementById('dynamicExample'),
+        };
+
+        const binaryContent = {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle text-green-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>`,
+            title: "Clasificación Binaria",
+            text: "Predice entre <strong>solo dos</strong> posibles clases o resultados mutuamente excluyentes (0 o 1). Es la forma más sencilla de clasificación.",
+            example: "<strong>Ejemplo:</strong> ¿Tiene el paciente la enfermedad (Sí/No)?"
+        };
+
+        const multiContent = {
+            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-grid text-red-600"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>`,
+            title: "Clasificación Multiclase",
+            text: "Predice entre <strong>tres o más</strong> clases. El modelo debe asignar una única etiqueta de un conjunto de opciones.",
+            example: "<strong>Ejemplo:</strong> Identificación de imágenes (Perro, Gato, Pájaro, Pez...)"
+        };
+
+        function toggleClassificationType(type) {
+            if (state.currentType === type) return;
+            state.currentType = type;
+
+            let content;
+            let activeBtn, inactiveBtn;
+
+            if (type === 'binary') {
+                content = binaryContent;
+                activeBtn = typeElements.btnBinary;
+                inactiveBtn = typeElements.btnMulti;
+                typeElements.dynamicTitle.classList.remove('text-red-700');
+                typeElements.dynamicTitle.classList.add('text-indigo-700');
+                typeElements.dynamicExample.classList.remove('bg-red-100', 'border-red-300');
+                typeElements.dynamicExample.classList.add('bg-green-100', 'border-green-300');
+            } else {
+                content = multiContent;
+                activeBtn = typeElements.btnMulti;
+                inactiveBtn = typeElements.btnBinary;
+                typeElements.dynamicTitle.classList.remove('text-indigo-700');
+                typeElements.dynamicTitle.classList.add('text-red-700');
+                typeElements.dynamicExample.classList.remove('bg-green-100', 'border-green-300');
+                typeElements.dynamicExample.classList.add('bg-red-100', 'border-red-300');
+            }
+
+            // Actualizar botones
+            activeBtn.classList.add('bg-indigo-500', 'border-indigo-400', 'text-white');
+            activeBtn.classList.remove('bg-white', 'border-slate-300', 'text-gray-700');
+            inactiveBtn.classList.remove('bg-indigo-500', 'border-indigo-400', 'text-white');
+            inactiveBtn.classList.add('bg-white', 'border-slate-300', 'text-gray-700');
+
+
+            // Actualizar contenido dinámico
+            typeElements.dynamicIcon.innerHTML = content.icon;
+            typeElements.dynamicTitle.textContent = content.title;
+            typeElements.dynamicText.innerHTML = content.text;
+            typeElements.dynamicExample.innerHTML = content.example;
+        }
+
+        // ----------------------------------------------------
+        // 2. Alternar entre Algoritmos (KNN y Árboles de Decisión)
+        // ----------------------------------------------------
+        const algoElements = {
+            tabKnn: document.getElementById('tabKnn'),
+            tabDt: document.getElementById('tabDt'),
+            algoDescription: document.getElementById('algoDescription'),
+            algoVisual: document.getElementById('algoVisual'),
+        };
+
+        const knnContent = {
+            title: "La Clasificación por Proximidad",
+            text: `
+                <h3 class="text-xl font-bold text-teal-700 mb-2">La Clasificación por Proximidad</h3>
+                <p>
+                    Un algoritmo simple y perezoso (lazy) que clasifica un nuevo punto basándose en la <strong>mayoría de votos</strong> de sus <strong><i>K</i> vecinos más cercanos</strong> en el espacio de características.
+                </p>
+                <p class="bg-teal-100 p-3 rounded-lg border border-teal-300 text-sm">
+                    <strong>Clave:</strong> La elección de <i>K</i> (un hiperparámetro) es crucial. Un <i>K</i> pequeño hace el modelo sensible al ruido (alta varianza), mientras que un <i>K</i> grande puede ignorar detalles importantes (alto sesgo).
+                </p>
+            `,
+            visual: `
+                <svg width="100%" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .point-red { fill: #ef4444; }
+                        .point-blue { fill: #3b82f6; }
+                        .new-point { fill: #f97316; stroke: #f97316; stroke-width: 3; }
+                        .circle { fill: none; stroke: #f97316; stroke-dasharray: 4 2; stroke-width: 1; }
+                    </style>
+                    <!-- Puntos de la Clase Azul -->
+                    <circle cx="20" cy="30" r="5" class="point-blue"/>
+                    <circle cx="50" cy="10" r="5" class="point-blue"/>
+                    <circle cx="45" cy="55" r="5" class="point-blue"/>
+                    <circle cx="70" cy="40" r="5" class="point-blue"/>
+                    <!-- Puntos de la Clase Roja -->
+                    <circle cx="120" cy="110" r="5" class="point-red"/>
+                    <circle cx="150" cy="130" r="5" class="point-red"/>
+                    <circle cx="170" cy="100" r="5" class="point-red"/>
+                    <circle cx="180" cy="135" r="5" class="point-red"/>
+                    <!-- Puntos Cercanos a la Nueva Clase (Mixto) -->
+                    <circle cx="95" cy="80" r="5" class="point-red"/>
+                    <circle cx="85" cy="95" r="5" class="point-blue"/>
+                    <circle cx="110" cy="90" r="5" class="point-red"/>
+                    <!-- Nuevo Punto (a clasificar) -->
+                    <circle cx="100" cy="100" r="6" class="new-point"/>
+                    <!-- Círculo de Vecinos (K=3) -->
+                    <circle cx="100" cy="100" r="30" class="circle"/>
+                    <text x="5" y="145" class="text-xs font-semibold text-gray-600">KNN: Círculo de Proximidad</text>
+                </svg>
+            `
+        };
+
+        const dtContent = {
+            title: "La Clasificación por Reglas",
+            text: `
+                <h3 class="text-xl font-bold text-teal-700 mb-2">La Clasificación por Reglas</h3>
+                <p>
+                    Construye un modelo de flujo similar a un diagrama de flujo, donde cada nodo interno representa una prueba de una característica y cada rama el resultado de esa prueba. El camino lleva a una decisión (etiqueta de clase).
+                </p>
+                <p class="bg-teal-100 p-3 rounded-lg border border-teal-300 text-sm">
+                    <strong>Clave:</strong> Busca el mejor "corte" para dividir los datos, maximizando la pureza de las etiquetas en los nodos resultantes (medido con Gini o Entropía).
+                </p>
+            `,
+            visual: `
+                <svg width="100%" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .node { fill: #06b6d4; stroke: #0e7490; stroke-width: 1; }
+                        .leaf-red { fill: #f87171; stroke: #b91c1c; }
+                        .leaf-blue { fill: #60a5fa; stroke: #1d4ed8; }
+                        .line { stroke: #14b8a6; stroke-width: 2; }
+                        .text { font-size: 14px; fill: white; font-weight: bold; }
+                    </style>
+                    <!-- Nodo Raíz -->
+                    <rect x="75" y="10" width="50" height="30" rx="5" class="node"/>
+                    <text x="100" y="30" text-anchor="middle" class="text">Raíz</text>
+                    <!-- Líneas -->
+                    <line x1="100" y1="40" x2="50" y2="70" class="line"/>
+                    <line x1="100" y1="40" x2="150" y2="70" class="line"/>
+                    <!-- Hojas (Decisiones) -->
+                    <rect x="25" y="80" width="50" height="30" rx="5" class="leaf-blue"/>
+                    <text x="50" y="100" text-anchor="middle" class="text">Clase A</text>
+                    
+                    <rect x="125" y="80" width="50" height="30" rx="5" class="leaf-red"/>
+                    <text x="150" y="100" text-anchor="middle" class="text">Clase B</text>
+                    
+                    <text x="10" y="70" class="text-xs font-semibold fill-gray-600">Sí</text>
+                    <text x="165" y="70" class="text-xs font-semibold fill-gray-600">No</text>
+
+                    <text x="5" y="145" class="text-xs font-semibold text-gray-600">DT: Camino de Reglas</text>
+                </svg>
+            `
+        };
+
+        function toggleAlgorithm(algo) {
+            if (state.currentAlgo === algo) return;
+            state.currentAlgo = algo;
+
+            let content;
+            let activeTab, inactiveTab;
+
+            if (algo === 'knn') {
+                content = knnContent;
+                activeTab = algoElements.tabKnn;
+                inactiveTab = algoElements.tabDt;
+            } else {
+                content = dtContent;
+                activeTab = algoElements.tabDt;
+                inactiveTab = algoElements.tabKnn;
+            }
+
+            // Actualizar pestañas
+            activeTab.classList.add('tab-active');
+            inactiveTab.classList.remove('tab-active');
+
+            // Actualizar contenido dinámico
+            algoElements.algoDescription.innerHTML = content.text;
+            algoElements.algoVisual.innerHTML = content.visual;
+        }
+
+        // Inicialización al cargar el DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Asegurar que el estado inicial se aplique correctamente
+            toggleClassificationType('binary'); 
+            toggleAlgorithm('knn');
+        });
+    </script>
+</body>
+</html>
+

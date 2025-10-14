@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación Cruzada</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Chart.js para el gráfico -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Carga de MathJax para renderizar LaTeX -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container-shadow {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+        /* Clase para centrar el mensaje de carga */
+        .chart-placeholder {
+            min-height: 320px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            border: 2px dashed #ccc;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chart-placeholder:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <!-- Contenedor principal para forzar el renderizado de LaTeX estático al inicio -->
+    <div id="mainContent" class="max-w-5xl mx-auto bg-white rounded-3xl container-shadow p-6 md:p-10">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-8 border-b pb-6 border-slate-200">
+            <span class="text-xs font-semibold uppercase tracking-widest text-orange-500">OPTIMIZACIÓN DE MODELOS</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mt-2">
+                Validación Cruzada: La Clave para el Trade-off
+            </h1>
+            <p class="mt-2 text-md text-gray-600">
+                Un método esencial para evaluar la capacidad de <strong>generalización</strong> de un modelo y seleccionar sus hiperparámetros.
+            </p>
+        </header>
+
+        <!-- SECCIÓN 1: PROCESO K-FOLD (Visible por defecto) -->
+        <div class="bg-indigo-50 border-2 border-indigo-200 p-6 rounded-xl mb-8">
+            <h2 class="text-2xl font-bold text-indigo-800 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-git-fork text-indigo-600 mr-3"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.2 1.2-.5 1.7L15 17"/><path d="M6 9v2c0 .6.2 1.2.5 1.7L9 17"/></svg>
+                El Método K-Fold: 5 Pasos Clave
+            </h2>
+            
+            <p class="text-gray-700 mb-4">
+                En lugar de una única división (Entrenamiento/Prueba), dividimos el conjunto de <strong>entrenamiento</strong> en <i>K</i> subconjuntos iguales (folds). Usaremos <i>K</i>=5 como ejemplo.
+            </p>
+            
+            <!-- Visualización Simulada del K-Fold (Visible por defecto) -->
+            <div id="kfoldDetails" class="space-y-4 mt-4">
+                
+                <!-- Estructura de un Fold -->
+                <div class="flex items-center space-x-2">
+                    <div class="text-sm font-semibold text-gray-700 w-20 flex-shrink-0">DATO TOTAL:</div>
+                    <div class="flex-grow flex h-8 rounded-lg overflow-hidden border border-gray-400">
+                        <div class="w-4/5 bg-blue-500 flex items-center justify-center text-white text-xs font-bold">Datos de Entrenamiento (80%)</div>
+                        <div class="w-1/5 bg-red-500 flex items-center justify-center text-white text-xs font-bold">Datos de Prueba (20%)</div>
+                    </div>
+                </div>
+
+                <!-- Ejemplo K=5 -->
+                <div class="text-sm font-semibold text-gray-700 w-20 flex-shrink-0">PROCESO <i>K</i>=5:</div>
+
+                <!-- Folds con Error E_1 y E_2 en HTML <i> -->
+                <div class="space-y-1">
+                    <div class="flex items-center text-xs space-x-2">
+                        <div class="w-16 text-right font-medium">Iteración 1:</div>
+                        <div class="flex flex-grow h-6">
+                            <div class="w-1/5 bg-orange-400 border border-white text-center text-white">Fold 1 (Val)</div>
+                            <div class="w-4/5 bg-indigo-300 border border-white text-center text-indigo-900">Folds 2-5 (Train)</div>
+                        </div>
+                        <span class="text-gray-500">(Error <i>E</i><sub>1</sub>)</span>
+                    </div>
+                    <div class="flex items-center text-xs space-x-2">
+                        <div class="w-16 text-right font-medium">Iteración 2:</div>
+                        <div class="flex flex-grow h-6">
+                            <div class="w-1/5 bg-indigo-300 border border-white"></div>
+                            <div class="w-1/5 bg-orange-400 border border-white text-center text-white">Fold 2 (Val)</div>
+                            <div class="w-3/5 bg-indigo-300 border border-white"></div>
+                        </div>
+                        <span class="text-gray-500">(Error <i>E</i><sub>2</sub>)</span>
+                    </div>
+                    <!-- Se muestra el patrón de repetición -->
+                    <div class="text-center text-sm text-gray-500 py-1">... Repetido 5 veces ...</div>
+                    <div class="text-sm font-semibold text-gray-700 w-20 flex-shrink-0">RESULTADO:</div>
+                    <p class="text-sm bg-white p-3 rounded-lg border border-indigo-300">
+                        El <strong>Error de Validación Cruzada</strong> es el promedio de los <i>K</i> errores: 
+                        <!-- LaTeX: $$E_{CV} = \frac{1}{K} \sum_{i=1}^{K} E_i$$ (display) -->
+                        $$E_{CV} = \frac{1}{K} \sum_{i=1}^{K} E_i$$
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: GRÁFICO DEL TRADE-OFF (Activación por botón) -->
+        <div class="bg-gray-50 border-2 border-gray-300 p-6 rounded-xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale text-gray-600 mr-3"><path d="m14 20-3.3-8-4.4 4.4L2 12 12 2l4.6 4.6 4.4-4.4 8 3.3zM15 15c.8-1.5 1-2.9 1-4.5"/></svg>
+                Aplicando la Validación para Encontrar el Punto Óptimo
+            </h2>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Contenedor del Gráfico -->
+                <div class="w-full lg:w-2/3 bg-white rounded-lg p-4 shadow-md">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-gray-700">Error vs. Complejidad del Modelo</h3>
+                    
+                    <!-- Placeholder para la gráfica (se reemplaza al hacer clic) -->
+                    <div id="chartContainer" class="h-80">
+                        <div id="chartPlaceholder" class="chart-placeholder" onclick="initializeChart()">
+                             <button class="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-6 rounded-full shadow-lg transition duration-200">
+                                Cargar Gráfico Interactivo
+                             </button>
+                             <p class="mt-3 text-sm text-gray-500">Haz clic para ver el Trade-off Sesgo-Varianza</p>
+                        </div>
+                        <canvas id="tradeoffChart" style="display:none;"></canvas>
+                    </div>
+
+                </div>
+
+                <!-- Explicación del Gráfico -->
+                <div class="w-full lg:w-1/3 p-5 rounded-lg border-2 border-green-500 bg-green-50 shadow-lg flex flex-col justify-center">
+                    <h3 class="text-xl font-extrabold text-green-800 mb-2">El Punto Ideal (Low Error)</h3>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <p>La curva de la <strong>Validación Cruzada</strong> (línea roja) nos guía.</p>
+                        <ul class="list-disc list-inside ml-4 space-y-2">
+                            <li>El error más bajo en la línea roja (pico verde) indica la <strong>Complejidad Óptima</strong>.</li>
+                            <li>A este nivel, la <strong>Varianza</strong> es controlada y el <strong>Sesgo</strong> es reducido.</li>
+                        </ul>
+                        <p class="font-semibold text-gray-800">Resultado:</p>
+                        <p class="bg-white p-2 rounded border border-green-200">
+                            La validación cruzada evita usar el conjunto de <strong>prueba (test)</strong> para ajustar el modelo, asegurando una evaluación final <strong>imparcial</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie de página -->
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            <strong>Recuerda:</strong> La validación cruzada se ejecuta en los datos de entrenamiento para elegir los hiperparámetros. El conjunto de prueba final nunca se toca hasta el final.
+        </footer>
+
+    </div>
+
+    <script>
+        // Bandera de control para garantizar que la gráfica se inicialice solo una vez.
+        let isChartInitialized = false;
+
+        // Función dedicada para inicializar el gráfico de Chart.js
+        function initializeChart() {
+            // Si ya se inicializó, salimos inmediatamente para evitar el bucle.
+            if (isChartInitialized) return;
+
+            const chartPlaceholder = document.getElementById('chartPlaceholder');
+            const tradeoffChart = document.getElementById('tradeoffChart');
+            
+            // Ocultar el placeholder y mostrar el canvas
+            chartPlaceholder.style.display = 'none';
+            tradeoffChart.style.display = 'block';
+
+            const ctx = tradeoffChart.getContext('2d');
+            
+            // Datos de complejidad (ej. Grado Polinomial)
+            const complexityLabels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            // Datos simulados para el error de entrenamiento (siempre disminuye)
+            const trainingError = [7.0, 5.0, 3.5, 2.5, 2.0, 1.5, 1.0, 0.7, 0.4, 0.2, 0.1, 0.05];
+            // Datos simulados para el error de Validación Cruzada (curva U)
+            const validationError = [8.0, 5.5, 4.0, 3.0, 2.2, 1.8, 1.9, 2.5, 3.5, 5.0, 7.0, 9.5];
+
+            // Encontrar el punto óptimo (mínimo error de validación)
+            const minError = Math.min(...validationError);
+            const optimalIndex = validationError.indexOf(minError);
+            const optimalComplexity = complexityLabels[optimalIndex];
+
+            // Crear el punto de visualización del óptimo
+            const optimalPoint = new Array(complexityLabels.length).fill(null);
+            optimalPoint[optimalIndex] = minError;
+
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: complexityLabels,
+                    datasets: [
+                        // Línea de Error de Entrenamiento (Sesgo)
+                        {
+                            label: 'Error de Entrenamiento (Sesgo - Overfitting)',
+                            data: trainingError,
+                            borderColor: 'rgb(59, 130, 246)', /* blue-500 */
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        // Línea de Error de Validación Cruzada (Generalización)
+                        {
+                            label: 'Error de Validación Cruzada (Varianza - Underfitting)',
+                            data: validationError,
+                            borderColor: 'rgb(249, 115, 22)', /* orange-600 */
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            tension: 0.3,
+                            fill: false
+                        },
+                        // Punto Óptimo
+                        {
+                            label: `Óptimo (Complejidad: ${optimalComplexity})`,
+                            data: optimalPoint,
+                            borderColor: 'rgb(34, 197, 94)', /* green-500 */
+                            backgroundColor: 'rgb(34, 197, 94)',
+                            pointRadius: 10,
+                            pointStyle: 'star',
+                            type: 'scatter',
+                            borderWidth: 0,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Desactivar cualquier animación
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => `Complejidad: ${context[0].label}`,
+                                label: (context) => {
+                                    if (context.datasetIndex === 2) {
+                                        return `Mejor Generalización: Error ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                    return `${context.dataset.label}: Error ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Complejidad del Modelo (Ej. Grado Polinomial)', font: { weight: 'bold' } },
+                            ticks: { stepSize: 1 }
+                        },
+                        y: {
+                            title: { display: true, text: 'Error (Loss/MSE)', font: { weight: 'bold' } },
+                            min: 0,
+                            max: 10
+                        }
+                    }
+                }
+            });
+            
+            isChartInitialized = true; // Establecer la bandera como verdadera
+        }
+        
+        // --- Lógica de MathJax ---
+        function initializeMathJax() {
+            const mainContent = document.getElementById('mainContent');
+            
+            // Función que renderiza MathJax en un elemento
+            const renderMathJax = (element) => {
+                if (window.MathJax) {
+                    // Solo renderiza la fórmula E_CV
+                    MathJax.typesetPromise(element);
+                }
+            };
+            
+            // Renderizado inicial al cargar: Forzar el renderizado en todo el contenido principal
+            if (window.MathJax) {
+                 renderMathJax([mainContent]);
+            }
+        }
+
+        // Ejecutar toda la inicialización del DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMathJax();
+        });
+
+        // Hacemos que la función initializeChart sea global para que el onClick la encuentre.
+        window.initializeChart = initializeChart;
+    </script>
+</body>
+</html>
+

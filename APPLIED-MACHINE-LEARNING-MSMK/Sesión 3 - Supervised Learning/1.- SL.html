@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprendizaje Supervisado: Clasificación vs. Regresión</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Chart.js para gráficos dinámicos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        /* Estilo personalizado para usar la fuente Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* Estilo de la tarjeta principal para un aspecto moderno */
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl card p-6 md:p-12">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-10">
+            <span class="text-xs font-semibold uppercase tracking-widest text-blue-500">Machine Learning Fundamental</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 mt-2">
+                Aprendizaje Supervisado: Clasificación vs. Regresión
+            </h1>
+            <p class="mt-3 text-lg text-gray-500 max-w-2xl mx-auto">
+                El modelo aprende de datos <strong>etiquetados</strong> para predecir salidas futuras. El tipo de salida define la tarea.
+            </p>
+        </header>
+
+        <!-- Contenedor de las dos secciones principales -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            
+            <!-- 1. Sección de Clasificación -->
+            <div class="bg-indigo-50 p-6 rounded-2xl border-b-4 border-indigo-600">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="text-4xl text-indigo-600">
+                        <!-- Icono de Clasificación (Etiquetas) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags"><path d="M9 18l7.5-7.5M14 18l7.5-7.5M10.5 5.5h.01M16.5 5.5h.01M19.5 5.5h.01M19.5 13.5h.01M10.5 13.5h.01M16.5 13.5h.01M19.5 10.5h.01M10.5 10.5h.01M16.5 10.5h.01M19.5 16.5h.01M10.5 16.5h.01M16.5 16.5h.01M19.5 19.5h.01M10.5 19.5h.01M16.5 19.5h.01M19.5 7.5h.01M10.5 7.5h.01M16.5 7.5h.01M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-indigo-800">1. Clasificación</h2>
+                </div>
+                
+                <p class="text-gray-700 mb-6">
+                    El objetivo es predecir una <strong>etiqueta categórica</strong> o <strong>discreta</strong>. El resultado siempre es una de las clases definidas en el entrenamiento.
+                </p>
+
+                <!-- Gráfico de Clasificación -->
+                <div class="bg-white rounded-lg p-4 mb-6 shadow-md">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-gray-700">Visualización de Clasificación Binaria</h3>
+                    <canvas id="classificationChart"></canvas>
+                </div>
+                
+                <!-- Ejemplos -->
+                <h3 class="text-2xl font-semibold text-indigo-700 mb-3 mt-8">Ejemplos Comunes:</h3>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-center p-2 bg-indigo-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail-warning text-indigo-600 mr-3"><path d="M22 10.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h7.5"/><path d="m22 13-3.2 2.2c-.7.5-1.5.7-2.3.6L4 18V6l8 6 4.3-2.7"/><path d="M19 8h.01"/><path d="M10 12l-8 6"/><path d="M17.9 19.4V16.6"/><path d="M17.9 22.2v-.8"/></svg>
+                        <strong>Detección de Spam:</strong> ¿Es Spam (Clase A) o No-Spam (Clase B)?
+                    </li>
+                    <li class="flex items-center p-2 bg-indigo-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart-pulse text-indigo-600 mr-3"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.2 14H20"/></svg>
+                        <strong>Diagnóstico Médico:</strong> ¿Riesgo Alto, Medio o Bajo? (Clasificación Multiclase)
+                    </li>
+                    <li class="flex items-center p-2 bg-indigo-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square text-indigo-600 mr-3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <strong>Análisis de Sentimiento:</strong> ¿La reseña es Positiva, Negativa o Neutral?
+                    </li>
+                    <li class="flex items-center p-2 bg-indigo-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card-off"><path d="M9.82 9.82a.24.24 0 0 0 0-.34l-.45-.45a.24.24 0 0 0-.34 0L3 14"/><path d="M2 2l20 20"/><path d="M22 10.8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7.2"/><path d="M10 10.5V10"/></svg>
+                        <strong>Detección de Fraude:</strong> ¿La transacción es Fraude (Sí) o Legítima (No)?
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 2. Sección de Regresión -->
+            <div class="bg-green-50 p-6 rounded-2xl border-b-4 border-green-600">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="text-4xl text-green-600">
+                        <!-- Icono de Regresión (Gráfico de Línea) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart"><path d="M3 3v18h18"/><path d="m18 7-5 5-4-4-5 5"/></svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-green-800">2. Regresión</h2>
+                </div>
+                
+                <p class="text-gray-700 mb-6">
+                    El objetivo es predecir un <strong>valor numérico</strong> o <strong>continuo</strong>. El resultado puede ser cualquier número dentro de un rango.
+                </p>
+
+                <!-- Gráfico de Regresión -->
+                <div class="bg-white rounded-lg p-4 mb-6 shadow-md">
+                    <h3 class="text-xl font-semibold mb-3 text-center text-gray-700">Visualización de Regresión Lineal</h3>
+                    <canvas id="regressionChart"></canvas>
+                </div>
+
+                <!-- Ejemplos -->
+                <h3 class="text-2xl font-semibold text-green-700 mb-3 mt-8">Ejemplos Comunes:</h3>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-center p-2 bg-green-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home text-green-600 mr-3"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <strong>Predicción de Precios:</strong> Estimar el valor exacto de una vivienda ($250,000 USD).
+                    </li>
+                    <li class="flex items-center p-2 bg-green-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-drizzle text-green-600 mr-3"><path d="M4 14.5a3.5 3.5 0 0 1 6.84-.84"/><path d="M16 12a4 4 0 0 0 0-8H6a2 2 0 0 0-2 2c0 1.2.68 2.3 1 3.5"/><path d="M20 12h.01"/><path d="M20 16h.01"/><path d="M20 20h.01"/><path d="M8 17v.01"/><path d="M8 21v.01"/><path d="M12 19v.01"/></svg>
+                        <strong>Previsión Meteorológica:</strong> Predecir la temperatura exacta de mañana (28.3 °C).
+                    </li>
+                    <li class="flex items-center p-2 bg-green-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench text-green-600 mr-3"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-5.3 5.3a2 2 0 0 1-1.4.6H5a2 2 0 0 1-2-2v-2.67a2 2 0 0 1 .6-1.4l5.3-5.3a6 6 0 0 1 7.94-7.94l-3.77 3.77Z"/><path d="m9.8 9.8 2.8 2.8"/></svg>
+                        <strong>Antigüedad del Equipo:</strong> Estimar la vida útil restante de una máquina (en meses o años).
+                    </li>
+                    <li class="flex items-center p-2 bg-green-100 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap text-green-600 mr-3"><path d="M21.42 10.98V17H11V5.7L21.42 10.98z"/><path d="M9 3L3 6l6 3 6-3z"/><path d="M3 15.7V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1.3"/><path d="M3 10.9V12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1.1"/></svg>
+                        <strong>Puntuación de Examen:</strong> Predecir la calificación final continua (ej. 85.5%).
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Inicialización de los gráficos de Chart.js
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // =========================================================
+            // Gráfico de Clasificación (Separación de Clases)
+            // =========================================================
+            const classificationCtx = document.getElementById('classificationChart').getContext('2d');
+            
+            // Datos simulados para Clasificación Binaria (Clase A y Clase B)
+            const classificationData = {
+                datasets: [{
+                    label: 'Clase A (Datos Etiquetados)',
+                    // Puntos en la esquina superior izquierda
+                    data: [
+                        { x: 5, y: 15 }, 
+                        { x: 7, y: 14 }, // Ajustado para quedar sobre la línea de decisión
+                        { x: 3, y: 18 }, 
+                        { x: 6, y: 19 }, 
+                        { x: 4, y: 16 }
+                    ],
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)', // Azul (Indigo)
+                    pointRadius: 6,
+                    type: 'bubble'
+                }, {
+                    label: 'Clase B (Datos Etiquetados)',
+                    // Puntos en la esquina inferior derecha
+                    data: [
+                        { x: 14, y: 5 }, 
+                        { x: 16, y: 3 }, // Ajustado para quedar bajo la línea de decisión
+                        { x: 12, y: 3 }, 
+                        { x: 18, y: 1 }, // Ajustado para quedar bajo la línea de decisión
+                        { x: 15, y: 4 }
+                    ],
+                    backgroundColor: 'rgba(107, 114, 128, 0.8)', // Gris
+                    pointRadius: 6,
+                    type: 'bubble'
+                }, {
+                    label: 'Límite de Decisión (Modelo)',
+                    // Línea diagonal que separa claramente las clases (y = 20 - x)
+                    data: [{ x: 0, y: 20 }, { x: 20, y: 0 }],
+                    borderColor: 'rgb(79, 70, 229)', // Morado oscuro
+                    borderWidth: 3,
+                    tension: 0,
+                    fill: false,
+                    type: 'line',
+                    pointRadius: 0,
+                    borderDash: [5, 5] // Línea discontinua
+                }]
+            };
+
+            new Chart(classificationCtx, {
+                type: 'scatter',
+                data: classificationData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        title: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.dataset.label}: (${context.parsed.x.toFixed(1)}, ${context.parsed.y.toFixed(1)})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Característica 1'
+                            },
+                            min: 0,
+                            max: 20,
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Característica 2'
+                            },
+                            min: 0,
+                            max: 20
+                        }
+                    }
+                }
+            });
+
+            // =========================================================
+            // Gráfico de Regresión (Predicción de Valor Continuo)
+            // =========================================================
+            const regressionCtx = document.getElementById('regressionChart').getContext('2d');
+            
+            // Datos simulados para Regresión Lineal (Relación entre X y Y)
+            const regressionData = {
+                datasets: [{
+                    label: 'Datos de Entrenamiento',
+                    data: [
+                        { x: 1, y: 3 }, { x: 3, y: 6 }, { x: 4, y: 8 }, { x: 6, y: 12 }, { x: 7, y: 14 },
+                        { x: 9, y: 17 }, { x: 10, y: 20 }
+                    ],
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)', // Verde
+                    pointRadius: 6,
+                    type: 'bubble'
+                }, {
+                    label: 'Línea de Predicción (Modelo)',
+                    data: [
+                        { x: 0, y: 0 }, { x: 12, y: 24 } // Línea simulada y ajustada (y = 2x)
+                    ],
+                    borderColor: 'rgb(22, 163, 74)', // Verde oscuro
+                    borderWidth: 3,
+                    tension: 0,
+                    fill: false,
+                    type: 'line',
+                    pointRadius: 0
+                },
+                // 3. Nueva Predicción (Punto)
+                {
+                    label: 'Nueva Predicción (Entrada X=8)',
+                    data: [{ x: 8, y: 16 }], // y = 2*8
+                    backgroundColor: 'rgb(234, 179, 8)', // Amarillo, para resaltar
+                    pointRadius: 8,
+                    pointStyle: 'star',
+                    type: 'scatter'
+                },
+                // 4. Línea de Proyección Vertical (desde X=8 hasta el punto) - Oculta de la leyenda al no tener 'label'
+                {
+                    data: [{ x: 8, y: 0 }, { x: 8, y: 16 }],
+                    borderColor: 'rgba(234, 179, 8, 0.6)',
+                    borderWidth: 2,
+                    tension: 0,
+                    fill: false,
+                    type: 'line',
+                    pointRadius: 0,
+                    borderDash: [4, 4]
+                },
+                // 5. Línea de Proyección Horizontal (desde Y=16 hasta el punto) - Oculta de la leyenda al no tener 'label'
+                {
+                    data: [{ x: 0, y: 16 }, { x: 8, y: 16 }],
+                    borderColor: 'rgba(234, 179, 8, 0.6)',
+                    borderWidth: 2,
+                    tension: 0,
+                    fill: false,
+                    type: 'line',
+                    pointRadius: 0,
+                    borderDash: [4, 4]
+                }
+                ]
+            };
+
+            new Chart(regressionCtx, {
+                type: 'scatter',
+                data: regressionData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            // Ocultar las proyecciones de la leyenda
+                            labels: {
+                                filter: function(legendItem, data) {
+                                    // Solo mostrar elementos que tengan un label definido
+                                    return data.datasets[legendItem.datasetIndex].label;
+                                }
+                            }
+                        },
+                        title: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.dataset.label || 'Proyección'}: Predicción Y = ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Entrada (ej. Tamaño de Casa)'
+                            },
+                            min: 0,
+                            max: 12,
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Salida (ej. Precio)'
+                            },
+                            min: 0,
+                            max: 25
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

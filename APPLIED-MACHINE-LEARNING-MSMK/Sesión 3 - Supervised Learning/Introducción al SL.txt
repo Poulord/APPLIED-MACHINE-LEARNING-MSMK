@@ -1,0 +1,27 @@
+● Introducción al Aprendizaje Supervisado
+	○ Tipos de Aprendizaje Supervisado
+● Regresión
+	○ Introducción a la Regresión: Comprensión de las relaciones entre variables,
+	predicción de resultados continuos.
+	○ Regresión Lineal: Teoría, función de coste (p. ej., MSE), descenso de gradiente
+	para entrenamiento.
+	○ Regresión Polinómica: Adición de términos polinómicos, selección de grado y
+	sobreajuste.
+	○ Métricas de evaluación de regresión: MSE, MAE, R-cuadrado.
+● Clasificación
+	○ Introducción a la clasificación: Predicción de categorías o etiquetas de clase.
+	○ Regresión logística: Clasificación binaria, función sigmoidea.
+	○ Clasificación multiclase: Extensión de la regresión logística a más de dos
+	clases.
+	○ Árboles de decisión: Modelos simples e interpretables tanto para regresión
+	como para clasificación.
+	○ Máquinas de vectores de soporte (MVS): Clasificación lineal y no lineal,
+	kernels.
+	○ Métricas de evaluación: Exactitud, precisión, recall, puntuación F1.
+● Evaluación y ajuste de modelos
+	○ División de datos: Conjuntos de entrenamiento, validación y prueba.
+	○ Validación cruzada: Técnicas para la evaluación robusta de modelos.
+	○ Sobreajuste y subajuste: Abordar el problema de los modelos con bajo
+	rendimiento con datos no analizados.
+	○ Ajuste de hiperparámetros
+

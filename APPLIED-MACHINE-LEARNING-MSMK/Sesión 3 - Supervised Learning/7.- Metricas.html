@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas de Evaluación de Regresión</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container-shadow {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+        /* Estilos SVG comunes */
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 350px;
+            margin: 1.5rem 0;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .svg-text {
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .metric-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        /* Estilo para las fórmulas (usando fuente monoespacio grande) */
+        .formula {
+            font-size: 1.125rem; 
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-5xl mx-auto bg-white rounded-3xl container-shadow p-6 md:p-10">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-8 border-b pb-6 border-slate-200">
+            <span class="text-xs font-semibold uppercase tracking-widest text-teal-500">EVALUACIÓN DE MODELOS</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mt-2">
+                Métricas de Evaluación de Regresión
+            </h1>
+            <p class="mt-2 text-md text-gray-600">
+                Cómo cuantificar el error de un modelo predictivo y evaluar su bondad de ajuste.
+            </p>
+        </header>
+
+        <!-- SECCIÓN INTERACTIVA CENTRAL -->
+        <div class="bg-gray-50 border-2 border-gray-300 p-6 rounded-xl mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+                Visualización del Error y Ajuste
+            </h2>
+            
+            <!-- CONTROLES -->
+            <div class="flex flex-wrap justify-center gap-4 p-4 bg-white rounded-lg shadow-inner mb-6">
+                <p class="font-semibold text-gray-700 w-full text-center mb-2">Selecciona la métrica para ver su concepto:</p>
+                <div class="flex gap-4">
+                    <button id="btn-mse" onclick="selectMetric('mse')" class="px-4 py-2 rounded-full font-bold text-white bg-sky-600 hover:bg-sky-700 transition duration-150 ease-in-out">
+                        MSE
+                    </button>
+                    <button id="btn-mae" onclick="selectMetric('mae')" class="px-4 py-2 rounded-full font-bold text-gray-800 bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out">
+                        MAE
+                    </button>
+                    <button id="btn-rmse" onclick="selectMetric('rmse')" class="px-4 py-2 rounded-full font-bold text-gray-800 bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out">
+                        RMSE
+                    </button>
+                    <button id="btn-r2" onclick="selectMetric('r2')" class="px-4 py-2 rounded-full font-bold text-gray-800 bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out">
+                        R-cuadrado
+                    </button>
+                </div>
+            </div>
+
+            <!-- VISUALIZACIÓN SVG -->
+            <div class="svg-container relative border-4 border-gray-400">
+                <svg id="metrics-svg" viewBox="0 0 100 100" class="w-full h-full">
+                    <!-- Ejes (Línea de fondo) -->
+                    <line x1="5" y1="95" x2="95" y2="95" stroke="#ccc" stroke-width="0.5"/>
+                    <line x1="5" y1="5" x2="5" y2="95" stroke="#ccc" stroke-width="0.5"/>
+                    
+                    <!-- Puntos de datos (Estáticos) -->
+                    <g id="data-points">
+                        <!-- Points will be added by JavaScript -->
+                    </g>
+
+                    <!-- Línea de Regresión (Hipótesis h(x)) - CORREGIDA -->
+                    <line id="regression-line" x1="5" y1="25" x2="95" y2="65" stroke="#0ea5e9" stroke-width="2" />
+                    <text x="80" y="30" class="svg-text" fill="#0ea5e9">h(x)</text>
+
+                    <!-- Línea de la Media (Para R2) -->
+                    <line id="mean-line" x1="5" y1="50" x2="95" y2="50" stroke="#f97316" stroke-width="1.5" stroke-dasharray="2,2" style="display:none;"/>
+                    <text id="mean-line-label" x="90" y="47" class="svg-text" fill="#f97316" style="display:none;">Media de Y</text>
+
+                    <!-- Grupo Dinámico para Visualización de Errores -->
+                    <g id="error-visualization">
+                        <!-- Content changes based on metric (MSE, MAE, R2) -->
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- METRICAS DETALLADAS (Grid) - Ahora en formato 2x2 en desktop -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
+            
+            <!-- PANEL 1: MSE -->
+            <div id="card-mse" class="metric-card bg-sky-50 border-2 border-sky-300 p-5 rounded-xl shadow-md">
+                <h3 class="text-xl font-bold text-sky-800 mb-2">1. Error Cuadrático Medio (MSE)</h3>
+                <p class="text-gray-700 mb-3 text-sm">
+                    Mide el promedio de los <strong>errores al cuadrado</strong>.
+                </p>
+                <div class="text-center bg-white p-3 rounded-lg border border-sky-200 mb-3">
+                    <span class="formula text-sky-700">
+                        MSE = (Σ(y<sub>i</sub> - Ŷ<sub>i</sub>)<sup>2</sup>)/m
+                    </span>
+                </div>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li><strong>Magnifica el error:</strong> Un gran error se castiga mucho más (al elevarse al cuadrado).</li>
+                    <li><strong>Sensible a Outliers:</strong> Muy afectado por puntos atípicos.</li>
+                    <li><strong>Unidad:</strong> Es la unidad de Y al cuadrado.</li>
+                </ul>
+            </div>
+
+            <!-- PANEL 2: MAE -->
+            <div id="card-mae" class="metric-card bg-green-50 border-2 border-green-300 p-5 rounded-xl shadow-md">
+                <h3 class="text-xl font-bold text-green-800 mb-2">2. Error Absoluto Medio (MAE)</h3>
+                <p class="text-gray-700 mb-3 text-sm">
+                    Mide el promedio de los <strong>errores en valor absoluto</strong>.
+                </p>
+                <div class="text-center bg-white p-3 rounded-lg border border-green-200 mb-3">
+                    <span class="formula text-green-700">
+                        MAE = (Σ|y<sub>i</sub> - Ŷ<sub>i</sub>|)/m
+                    </span>
+                </div>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li><strong>Robusto a Outliers:</strong> Castiga los errores de manera lineal.</li>
+                    <li><strong>Interpretación simple:</strong> Representa el error promedio en las unidades originales de Y.</li>
+                    <li><strong>Menos sensible:</strong> No penaliza tan duramente los errores grandes.</li>
+                </ul>
+            </div>
+
+            <!-- PANEL 3: RMSE -->
+            <div id="card-rmse" class="metric-card bg-amber-50 border-2 border-amber-300 p-5 rounded-xl shadow-md">
+                <h3 class="text-xl font-bold text-amber-800 mb-2">3. Raíz del Error Cuadrático Medio (RMSE)</h3>
+                <p class="text-gray-700 mb-3 text-sm">
+                    Es la <strong>raíz cuadrada del MSE</strong>. Su unidad coincide con la de la variable Y.
+                </p>
+                <div class="text-center bg-white p-3 rounded-lg border border-amber-200 mb-3">
+                    <span class="formula text-amber-700">
+                        RMSE = &radic;<span class="text-sm">(Σ(y<sub>i</sub> - Ŷ<sub>i</sub>)<sup>2</sup>)/m</span>
+                    </span>
+                </div>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li><strong>Interpretable:</strong> Mismo factor de escala que la variable objetivo (Y).</li>
+                    <li><strong>Sensible a Outliers:</strong> Hereda la sensibilidad a errores grandes del MSE.</li>
+                    <li><strong>Unidad:</strong> Es la unidad de Y.</li>
+                </ul>
+            </div>
+            
+            <!-- PANEL 4: R2 -->
+            <div id="card-r2" class="metric-card bg-purple-50 border-2 border-purple-300 p-5 rounded-xl shadow-md">
+                <h3 class="text-xl font-bold text-purple-800 mb-2">4. Coeficiente R-cuadrado (R²)</h3>
+                <p class="text-gray-700 mb-3 text-sm">
+                    Mide la <strong>proporción de la varianza</strong> en Y explicada por el modelo.
+                </p>
+                <div class="text-center bg-white p-3 rounded-lg border border-purple-200 mb-3">
+                    <span class="formula text-purple-700">
+                        R<sup>2</sup> = 1 - (SSE / SST)
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Donde SSE es el error residual y SST es la varianza total.
+                    </p>
+                </div>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li><strong>Rango:</strong> Generalmente entre 0 y 1. Un valor cercano a 1 es mejor.</li>
+                    <li><strong>Interpretación:</strong> Un R² de 0.8 significa que el modelo explica el 80% de la varianza.</li>
+                    <li><strong>No mide sesgo:</strong> Solo mide qué tan bien los puntos se ajustan a la línea.</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Pie de página -->
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            Elige la métrica según tu necesidad: ¿Quieres penalizar los errores grandes (MSE/RMSE) o necesitas una métrica robusta (MAE)?
+        </footer>
+
+    </div>
+
+    <script>
+        // ==========================================================
+        // Lógica de Visualización Interactiva
+        // ==========================================================
+
+        const DATA_POINTS = [
+            { x: 10, y: 75, predY: 76.5 },
+            { x: 25, y: 65, predY: 67.5 },
+            { x: 40, y: 55, predY: 58.5 },
+            { x: 55, y: 30, predY: 49.5 }, // <-- Outlier
+            { x: 70, y: 35, predY: 40.5 },
+            { x: 85, y: 30, predY: 31.5 }
+        ];
+
+        // Mapea el valor Y (0 es abajo) a la coordenada SVG (0 es arriba)
+        function mapYToSVG(y) {
+            return 100 - y;
+        }
+
+        const svg = document.getElementById('metrics-svg');
+        const errorVisualization = document.getElementById('error-visualization');
+        const pointsGroup = document.getElementById('data-points');
+        const meanLine = document.getElementById('mean-line');
+        const meanLineLabel = document.getElementById('mean-line-label');
+        
+        const cards = {
+            mse: document.getElementById('card-mse'),
+            mae: document.getElementById('card-mae'),
+            rmse: document.getElementById('card-rmse'), // Añadido RMSE
+            r2: document.getElementById('card-r2')
+        };
+        const buttons = {
+            mse: document.getElementById('btn-mse'),
+            mae: document.getElementById('btn-mae'),
+            rmse: document.getElementById('btn-rmse'), // Añadido RMSE
+            r2: document.getElementById('btn-r2')
+        };
+        
+        // La media de los valores Y para R2
+        const meanY = DATA_POINTS.reduce((sum, p) => sum + p.y, 0) / DATA_POINTS.length; // (75+65+55+30+35+30) / 6 = 48.33
+        const meanYSVG = mapYToSVG(meanY); // 100 - 48.33 = 51.67
+
+        function drawDataPoints() {
+            pointsGroup.innerHTML = '';
+            DATA_POINTS.forEach(p => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute('cx', p.x);
+                circle.setAttribute('cy', mapYToSVG(p.y));
+                circle.setAttribute('r', 2);
+                circle.setAttribute('fill', '#0f766e'); // Teal color
+                pointsGroup.appendChild(circle);
+            });
+        }
+
+        // Función para cambiar el estado de los botones y tarjetas
+        function updateUI(selectedMetric) {
+            Object.keys(buttons).forEach(key => {
+                const isSelected = key === selectedMetric;
+                const activeColorClass = isSelected ? 'bg-sky-600' : 'bg-gray-200';
+                const activeTextColorClass = isSelected ? 'text-white' : 'text-gray-800';
+                const hoverClass = isSelected ? 'hover:bg-sky-700' : 'hover:bg-gray-300';
+                const ringColor = 'ring-sky-500';
+
+                // Botones
+                buttons[key].classList.toggle('bg-sky-600', isSelected);
+                buttons[key].classList.toggle('text-white', isSelected);
+                buttons[key].classList.toggle('bg-gray-200', !isSelected);
+                buttons[key].classList.toggle('text-gray-800', !isSelected);
+                buttons[key].classList.toggle('hover:bg-sky-700', isSelected);
+                buttons[key].classList.toggle('hover:bg-gray-300', !isSelected);
+
+                // Tarjetas
+                cards[key].classList.toggle('ring-4', isSelected);
+                cards[key].classList.toggle('ring-offset-2', isSelected);
+                cards[key].classList.toggle('ring-opacity-50', isSelected);
+                cards[key].classList.toggle(ringColor, isSelected);
+                cards[key].classList.toggle('transform', isSelected);
+                cards[key].classList.toggle('scale-[1.02]', isSelected);
+            });
+        }
+        
+        // Función principal para dibujar la visualización de la métrica
+        function drawMetricVisualization(metric) {
+            errorVisualization.innerHTML = ''; // Limpiar visualizaciones anteriores
+            
+            // Ocultar elementos de R2 por defecto
+            meanLine.style.display = 'none';
+            meanLineLabel.style.display = 'none';
+
+            if (metric === 'mse' || metric === 'mae' || metric === 'rmse') {
+                let color;
+                let isSquaredVisualization = false; // true para MSE/RMSE (basado en error cuadrático), false para MAE
+                
+                if (metric === 'mse') {
+                    color = '#ef4444'; // Rojo para MSE
+                    isSquaredVisualization = true;
+                } else if (metric === 'mae') {
+                    color = '#22c55e'; // Verde para MAE
+                    isSquaredVisualization = false;
+                } else if (metric === 'rmse') {
+                    color = '#f59e0b'; // Ámbar para RMSE
+                    isSquaredVisualization = true;
+                }
+
+                const strokeWidth = 1.5;
+
+                DATA_POINTS.forEach(p => {
+                    const yActualSVG = mapYToSVG(p.y);
+                    const yPredSVG = mapYToSVG(p.predY);
+                    
+                    // 1. Dibujar el Error (Línea Residual)
+                    const residualLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    residualLine.setAttribute('x1', p.x);
+                    residualLine.setAttribute('y1', yActualSVG);
+                    residualLine.setAttribute('x2', p.x);
+                    residualLine.setAttribute('y2', yPredSVG);
+                    residualLine.setAttribute('stroke', color);
+                    residualLine.setAttribute('stroke-width', strokeWidth);
+                    residualLine.setAttribute('stroke-dasharray', '1, 1');
+                    residualLine.setAttribute('opacity', 0.6); 
+                    errorVisualization.appendChild(residualLine);
+
+                    if (isSquaredVisualization) {
+                        // MSE / RMSE Logic (Dibujar el Error Cuadrado como guía visual)
+                        const error = Math.abs(yActualSVG - yPredSVG);
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+                        const rectY = Math.min(yActualSVG, yPredSVG);
+                        const rectX = p.x; 
+
+                        if (error > 2) {
+                            rect.setAttribute('x', rectX);
+                            rect.setAttribute('y', rectY);
+                            rect.setAttribute('width', error);
+                            rect.setAttribute('height', error);
+                            rect.setAttribute('fill', color);
+                            rect.setAttribute('fill-opacity', 0.15);
+                            rect.setAttribute('stroke', color);
+                            rect.setAttribute('stroke-width', 0.5);
+                            errorVisualization.appendChild(rect);
+                        }
+
+                    } else if (metric === 'mae') {
+                        // MAE Logic (Dibujar el valor Absoluto con línea más gruesa)
+                        const absLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        absLine.setAttribute('x1', p.x);
+                        absLine.setAttribute('y1', yActualSVG);
+                        absLine.setAttribute('x2', p.x);
+                        absLine.setAttribute('y2', yPredSVG);
+                        absLine.setAttribute('stroke', color);
+                        absLine.setAttribute('stroke-width', 3);
+                        absLine.setAttribute('opacity', 0.7); 
+                        errorVisualization.appendChild(absLine);
+                    }
+                });
+
+            } else if (metric === 'r2') {
+                // Visualización de R-cuadrado (SST vs SSE)
+                meanLine.style.display = 'block';
+                meanLineLabel.style.display = 'block';
+                const meanColor = '#f97316'; // Naranja (SST)
+                const residualColor = '#0ea5e9'; // Azul (SSE)
+
+                DATA_POINTS.forEach(p => {
+                    const yActualSVG = mapYToSVG(p.y);
+                    const yPredSVG = mapYToSVG(p.predY);
+                    
+                    // 1. Dibujar SST (Varianza Total: Y vs Media)
+                    const sstLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    sstLine.setAttribute('x1', p.x);
+                    sstLine.setAttribute('y1', yActualSVG);
+                    sstLine.setAttribute('x2', p.x);
+                    sstLine.setAttribute('y2', meanYSVG);
+                    sstLine.setAttribute('stroke', meanColor);
+                    sstLine.setAttribute('stroke-width', 1.5);
+                    sstLine.setAttribute('stroke-dasharray', '2, 1');
+                    errorVisualization.appendChild(sstLine);
+
+                    // 2. Dibujar SSE (Error Residual: Y vs Predicción)
+                    const sseLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    sseLine.setAttribute('x1', p.x);
+                    sseLine.setAttribute('y1', yActualSVG);
+                    sseLine.setAttribute('x2', p.x);
+                    sseLine.setAttribute('y2', yPredSVG);
+                    sseLine.setAttribute('stroke', residualColor);
+                    sseLine.setAttribute('stroke-width', 3);
+                    sseLine.setAttribute('opacity', 0.6);
+                    errorVisualization.appendChild(sseLine);
+                });
+            }
+        }
+
+        // Controlador de selección de métricas
+        function selectMetric(metric) {
+            drawMetricVisualization(metric);
+            updateUI(metric);
+        }
+
+        // Inicializar el gráfico al cargar la página
+        window.onload = function() {
+            drawDataPoints();
+            selectMetric('mse'); // Inicia con MSE seleccionado
+            
+            // Ajustar la línea de la media de forma estática una vez
+            meanLine.setAttribute('y1', meanYSVG);
+            meanLine.setAttribute('y2', meanYSVG);
+        };
+    </script>
+</body>
+</html>
+

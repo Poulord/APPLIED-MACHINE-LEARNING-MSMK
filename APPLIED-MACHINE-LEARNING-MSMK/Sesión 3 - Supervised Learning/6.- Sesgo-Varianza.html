@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesgo y Varianza</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container-shadow {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+        /* Estilo para los círculos del tiro al blanco */
+        .bullseye {
+            stroke-width: 1;
+            stroke: #475569; /* slate-600 */
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl container-shadow p-6 md:p-10">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-8 border-b pb-6 border-slate-200">
+            <span class="text-xs font-semibold uppercase tracking-widest text-pink-500">FUNDAMENTOS DE ML</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mt-2">
+                El Compromiso Sesgo-Varianza
+            </h1>
+            <p class="mt-2 text-md text-gray-600">
+                La clave para evitar el sobreajuste (Overfitting) y el subajuste (Underfitting).
+            </p>
+        </header>
+
+        <!-- LEYENDA -->
+        <div class="flex justify-center gap-6 text-sm text-gray-600 mb-6">
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-red-600 rounded-full mr-2"></span>
+                <span>= Predicción del modelo (Disparo)</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-gray-600 rounded-full mr-2"></span>
+                <span>= Valor real (Centro)</span>
+            </div>
+        </div>
+
+        <!-- SECCIÓN INTERACTIVA CENTRAL -->
+        <div class="bg-gray-50 border-2 border-gray-300 p-6 rounded-xl mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+                Analizando el Tiro al Blanco
+            </h2>
+            
+            <!-- CONTROLES -->
+            <div class="flex flex-wrap justify-center gap-3 p-4 bg-white rounded-lg shadow-inner mb-6">
+                <button id="btn-ideal" onclick="selectScenario('ideal')" class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-white bg-green-600 hover:bg-green-700 transition duration-150 ease-in-out text-sm md:text-base">
+                    Ideal (Bajo Sesgo/Baja Varianza)
+                </button>
+                <button id="btn-high-bias" onclick="selectScenario('high_bias')" class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-gray-800 bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out text-sm md:text-base">
+                    Alto Sesgo (Subajuste)
+                </button>
+                <button id="btn-high-variance" onclick="selectScenario('high_variance')" class="px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-gray-800 bg-gray-200 hover:bg-gray-300 transition duration-150 ease-in-out text-sm md:text-base">
+                    Alta Varianza (Sobreajuste)
+                </button>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- VISUALIZACIÓN SVG -->
+                <div class="w-full lg:w-1/2 flex justify-center items-center h-80 bg-white rounded-lg border border-gray-200 p-4">
+                    <svg id="target-svg" viewBox="0 0 100 100" class="w-full h-full max-w-xs">
+                        <!-- Círculos del Blanco (Bullseye) -->
+                        <circle cx="50" cy="50" r="45" fill="#fef08a" class="bullseye"/>
+                        <circle cx="50" cy="50" r="30" fill="#fcd34d" class="bullseye"/>
+                        <circle cx="50" cy="50" r="15" fill="#f59e0b" class="bullseye"/>
+                        <circle cx="50" cy="50" r="5" fill="#ef4444"/> <!-- Centro Rojo -->
+                        
+                        <!-- Puntos de Predicción (Shots) -->
+                        <g id="prediction-shots">
+                            <!-- Points will be drawn by JavaScript -->
+                        </g>
+                    </svg>
+                </div>
+                
+                <!-- EXPLICACIÓN DEL ESCENARIO -->
+                <div id="explanation-panel" class="w-full lg:w-1/2 p-5 rounded-lg border-2 border-green-500 bg-green-50 shadow-lg flex flex-col justify-center">
+                    <h3 id="panel-title" class="text-xl font-extrabold text-green-800 mb-2">Ideal (Bajo Sesgo y Baja Varianza)</h3>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <p><strong>El Modelo:</strong> Tiene la complejidad justa. Es el objetivo ideal.</p>
+                        <p class="font-semibold text-gray-800">🎯 Sesgo (Error en el promedio): <span class="text-green-600">Bajo.</span> Las predicciones están cerca del centro.</p>
+                        <p class="font-semibold text-gray-800">📐 Varianza (Dispersión): <span class="text-green-600">Baja.</span> Las predicciones están muy juntas entre sí.</p>
+                        <p class="bg-white p-2 rounded border border-green-200">
+                            <strong>Resultado:</strong> El modelo <strong>generaliza</strong> bien. Funciona de manera consistente en datos de entrenamiento y datos nuevos (prueba).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEFINICIONES CLAVE (Grid 2x2) -->
+        <div class="grid md:grid-cols-2 gap-6 mt-8">
+            
+            <!-- Tarjeta de SESGO (Bias) -->
+            <div class="bg-sky-50 border-l-4 border-sky-500 p-5 rounded-xl shadow-md">
+                <h3 class="text-2xl font-bold text-sky-800 mb-2 flex items-center">
+                    Sesgo (Bias)
+                </h3>
+                <p class="text-gray-700 mb-3 font-semibold">
+                    Error causado por suposiciones simplificadas en el modelo.
+                </p>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li>Mide la diferencia entre la <strong>predicción promedio</strong> del modelo y el valor real.</li>
+                    <li>Un <strong>Alto Sesgo</strong> significa que el modelo es demasiado simple (ej. una línea recta) y no puede capturar la complejidad de los datos (Subajuste).</li>
+                    <li>Asociado con errores consistentes y altos.</li>
+                </ul>
+            </div>
+
+            <!-- Tarjeta de VARIANZA (Variance) -->
+            <div class="bg-pink-50 border-l-4 border-pink-500 p-5 rounded-xl shadow-md">
+                <h3 class="text-2xl font-bold text-pink-800 mb-2 flex items-center">
+                    Varianza
+                </h3>
+                <p class="text-gray-700 mb-3 font-semibold">
+                    Sensibilidad del modelo a las pequeñas fluctuaciones en los datos de entrenamiento.
+                </p>
+                <ul class="list-disc list-inside text-sm text-gray-700 ml-4">
+                    <li>Mide <strong>qué tan dispersas</strong> están las predicciones entre diferentes conjuntos de datos de entrenamiento.</li>
+                    <li>Una <strong>Alta Varianza</strong> significa que el modelo es demasiado complejo y memoriza el ruido de los datos (Sobreajuste).</li>
+                    <li>Asociada con un buen rendimiento en entrenamiento, pero un mal rendimiento en datos nuevos.</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Pie de página -->
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            El objetivo es encontrar el punto óptimo (Trade-off) donde el modelo tiene un error aceptablemente bajo en el conjunto de prueba.
+        </footer>
+
+    </div>
+
+    <script>
+        // ==========================================================
+        // Lógica de Visualización Interactiva
+        // ==========================================================
+
+        // Define las coordenadas de los 'disparos' (predicciones) para cada escenario
+        const SCENARIO_DATA = {
+            // BAJO SESGO, BAJA VARIANZA (Modelo Ideal)
+            ideal: {
+                title: "Ideal (Bajo Sesgo y Baja Varianza)",
+                bias_text: "Bajo. Las predicciones están cerca del centro.",
+                variance_text: "Baja. Las predicciones están muy juntas entre sí.",
+                bg_class: "border-green-500 bg-green-50",
+                color_class: "text-green-800",
+                shots: [
+                    { x: 50, y: 50 }, { x: 52, y: 48 }, { x: 49, y: 51 },
+                    { x: 48, y: 52 }, { x: 51, y: 49 }, { x: 50, y: 53 },
+                    { x: 53, y: 50 }, { x: 47, y: 49 }, { x: 50, y: 47 }
+                ]
+            },
+            // ALTO SESGO, BAJA VARIANZA (Subajuste/Underfitting)
+            high_bias: {
+                title: "Alto Sesgo (Subajuste)",
+                bias_text: "Alto. El grupo está lejos del centro.",
+                variance_text: "Baja. El grupo de predicciones es muy denso.",
+                bg_class: "border-sky-500 bg-sky-50",
+                color_class: "text-sky-800",
+                shots: [
+                    { x: 75, y: 25 }, { x: 77, y: 24 }, { x: 74, y: 26 },
+                    { x: 76, y: 23 }, { x: 75, y: 27 }, { x: 78, y: 25 },
+                    { x: 73, y: 25 }, { x: 76, y: 26 }, { x: 74, y: 24 }
+                ]
+            },
+            // BAJO SESGO, ALTA VARIANZA (Sobreajuste/Overfitting)
+            high_variance: {
+                title: "Alta Varianza (Sobreajuste)",
+                bias_text: "Bajo. El centro del grupo de dispersión está cerca del centro.",
+                variance_text: "Alta. Las predicciones están muy dispersas.",
+                bg_class: "border-pink-500 bg-pink-50",
+                color_class: "text-pink-800",
+                shots: [
+                    { x: 30, y: 30 }, { x: 70, y: 70 }, { x: 35, y: 65 },
+                    { x: 65, y: 35 }, { x: 50, y: 55 }, { x: 45, y: 20 },
+                    { x: 55, y: 80 }, { x: 80, y: 50 }, { x: 20, y: 50 }
+                ]
+            }
+            /* Nota: Alto Sesgo y Alta Varianza (peor escenario) no se incluye en los botones para simplificar, 
+               pero conceptualmente sería un grupo disperso y alejado del centro, combinando ambos errores.
+            */
+        };
+
+        const svgGroup = document.getElementById('prediction-shots');
+        const explanationPanel = document.getElementById('explanation-panel');
+        const panelTitle = document.getElementById('panel-title');
+        
+        const buttons = {
+            ideal: document.getElementById('btn-ideal'),
+            high_bias: document.getElementById('btn-high-bias'),
+            high_variance: document.getElementById('btn-high-variance')
+        };
+        
+        // Función para dibujar los puntos de predicción
+        function drawShots(shots) {
+            svgGroup.innerHTML = ''; // Limpiar puntos anteriores
+            shots.forEach(p => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute('cx', p.x);
+                circle.setAttribute('cy', p.y);
+                circle.setAttribute('r', 2.5); // Radio un poco más grande
+                circle.setAttribute('fill', '#ef4444'); // Rojo para las predicciones
+                svgGroup.appendChild(circle);
+            });
+        }
+
+        // Función para actualizar la UI (botones y panel de explicación)
+        function updateUI(scenario) {
+            const data = SCENARIO_DATA[scenario];
+
+            // 1. Actualizar el panel de explicación
+            explanationPanel.className = `w-full lg:w-1/2 p-5 rounded-lg border-2 shadow-lg flex flex-col justify-center ${data.bg_class}`;
+            panelTitle.textContent = data.title;
+            panelTitle.className = `text-xl font-extrabold mb-2 ${data.color_class}`;
+
+            const explanationText = `
+                <p><strong>El Modelo:</strong> Tiene ${scenario === 'high_bias' ? 'la complejidad insuficiente. Subajuste.' : scenario === 'high_variance' ? 'demasiada complejidad. Sobreajuste.' : 'la complejidad justa. Es el objetivo ideal.'}</p>
+                <p class="font-semibold text-gray-800">🎯 Sesgo (Error en el promedio): <span class="${data.color_class}">${data.bias_text}</span></p>
+                <p class="font-semibold text-gray-800">📐 Varianza (Dispersión): <span class="${data.color_class}">${data.variance_text}</span></p>
+                <p class="bg-white p-2 rounded border border-${scenario === 'ideal' ? 'green' : scenario === 'high_bias' ? 'sky' : 'pink'}-200">
+                    <strong>Resultado:</strong> El modelo <strong>${scenario === 'ideal' ? 'generaliza' : scenario === 'high_bias' ? 'subajusta' : 'sobreajusta'}</strong> la realidad.
+                </p>
+            `;
+            explanationPanel.querySelector('.space-y-3').innerHTML = explanationText;
+
+            // 2. Actualizar los botones
+            Object.keys(buttons).forEach(key => {
+                const isSelected = key === scenario;
+                const button = buttons[key];
+                
+                button.classList.toggle('bg-green-600', isSelected && key === 'ideal');
+                button.classList.toggle('hover:bg-green-700', isSelected && key === 'ideal');
+                button.classList.toggle('text-white', isSelected && key === 'ideal');
+
+                button.classList.toggle('bg-sky-600', isSelected && key === 'high_bias');
+                button.classList.toggle('hover:bg-sky-700', isSelected && key === 'high_bias');
+                button.classList.toggle('text-white', isSelected && key === 'high_bias');
+
+                button.classList.toggle('bg-pink-600', isSelected && key === 'high_variance');
+                button.classList.toggle('hover:bg-pink-700', isSelected && key === 'high_variance');
+                button.classList.toggle('text-white', isSelected && key === 'high_variance');
+
+
+                button.classList.toggle('bg-gray-200', !isSelected);
+                button.classList.toggle('hover:bg-gray-300', !isSelected);
+                button.classList.toggle('text-gray-800', !isSelected);
+            });
+        }
+        
+        // Controlador de selección de escenarios
+        function selectScenario(scenario) {
+            drawShots(SCENARIO_DATA[scenario].shots);
+            updateUI(scenario);
+        }
+
+        // Inicializar el gráfico al cargar la página
+        window.onload = function() {
+            selectScenario('ideal'); // Inicia con el escenario Ideal
+        };
+    </script>
+</body>
+</html>
+

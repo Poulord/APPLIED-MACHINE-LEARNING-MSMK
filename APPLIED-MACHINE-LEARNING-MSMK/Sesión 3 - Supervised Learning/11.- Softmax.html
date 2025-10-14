@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificación Multiclase: Regresión Logística Extendida</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de fuente y fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Gris muy claro */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        /* Estilos para el texto de clase simulado */
+        .class-dot {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .class-dot:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        /* Estilo para los botones de colapsar/expandir */
+        .toggle-btn {
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .toggle-btn:active {
+            transform: scale(0.98);
+        }
+        /* Animación de giro para el ícono */
+        .rotated {
+            transform: rotate(180deg);
+        }
+        /* Estilo para el canvas de la sigmoide (mantenido por si se necesita) */
+        #sigmoidCanvas {
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+        /* Animación para el anillo de la clase elegida */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.3); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 0; }
+        }
+        .pulse-effect {
+            animation: pulse-ring 1s ease-out infinite;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'blue-gemini': '#1a73e8',
+                        'blue-gemini-light': '#4285f4',
+                        'class-a': '#ef4444', /* Red-500 */
+                        'class-b': '#10b981', /* Emerald-500 */
+                        'class-c': '#3b82f6', /* Blue-500 */
+                    }
+                }
+            }
+        }
+
+        // --- FUNCIONES DE BASE DE CLASIFICACIÓN ---
+
+        // Función Sigmoide (Aún se mantiene por si se usa en la explicación de OvR, aunque no se visualice)
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+
+        // Función Softmax (Usada en Regresión Logística Multinomial)
+        function softmax(logits) {
+            // logits es un array de Z (logits) [Z_A, Z_B, Z_C, ...]
+            const exp_logits = logits.map(z => Math.exp(z));
+            const sum_exp = exp_logits.reduce((a, b) => a + b, 0);
+            return exp_logits.map(exp => exp / sum_exp); // Retorna [P_A, P_B, P_C, ...]
+        }
+
+        // --- LÓGICA DE VISUALIZACIÓN MULTICLASE (SOFTMAX) ---
+
+        function setupMulticlassInteraction() {
+            // Asegurarse de que todos los elementos existan antes de configurar los listeners
+            const sliders = ['zA', 'zB', 'zC'].map(id => document.getElementById(id)).filter(e => e !== null);
+            if (sliders.length === 0) return; // Salir si los sliders no están presentes
+
+            const zValueSpans = ['zAValue', 'zBValue', 'zCValue'].map(id => document.getElementById(id));
+            const pValueSpans = ['pAValue', 'pBValue', 'pCValue'].map(id => document.getElementById(id));
+            const finalClassDisplay = document.getElementById('finalClassDisplay');
+            
+            // Referencias a los contenedores de íconos
+            const classIcons = {
+                'A': document.getElementById('classIconA'),
+                'B': document.getElementById('classIconB'),
+                'C': document.getElementById('classIconC'),
+            };
+            const classColors = {
+                'A': 'text-class-a',
+                'B': 'text-class-b',
+                'C': 'text-class-c',
+            };
+            const classRingColors = {
+                'A': 'ring-class-a',
+                'B': 'ring-class-b',
+                'C': 'ring-class-c',
+            };
+
+            const updateMulticlassVisualization = () => {
+                const logits = sliders.map(s => parseFloat(s.value));
+                const probabilities = softmax(logits);
+
+                let maxP = -1;
+                let predictedClass = '';
+                
+                // 1. Actualizar valores y encontrar clase ganadora
+                probabilities.forEach((p, index) => {
+                    const className = ['A', 'B', 'C'][index];
+                    const z = logits[index];
+
+                    if (zValueSpans[index]) zValueSpans[index].textContent = z.toFixed(2);
+                    if (pValueSpans[index]) pValueSpans[index].textContent = p.toFixed(3);
+                    
+                    if (p > maxP) {
+                        maxP = p;
+                        predictedClass = className;
+                    }
+                });
+
+                // 2. Actualizar Display de Clase Final
+                if (finalClassDisplay) {
+                    finalClassDisplay.textContent = `Clase ${predictedClass} (P = ${maxP.toFixed(3)})`;
+                    
+                    // Limpiar y aplicar color al texto de la decisión final
+                    Object.values(classColors).forEach(c => finalClassDisplay.classList.remove(c));
+                    finalClassDisplay.classList.add(classColors[predictedClass]);
+                }
+
+                // 3. Actualizar Visualización de Íconos
+                ['A', 'B', 'C'].forEach(className => {
+                    const icon = classIcons[className];
+                    if (!icon) return;
+
+                    // Limpiar clases de anillo y animación
+                    Object.values(classRingColors).forEach(c => icon.classList.remove('ring-8', 'ring-opacity-80', c, 'pulse-effect'));
+                    
+                    if (className === predictedClass) {
+                        // Aplicar anillo y animación a la clase ganadora
+                        icon.classList.add('ring-8', 'ring-opacity-80', classRingColors[className], 'pulse-effect');
+                    } else {
+                        // Iconos perdedores tienen un anillo sutil
+                        icon.classList.add('ring-4', 'ring-gray-300/30');
+                    }
+                });
+            };
+
+            sliders.forEach(slider => {
+                slider.oninput = updateMulticlassVisualization;
+            });
+
+            // Establecer valores iniciales para un estado neutro
+            document.getElementById('zA').value = 1.0;
+            document.getElementById('zB').value = -1.0;
+            document.getElementById('zC').value = 0.5;
+            updateMulticlassVisualization();
+        }
+
+
+        // --- LÓGICA DE LA INFOGRAFÍA (Colapsables) ---
+
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const icon = document.getElementById(`icon-${sectionId}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                setTimeout(() => {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }, 10);
+                if (icon) icon.classList.add('rotated');
+            } else {
+                content.style.maxHeight = '0';
+                content.addEventListener('transitionend', function() {
+                    if (content.style.maxHeight === '0px') {
+                        content.classList.add('hidden');
+                    }
+                }, { once: true });
+                if (icon) icon.classList.remove('rotated');
+            }
+        }
+    </script>
+</head>
+<body class="p-4">
+
+    <!-- Contenedor Principal de la Infografía -->
+    <div class="max-w-4xl w-full mx-auto p-6 md:p-10 bg-white rounded-xl shadow-2xl space-y-8">
+        
+        <header class="text-center border-b-4 border-blue-gemini pb-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
+                Clasificación Multiclase
+            </h1>
+            <p class="mt-2 text-xl text-gray-600">
+                La extensión de la Regresión Logística
+            </p>
+        </header>
+
+        <!-- Sección 1: Definición y Contexto -->
+        <section class="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-gemini-light">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-3">¿Qué es?</h2>
+            <p class="text-lg text-gray-600">
+                Mientras que la <strong>Regresión Logística</strong> se limita a problemas de <strong>clasificación binaria</strong> (por ejemplo: Sí/No, 0/1), la clasificación multiclase permite asignar una instancia a <span class="font-bold text-blue-gemini">más de dos categorías</span> posibles.
+                Esencialmente, transformamos un clasificador binario simple en un sistema que puede manejar K clases, donde K > 2.
+            </p>
+        </section>
+        
+        <!-- Sección 2: Transición a Multiclase: Simulación Softmax -->
+        <section class="bg-indigo-50 p-6 rounded-xl border-l-4 border-indigo-500">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 3-3M3 21h18M5 9h14M8 17h8"/></svg>
+                Transición a Multiclase: Simulación Softmax
+            </h2>
+            <p class="text-gray-600 mb-6">
+                En Softmax, cada clase tiene un puntaje <strong>Z</strong> (Logit). Mueve los controles para ver cómo el Softmax convierte esos puntajes en probabilidades P (que suman 1) y elige la clase ganadora.
+            </p>
+
+            <!-- Contenedor de Sliders -->
+            <div class="space-y-4 bg-white p-4 rounded-lg shadow-inner">
+                <!-- Slider A -->
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                    <label class="font-semibold text-class-a w-full sm:w-1/4">Clase A (Logit Z): <span id="zAValue" class="font-bold">1.00</span></label>
+                    <input type="range" id="zA" min="-3" max="3" step="0.1" value="1.0" class="w-full sm:w-1/2 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-gray-700 w-full sm:w-1/4 text-right">P(A): <span id="pAValue" class="font-bold text-lg">0.333</span></span>
+                </div>
+                <!-- Slider B -->
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                    <label class="font-semibold text-class-b w-full sm:w-1/4">Clase B (Logit Z): <span id="zBValue" class="font-bold">-1.00</span></label>
+                    <input type="range" id="zB" min="-3" max="3" step="0.1" value="-1.0" class="w-full sm:w-1/2 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-gray-700 w-full sm:w-1/4 text-right">P(B): <span id="pBValue" class="font-bold text-lg">0.333</span></span>
+                </div>
+                <!-- Slider C -->
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                    <label class="font-semibold text-class-c w-full sm:w-1/4">Clase C (Logit Z): <span id="zCValue" class="font-bold">0.50</span></label>
+                    <input type="range" id="zC" min="-3" max="3" step="0.1" value="0.5" class="w-full sm:w-1/2 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span class="text-gray-700 w-full sm:w-1/4 text-right">P(C): <span id="pCValue" class="font-bold text-lg">0.333</span></span>
+                </div>
+            </div>
+
+            <!-- Resultado de la Clasificación -->
+            <div class="mt-6 flex flex-col md:flex-row items-center justify-between p-4 bg-white rounded-lg shadow-xl border-t-4 border-indigo-300">
+                <div class="flex flex-col items-center md:items-start mb-4 md:mb-0">
+                    <p class="text-xl font-medium text-gray-700">Decisión Final del Modelo:</p>
+                    <span id="finalClassDisplay" class="text-3xl font-extrabold text-red-500 transition-colors duration-300">
+                        Clase A (P = 0.333)
+                    </span>
+                </div>
+                
+                <!-- Visualización de Íconos -->
+                <div class="flex space-x-6">
+                    <div id="classIconA" class="class-dot w-10 h-10 rounded-full bg-class-a ring-8 ring-class-a/80 pulse-effect"></div>
+                    <div id="classIconB" class="class-dot w-10 h-10 rounded-full bg-class-b ring-4 ring-gray-300/30"></div>
+                    <div id="classIconC" class="class-dot w-10 h-10 rounded-full bg-class-c ring-4 ring-gray-300/30"></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Sección 3: Enfoques Interactivos -->
+        <section class="space-y-6">
+            <h2 class="text-3xl font-bold text-gray-800">Tres Enfoques Clave</h2>
+
+            <!-- Tarjeta 1: Uno vs. El Resto (OvR) -->
+            <div class="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                <button class="toggle-btn w-full p-5 flex justify-between items-center text-left bg-gray-50 hover:bg-gray-100 rounded-t-xl" onclick="toggleSection('ovr-content')">
+                    <span class="text-xl font-semibold text-gray-800">1. Uno vs. El Resto (One-vs-Rest / OvR)</span>
+                    <svg id="icon-ovr-content" class="w-6 h-6 transform transition-transform text-blue-gemini" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="ovr-content" class="overflow-hidden transition-all duration-500 ease-in-out hidden" style="max-height: 0;">
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-700 mb-3">
+                            Este método entrena K clasificadores binarios separados, <strong>cada uno usando una función Sigmoide</strong>.
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li class="text-gray-700"><span class="font-medium text-class-a">Clasificador 1:</span> ¿Es Clase A? (vs. Resto)</li>
+                            <li class="text-gray-700"><span class="font-medium text-class-b">Clasificador 2:</span> ¿Es Clase B? (vs. Resto)</li>
+                            <li class="text-gray-700"><span class="font-medium text-class-c">Clasificador 3:</span> ¿Es Clase C? (vs. Resto)</li>
+                        </ul>
+                        <p class="mt-3 text-sm italic text-gray-500">
+                            **Decisión final:** La clase con la puntuación de probabilidad más alta de sus respectivos clasificadores es la seleccionada.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Regresión Softmax -->
+            <div class="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                <button class="toggle-btn w-full p-5 flex justify-between items-center text-left bg-gray-50 hover:bg-gray-100" onclick="toggleSection('softmax-content')">
+                    <span class="text-xl font-semibold text-gray-800">2. Regresión Softmax (Logística Multinomial)</span>
+                    <svg id="icon-softmax-content" class="w-6 h-6 transform transition-transform text-blue-gemini" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="softmax-content" class="overflow-hidden transition-all duration-500 ease-in-out hidden" style="max-height: 0;">
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-700 mb-3">
+                            A diferencia de OvR, Softmax entrena un <strong>único modelo</strong> que utiliza la fórmula de abajo para normalizar los puntajes <strong>Z</strong> en probabilidades.
+                        </p>
+                        <p class="text-gray-700 mb-3 font-semibold">
+                            Función Softmax (Aproximación para HTML):
+                        </p>
+                        <div class="bg-blue-gemini-light/10 p-4 rounded-lg overflow-x-auto">
+                            <!-- Fórmula Softmax adaptada a texto plano para visibilidad garantizada en HTML sin librerías -->
+                            <code class="text-sm text-blue-gemini font-mono block text-center">
+                                P(y = j | x) = e^(w_j * x) / ( Σ[k=1 hasta K] e^(w_k * x) )
+                            </code>
+                        </div>
+                        
+                        <h4 class="text-lg font-bold text-gray-800 mt-4 mb-2">Ejemplo Numérico:</h4>
+                        <div class="bg-gray-100 p-4 rounded-lg space-y-2 text-sm font-mono text-gray-700">
+                            <p><strong>1. Puntajes (Logits Z):</strong></p>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>Clase 1: Z<sub>1</sub> = 2.0</li>
+                                <li>Clase 2: Z<sub>2</sub> = 1.0</li>
+                                <li>Clase 3: Z<sub>3</sub> = -1.0</li>
+                            </ul>
+                            <p><strong>2. Exponenciales (e<sup>Z</sup>):</strong></p>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>e<sup>2.0</sup> ≈ 7.389</li>
+                                <li>e<sup>1.0</sup> ≈ 2.718</li>
+                                <li>e<sup>-1.0</sup> ≈ 0.368</li>
+                            </ul>
+                            <p><strong>3. Suma de Exponenciales (Denominador):</strong></p>
+                            <p class="ml-4">7.389 + 2.718 + 0.368 ≈ <strong>10.475</strong></p>
+                            <p><strong>4. Probabilidades P:</strong></p>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>P(y=1) = 7.389 / 10.475 ≈ <strong>0.705</strong></li>
+                                <li>P(y=2) = 2.718 / 10.475 ≈ <strong>0.259</strong></li>
+                                <li>P(y=3) = 0.368 / 10.475 ≈ <strong>0.035</strong></li>
+                            </ul>
+                            <p class="text-right mt-3 pt-2 border-t border-gray-300">Suma Total: 0.705 + 0.259 + 0.035 = <strong>1.0</strong> ✅</p>
+                        </div>
+
+                        <p class="mt-3 text-sm italic text-gray-500">
+                            **Resultado:** Obtienes un vector de probabilidades donde la suma de todas las probabilidades es igual a 1. La simulación superior utiliza esta fórmula.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta 3: Uno vs. Uno (OvO) -->
+            <div class="bg-white border-2 border-gray-200 rounded-xl shadow-lg">
+                <button class="toggle-btn w-full p-5 flex justify-between items-center text-left bg-gray-50 hover:bg-gray-100 rounded-b-xl" onclick="toggleSection('ovo-content')">
+                    <span class="text-xl font-semibold text-gray-800">3. Uno vs. Uno (One-vs-One / OvO)</span>
+                    <svg id="icon-ovo-content" class="w-6 h-6 transform transition-transform text-blue-gemini" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="ovo-content" class="overflow-hidden transition-all duration-500 ease-in-out hidden" style="max-height: 0;">
+                    <div class="p-5 border-t border-gray-200">
+                        <p class="text-gray-700 mb-3">
+                            Este método entrena un clasificador binario para <strong>cada par</strong> posible de clases. Si tienes K clases, se entrenan K(K-1)/2 clasificadores.
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li class="text-gray-700">Clasificador (A vs B)</li>
+                            <li class="text-gray-700">Clasificador (A vs C)</li>
+                            <li class="text-gray-700">Clasificador (B vs C)</li>
+                        </ul>
+                        <p class="mt-3 text-sm italic text-gray-500">
+                            **Decisión final:** Cuando se presenta una nueva instancia, se ejecuta cada clasificador. La clase que "gana" la mayoría de los enfrentamientos (método de **voto por mayoría**) es la predicción final.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+        
+        <!-- Sección 4: Guía Rápida: ¿Cuándo Usar Cuál? (NUEVA) -->
+        <section class="bg-green-50 p-6 rounded-xl border-l-4 border-green-600 mt-8 shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-green-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.276a4.5 4.5 0 010 6.364L12 20.364l-7.618-7.618a4.5 4.5 0 016.364-6.364L12 7.636l1.272-1.272a4.5 4.5 0 016.364 0z"/></svg>
+                Guía Rápida: ¿Cuándo Usar Cuál?
+            </h2>
+            <div class="space-y-3 text-lg text-gray-700">
+                <p>
+                    <strong class="text-red-700">Clasificación Binaria:</strong> Usar la <span class="font-semibold text-blue-gemini">Función Sigmoide</span> (Regresión Logística). Es su propósito principal.
+                </p>
+                <hr class="border-green-200">
+                <p>
+                    <strong class="text-indigo-700">K pequeña, Prototipado Rápido:</strong> Usar <span class="font-semibold text-blue-gemini">OvO/OvR</span>. Son fáciles de implementar para un número reducido de clases (K).
+                </p>
+                <hr class="border-green-200">
+                <p>
+                    <strong class="text-purple-700">Corrección Teórica y Producción:</strong> Usar <span class="font-semibold text-blue-gemini">Softmax</span>. Es el estándar para obtener probabilidades bien formadas que suman 1.
+                </p>
+                <hr class="border-green-200">
+                <p>
+                    <strong class="text-purple-700">Desequilibrio de Clases:</strong> Usar <span class="font-semibold text-blue-gemini">Softmax</span>. Proporciona una mejor calibración de las probabilidades relativas entre todas las clases.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t-2 border-gray-200">
+            <p class="text-md text-gray-500">
+                La Clasificación Multiclase es fundamental en tareas como la clasificación de imágenes, el reconocimiento de voz o la predicción de resultados con múltiples categorías.
+            </p>
+        </footer>
+
+    </div>
+
+    <!-- Script para asegurar el correcto re-cálculo de altura al expandir y inicializar canvas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ajusta la transición para que la altura máxima se anime
+            document.querySelectorAll('.transition-all').forEach(el => {
+                el.style.transitionProperty = 'max-height, visibility';
+            });
+            // Inicializar solo la interacción multiclas Softmax
+            setupMulticlassInteraction();
+        });
+    </script>
+
+</body>
+</html>
+

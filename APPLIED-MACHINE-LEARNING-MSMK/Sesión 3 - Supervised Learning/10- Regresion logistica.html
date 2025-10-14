@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresión Logística y Función Sigmoide</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3e8ff; /* Púrpura muy claro (Violet-50) */
+        }
+        .card-shadow {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+        /* Estilos para el gradiente de probabilidad */
+        #probBar {
+            background: linear-gradient(90deg, #fef2f2 0%, #dc2626 50%, #10b981 50%, #10b981 100%);
+            transition: width 0.3s ease-in-out;
+        }
+        /* Contenedor SVG para mantener el aspecto ratio en responsive */
+        #svg-container {
+            width: 100%;
+            padding-top: 50%; /* 2:1 Aspect Ratio (200 / 400 * 100) */
+            position: relative;
+        }
+        #sigmoidSvg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .variable {
+            font-style: italic;
+            font-weight: bold;
+        }
+    </style>
+    <!-- Configuración para usar MathJax para LaTeX (solo para fórmulas en bloque) -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl card-shadow p-6 md:p-12">
+        
+        <!-- HEADER: Título y Definición -->
+        <header class="text-center mb-10 border-b pb-6 border-violet-200">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
+                Regresión Logística y la <span class="text-violet-600">Función Sigmoidea</span>
+            </h1>
+            <p class="mt-3 text-lg text-gray-600 max-w-4xl mx-auto">
+                Un algoritmo de <strong>clasificación binaria</strong> que, a pesar de su nombre, no predice valores continuos, sino la <strong>probabilidad</strong> de pertenencia a una clase.
+            </p>
+        </header>
+
+        <!-- GRID PRINCIPAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- TARJETA 1: El Contexto (Clasificación Binaria) -->
+            <div class="lg:col-span-1 bg-violet-50 border border-violet-200 rounded-2xl p-6 flex flex-col justify-between h-full transition duration-300 hover:shadow-lg">
+                <div>
+                    <div class="text-violet-600 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-binary"><path d="M5 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5Z"/><path d="M12 8v8"/><path d="M8 8v8"/><path d="M16 8v8"/></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-3">1. Objetivo: Clase Binaria</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        La Regresión Logística es ideal para problemas donde la salida solo puede ser uno de <strong>dos valores</strong> (0 o 1, Sí o No, Positivo o Negativo).
+                    </p>
+                    <div class="mt-4 bg-violet-100 p-3 rounded-lg border border-violet-300">
+                        <p class="font-semibold text-violet-800 text-sm">¿Cómo funciona?</p>
+                        <p class="text-violet-700 text-sm">
+                            Utiliza la regresión lineal para generar una entrada <span class="variable">z</span> y luego la convierte en probabilidad <span class="variable">P</span>.
+                        </p>
+                        <!-- Fórmula de regresión lineal. Usamos MathJax para el formato. -->
+                        <p class="text-violet-900 font-mono text-xs mt-2">
+                            $$z = \beta_0 + \beta_1x_1 + \dots + \beta_nx_n$$
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETA 2: LA FUNCIÓN SIGMOIDEA (Interactiva y con Gráfica) -->
+            <div class="lg:col-span-2 bg-pink-50 border border-pink-200 rounded-2xl p-6 transition duration-300 hover:shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">2. El Motor: Función Sigmoidea ($S(z)$)</h2>
+                
+                <div class="flex items-center space-x-4 mb-4">
+                    <!-- Fórmula Sigmoidea. Usamos MathJax para el formato. -->
+                    <div class="text-2xl font-extrabold text-pink-700">
+                        $$P(y=1 | x) = S(z) = \frac{1}{1 + e^{-z}}$$
+                    </div>
+                </div>
+
+                <!-- PÁRRAFO CORREGIDO con Unicode para infinito y <strong> para negritas -->
+                <p class="text-gray-700 mb-6">
+                    Esta función toma cualquier valor real <span class="variable">z</span> (de &minus;&infin; a +&infin;) y lo "aprieta" en un rango de <strong>probabilidad de 0 a 1</strong>.
+                </p>
+
+                <!-- INTERACCIÓN SIGMOIDEA Y GRÁFICA -->
+                <div class="p-4 bg-white rounded-xl border border-pink-300 shadow-inner">
+                    
+                    <!-- Contenedor del SVG para la gráfica -->
+                    <div id="svg-container">
+                        <svg id="sigmoidSvg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid meet">
+                            <!-- Definir Margenes y Escalas (Viewport es 400x200) -->
+                            <g id="graph-content" transform="translate(40, 10)">
+                                <!-- Fondo y Ejes -->
+                                <rect width="320" height="180" fill="#fef2f2" stroke="#d1d5db" stroke-width="1" rx="5"/>
+                                <!-- Eje X (Z) -->
+                                <line x1="0" y1="90" x2="320" y2="90" stroke="#9ca3af" stroke-width="1"/>
+                                <!-- Eje Y (P) -->
+                                <line x1="160" y1="0" x2="160" y2="180" stroke="#9ca3af" stroke-width="1"/>
+                                
+                                <!-- Línea de Decisión P=0.5 (Y=90) -->
+                                <line x1="0" y1="90" x2="320" y2="90" stroke="#f69d3c" stroke-dasharray="4 2" stroke-width="2"/>
+
+                                <!-- Ticks y Etiquetas -->
+                                <text x="-25" y="10" fill="#4b5563" font-size="12">P=1</text>
+                                <text x="-25" y="185" fill="#4b5563" font-size="12">P=0</text>
+                                <text x="155" y="198" fill="#4b5563" font-size="12">Z=0</text>
+                                <text x="5" y="198" fill="#4b5563" font-size="12">Z=-5</text>
+                                <text x="305" y="198" fill="#4b5563" font-size="12">Z=5</text>
+                                
+                                <!-- Curva Sigmoidea (generada por JS) -->
+                                <path id="sigmoidPath" fill="none" stroke="#db2777" stroke-width="3" />
+
+                                <!-- Punto Interactivo (z, P) -->
+                                <circle id="interactivePoint" r="6" fill="#ec4899" stroke="#fff" stroke-width="2" />
+
+                                <!-- Líneas de Proyección -->
+                                <line id="projZ" stroke="#9ca3af" stroke-dasharray="2 2" stroke-width="1" />
+                                <line id="projP" stroke="#9ca3af" stroke-dasharray="2 2" stroke-width="1" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Slider y Resultados -->
+                    <label for="z_input" class="block text-sm font-medium text-gray-700 mb-2 mt-4">
+                        Valor de Entrada Z (Resultado de Regresión Lineal): <span id="z_display" class="font-bold text-pink-600">0.00</span>
+                    </label>
+                    <input type="range" id="z_input" min="-5" max="5" step="0.1" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-lg font-semibold text-gray-700">
+                            Probabilidad de Clase 1 (<span class="variable">P</span>): <span id="prob_display" class="font-extrabold text-2xl text-pink-600">0.50</span>
+                        </div>
+                        <div id="classification_result" class="px-3 py-1 rounded-full text-sm font-bold bg-gray-200">
+                            CLASE 0
+                        </div>
+                    </div>
+
+                    <!-- Barra de Probabilidad Visual -->
+                    <div class="w-full h-8 mt-4 rounded-lg overflow-hidden border border-gray-300 relative">
+                        <div id="prob_fill" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%;"></div>
+                        <div class="absolute inset-y-0 left-1/2 w-0.5 bg-gray-900" title="Umbral 0.5"></div>
+                    </div>
+                    <div class="flex justify-between text-xs mt-1 text-gray-500">
+                        <span>0% (Clase 0)</span>
+                        <span>50%</span>
+                        <span>100% (Clase 1)</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TARJETA 3: El Umbral de Decisión (Decision Boundary) -->
+            <div class="lg:col-span-3 bg-teal-50 border border-teal-200 rounded-2xl p-8 mt-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-5 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler text-teal-600 mr-2"><path d="M15 22.5L9 22.5"/><path d="M12 21L12 3"/><path d="M3 7V2.5A2.5 2.5 0 0 1 5.5 0H18.5A2.5 2.5 0 0 1 21 2.5V7"/><path d="M12 16L12 7"/><path d="M9 11L9 7"/><path d="M15 11L15 7"/></svg>
+                    3. Umbral de Decisión (Threshold)
+                </h2>
+
+                <div class="md:flex gap-6 items-start">
+                    <div class="md:w-2/3 space-y-4 text-gray-700">
+                        <p>
+                            Una vez que la Sigmoidea nos da una probabilidad <span class="variable">P</span> (un valor entre 0 y 1), necesitamos convertirla en una etiqueta de clase final. Esto se hace aplicando un <strong>Umbral</strong> (Threshold), generalmente fijado en <strong>0.5</strong>.
+                        </p>
+                        <p class="bg-teal-100 p-3 rounded-lg border border-teal-300 text-sm">
+                            <strong>Regla de Decisión:</strong>
+                            <ul>
+                                <!-- CORRECCIÓN: $\rightarrow$ reemplazado por &rarr; -->
+                                <li>Si <span class="variable">P</span> &ge; 0.5 &rarr; Clasifica como <strong>Clase 1</strong> (Positivo).</li>
+                                <li>Si <span class="variable">P</span> &lt; 0.5 &rarr; Clasifica como <strong>Clase 0</strong> (Negativo).</li>
+                            </ul>
+                        </p>
+                        <p>
+                            En el punto <span class="variable">P</span> = 0.5, el valor de entrada <span class="variable">z</span> es exactamente 0. Por eso, <span class="variable">z</span>=0 se conoce como la <strong>frontera de decisión</strong> (Decision Boundary) del modelo.
+                        </p>
+                    </div>
+                    
+                    <div class="md:w-1/3 mt-6 md:mt-0 flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-teal-300 shadow-inner">
+                        <div class="text-center">
+                            <h4 class="text-lg font-bold text-teal-700 mb-2">Punto Crítico</h4>
+                            <!-- Usamos MathJax para el formato de la fórmula en bloque, que es donde se debe usar. -->
+                            <p class="text-gray-800 font-mono text-xl">
+                                $$z=0 \quad \implies \quad P=0.5$$
+                            </p>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart text-teal-600 mx-auto my-3"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                            <p class="text-sm text-gray-600">
+                                La frontera donde la probabilidad de ambas clases es igual.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- LÓGICA DE INTERACTIVIDAD Y GRÁFICOS SVG ---
+
+        // Elementos DOM
+        const zInput = document.getElementById('z_input');
+        const zDisplay = document.getElementById('z_display');
+        const probDisplay = document.getElementById('prob_display');
+        const probFill = document.getElementById('prob_fill');
+        const classificationResult = document.getElementById('classification_result');
+        
+        // Elementos SVG
+        const sigmoidPath = document.getElementById('sigmoidPath');
+        const interactivePoint = document.getElementById('interactivePoint');
+        const projZ = document.getElementById('projZ'); // Proyección a Z
+        const projP = document.getElementById('projP'); // Proyección a P
+
+        // Configuración de la gráfica SVG
+        const GRAPH_WIDTH = 320;
+        const GRAPH_HEIGHT = 180;
+        const Z_MIN = -5;
+        const Z_MAX = 5;
+
+        /**
+         * Mapea un valor Z (de -5 a 5) a una posición X en el SVG (de 0 a 320).
+         * @param {number} z Valor de entrada.
+         * @returns {number} Posición X en el SVG.
+         */
+        function mapZtoX(z) {
+            return (z - Z_MIN) / (Z_MAX - Z_MIN) * GRAPH_WIDTH;
+        }
+
+        /**
+         * Mapea un valor P (de 0 a 1) a una posición Y en el SVG (de 180 a 0).
+         * El eje Y en SVG está invertido (0 arriba, 180 abajo).
+         * @param {number} p Valor de probabilidad.
+         * @returns {number} Posición Y en el SVG.
+         */
+        function mapPtoY(p) {
+            return GRAPH_HEIGHT * (1 - p);
+        }
+
+        /**
+         * Calcula el valor Sigmoidea para cualquier entrada z.
+         * S(z) = 1 / (1 + e^-z)
+         * @param {number} z El valor de entrada.
+         * @returns {number} La probabilidad (0 a 1).
+         */
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+
+        /**
+         * Dibuja la curva Sigmoidea en el SVG.
+         */
+        function drawSigmoidCurve() {
+            let pathData = "M"; // MoveTo
+            const step = 0.5;
+            for (let z = Z_MIN; z <= Z_MAX; z += step) {
+                const x = mapZtoX(z);
+                const p = sigmoid(z);
+                const y = mapPtoY(p);
+                pathData += `${x},${y} `;
+            }
+            sigmoidPath.setAttribute('d', pathData);
+        }
+
+        /**
+         * Actualiza la visualización basada en el valor del slider.
+         */
+        function updateSigmoidVisualization() {
+            const z = parseFloat(zInput.value);
+            
+            // 1. Calcular Probabilidad P
+            const probability = sigmoid(z);
+            const probPercent = (probability * 100).toFixed(0);
+
+            // 2. Determinar Clasificación (Umbral 0.5)
+            const classification = probability >= 0.5 ? 'CLASE 1' : 'CLASE 0';
+            
+            // 3. Actualizar displays de texto
+            zDisplay.textContent = z.toFixed(2);
+            probDisplay.textContent = probability.toFixed(2);
+            
+            // 4. Actualizar barra visual
+            probFill.style.width = `${probPercent}%`;
+            
+            // 5. Actualizar resultado de clasificación
+            classificationResult.textContent = classification;
+
+            // 6. Actualizar estilo del resultado
+            if (classification === 'CLASE 1') {
+                classificationResult.classList.remove('bg-red-100', 'text-red-700', 'bg-gray-200');
+                classificationResult.classList.add('bg-emerald-100', 'text-emerald-700');
+            } else {
+                classificationResult.classList.remove('bg-emerald-100', 'text-emerald-700');
+                classificationResult.classList.add('bg-red-100', 'text-red-700');
+            }
+
+            if (z === 0) {
+                // Estilo especial para el punto de quiebre
+                classificationResult.classList.remove('bg-red-100', 'text-red-700', 'bg-emerald-100', 'text-emerald-700');
+                classificationResult.classList.add('bg-gray-300', 'text-gray-800');
+            }
+
+            // 7. Actualizar la gráfica SVG
+            const x = mapZtoX(z);
+            const y = mapPtoY(probability);
+            const y_axis_center = 90; // Posición Y del eje Z (z=0)
+            const x_axis_center = 160; // Posición X del eje P (P=0.5)
+
+            // Mover el punto interactivo
+            interactivePoint.setAttribute('cx', x);
+            interactivePoint.setAttribute('cy', y);
+
+            // Dibujar las líneas de proyección
+            // Proyección horizontal (a eje P/Y)
+            projP.setAttribute('x1', x);
+            projP.setAttribute('y1', y);
+            projP.setAttribute('x2', 0);
+            projP.setAttribute('y2', y);
+            
+            // Proyección vertical (a eje Z/X)
+            projZ.setAttribute('x1', x);
+            projZ.setAttribute('y1', y);
+            projZ.setAttribute('x2', x);
+            projZ.setAttribute('y2', GRAPH_HEIGHT); // Al fondo del gráfico
+        }
+
+        // Event listener para el slider
+        zInput.addEventListener('input', updateSigmoidVisualization);
+
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dibuja la curva una vez
+            drawSigmoidCurve();
+            // Actualiza la visualización interactiva al valor inicial (z=0)
+            updateSigmoidVisualization();
+        });
+    </script>
+</body>
+</html>
+

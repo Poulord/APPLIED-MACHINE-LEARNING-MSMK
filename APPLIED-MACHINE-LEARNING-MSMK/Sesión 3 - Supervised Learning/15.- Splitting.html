@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>División de Datos para ML</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .section-header {
+            border-bottom: 3px solid #3b82f6; /* blue-500 */
+        }
+        .data-bar-segment {
+            transition: width 0.3s ease-in-out;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-5xl w-full mx-auto p-6 md:p-8 bg-white rounded-xl shadow-2xl space-y-10">
+        
+        <header class="text-center section-header pb-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                Infografía: División de Datos para Machine Learning
+            </h1>
+            <p class="mt-2 text-xl text-gray-600">
+                El total es de <b>1000 puntos</b> de datos. Ajusta los sliders para definir el tamaño de cada conjunto.
+            </p>
+        </header>
+
+        <!-- Nueva Sección: Explicación y Criterios -->
+        <section class="mt-8 p-6 bg-gray-50 rounded-xl shadow-md border-l-4 border-gray-400">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Propósito y Criterios de la División</h2>
+            
+            <div class="space-y-4">
+                <div class="border-b pb-2 border-gray-200">
+                    <h3 class="text-xl font-semibold text-blue-700">Conjunto de Entrenamiento (Train)</h3>
+                    <p class="text-gray-700 text-base mt-1">
+                        <b>Propósito:</b> Es el conjunto más grande. Se utiliza para <b>enseñar</b> al modelo, ajustando sus pesos y sesgos internos (parámetros) durante el proceso de optimización.
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <b>Criterio de Tamaño:</b> Debe ser lo suficientemente grande para capturar la complejidad de los datos (e.g., 60% a 80% del total).
+                    </p>
+                </div>
+                
+                <div class="border-b pb-2 border-gray-200">
+                    <h3 class="text-xl font-semibold text-yellow-700">Conjunto de Validación (Validation)</h3>
+                    <p class="text-gray-700 text-base mt-1">
+                        <b>Propósito:</b> Se usa para <b>seleccionar los hiperparámetros</b> (e.g., tasa de aprendizaje, número de capas) del modelo y monitorear el rendimiento en datos no vistos, ayudando a prevenir el <b>sobreajuste</b> (overfitting).
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <b>Criterio de Tamaño:</b> Típicamente entre 10% y 20%. No necesita ser tan grande como el de entrenamiento, pero sí representativo.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-red-700">Conjunto de Prueba (Test)</h3>
+                    <p class="text-gray-700 text-base mt-1">
+                        <b>Propósito:</b> Se evalúa al modelo <b>una sola vez</b> al final del desarrollo para obtener una métrica de rendimiento <b>imparcial</b> y simular su comportamiento en el mundo real. ¡Nunca se toca durante el entrenamiento o la validación!
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <b>Criterio de Tamaño:</b> Generalmente entre 10% y 20%. Es crucial mantenerlo separado e intacto.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Controles (Sliders) -->
+        <section>
+            <h2 class="text-3xl font-bold text-blue-600 mb-6">1. Control de Porcentajes</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-blue-50 rounded-xl shadow-inner">
+                
+                <!-- Slider para Entrenamiento -->
+                <div class="space-y-3">
+                    <label for="train-slider" class="block text-lg font-semibold text-blue-800">
+                        Conjunto de <span style="color:#2563eb;">Entrenamiento</span>: <span id="train-percent-display">70%</span>
+                    </label>
+                    <input type="range" id="train-slider" min="50" max="80" value="70" step="5" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" oninput="updateSplit()">
+                    <p class="text-sm text-gray-600">Se usa para <b>ajustar los pesos</b> del modelo.</p>
+                </div>
+                
+                <!-- Slider para Validación -->
+                <div class="space-y-3">
+                    <label for="validation-slider" class="block text-lg font-semibold text-yellow-800">
+                        Conjunto de <span style="color:#d97706;">Validación</span>: <span id="validation-percent-display">15%</span>
+                    </label>
+                    <input type="range" id="validation-slider" min="5" max="30" value="15" step="5" class="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer" oninput="updateSplit()">
+                    <p class="text-sm text-gray-600">Se usa para <b>seleccionar hiperparámetros</b> y evitar el sobreajuste.</p>
+                </div>
+            </div>
+
+            <!-- Porcentaje y Conteo de Prueba (Calculado) -->
+            <div class="mt-6 p-4 bg-red-50 rounded-lg border border-red-300">
+                <p class="text-lg font-semibold text-red-800">
+                    Conjunto de <span style="color:#dc2626;">Prueba</span> (Calculado): <span id="test-percent-display">15%</span> 
+                    (<span id="test-count-display">150</span> puntos)
+                </p>
+                <p class="text-sm text-gray-600">Se usa para dar la <b>evaluación final e imparcial</b> del modelo.</p>
+            </div>
+        </section>
+
+        <!-- Sección 2: Visualización de la División de Datos -->
+        <section class="mt-10">
+            <h2 class="text-3xl font-bold text-blue-600 mb-6">2. Visualización del Conjunto de Datos</h2>
+            
+            <div id="data-bar" class="flex w-full rounded-lg shadow-xl overflow-hidden border-2 border-gray-300">
+                <!-- Los segmentos se llenan con JavaScript -->
+            </div>
+
+            <div class="mt-8 grid grid-cols-3 gap-4 text-center">
+                <div class="p-4 rounded-lg bg-blue-500 text-white">
+                    <p class="text-xl font-bold">ENTRENAMIENTO</p>
+                    <p id="train-count-info" class="text-sm">700 puntos (70%)</p>
+                </div>
+                <div class="p-4 rounded-lg bg-yellow-600 text-white">
+                    <p class="text-xl font-bold">VALIDACIÓN</p>
+                    <p id="validation-count-info" class="text-sm">150 puntos (15%)</p>
+                </div>
+                <div class="p-4 rounded-lg bg-red-600 text-white">
+                    <p class="text-xl font-bold">PRUEBA</p>
+                    <p id="test-count-info" class="text-sm">150 puntos (15%)</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const TOTAL_DATA = 1000;
+        const totalBar = document.getElementById('data-bar');
+        const trainSlider = document.getElementById('train-slider');
+        const validationSlider = document.getElementById('validation-slider');
+        
+        // Inicializar los segmentos del Data Bar
+        totalBar.innerHTML = `
+            <div id="train-segment" class="data-bar-segment bg-blue-500"></div>
+            <div id="validation-segment" class="data-bar-segment bg-yellow-600"></div>
+            <div id="test-segment" class="data-bar-segment bg-red-600"></div>
+        `;
+
+        const trainSegment = document.getElementById('train-segment');
+        const validationSegment = document.getElementById('validation-segment');
+        const testSegment = document.getElementById('test-segment');
+        
+        // Función principal para actualizar la división
+        function updateSplit() {
+            // 1. Obtener los valores deseados de los sliders
+            let trainPercent = parseInt(trainSlider.value);
+            let validationPercent = parseInt(validationSlider.value);
+
+            // 2. Calcular el porcentaje de prueba
+            let remainingPercent = 100 - (trainPercent + validationPercent);
+            
+            // 3. Aplicar lógica de reajuste si la suma excede 100% o cae muy bajo
+            // Si la suma excede 100%, priorizamos entrenamiento y reajustamos validación/prueba
+            if (remainingPercent < 0) {
+                // Reducir la validación primero
+                let overflow = -remainingPercent; 
+                if (validationPercent >= overflow) {
+                    validationPercent -= overflow;
+                    remainingPercent = 0;
+                } else {
+                    // Si la validación no es suficiente, reducimos el entrenamiento (caso extremo, no debería pasar con los límites de los sliders)
+                    // Para simplificar, simplemente aseguramos que el test sea al menos 10%
+                    validationPercent = 100 - trainPercent - 10;
+                    if (validationPercent < 5) validationPercent = 5; // Mínimo de 5%
+                    remainingPercent = 100 - (trainPercent + validationPercent);
+                }
+            } else if (remainingPercent > 50) {
+                 // Si queda mucho espacio (más del 50%), aseguramos un mínimo de prueba sensato (e.g., 10%) y que el test no sea ridículamente grande.
+                 // Esto no debería pasar con los límites actuales, pero es una buena práctica.
+                 remainingPercent = 100 - (trainPercent + validationPercent);
+            }
+
+            let testPercent = remainingPercent;
+            
+            // 4. Calcular el número de puntos
+            const trainCount = Math.round(TOTAL_DATA * (trainPercent / 100));
+            const validationCount = Math.round(TOTAL_DATA * (validationPercent / 100));
+            // El conteo de prueba es la diferencia para asegurar que la suma sea exacta
+            const testCount = TOTAL_DATA - trainCount - validationCount; 
+
+            // 5. Actualizar la visualización de los porcentajes y conteos en los sliders
+            document.getElementById('train-percent-display').textContent = `${trainPercent}%`;
+            document.getElementById('validation-percent-display').textContent = `${validationPercent}%`;
+            document.getElementById('test-percent-display').textContent = `${testPercent}%`;
+            document.getElementById('test-count-display').textContent = testCount;
+
+            // 6. Actualizar la barra visual
+            trainSegment.style.width = `${trainPercent}%`;
+            trainSegment.textContent = trainPercent >= 10 ? `${trainPercent}%` : '';
+            
+            validationSegment.style.width = `${validationPercent}%`;
+            validationSegment.textContent = validationPercent >= 5 ? `${validationPercent}%` : '';
+            
+            testSegment.style.width = `${testPercent}%`;
+            testSegment.textContent = testPercent >= 5 ? `${testPercent}%` : '';
+
+            // 7. Actualizar la información de los cuadros inferiores
+            document.getElementById('train-count-info').innerHTML = `<b>${trainCount}</b> puntos (${trainPercent}%)`;
+            document.getElementById('validation-count-info').innerHTML = `<b>${validationCount}</b> puntos (${validationPercent}%)`;
+            document.getElementById('test-count-info').innerHTML = `<b>${testCount}</b> puntos (${testPercent}%)`;
+        }
+
+        // Inicializar la división al cargar la página
+        window.onload = updateSplit;
+    </script>
+</body>
+</html>
+

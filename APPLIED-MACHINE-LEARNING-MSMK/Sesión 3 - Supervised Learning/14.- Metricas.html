@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas de Clasificación Interactivas</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .metric-card {
+            @apply p-4 rounded-xl shadow-lg border-b-4 transition duration-300 transform hover:scale-[1.02];
+        }
+        .confusion-input {
+            @apply w-full text-center text-2xl font-bold p-2 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition duration-150;
+        }
+        .sheep-display {
+            /* Estilo para el número de ovejitas */
+            @apply text-xl mt-1 font-extrabold;
+        }
+        /* CLASES PERSONALIZADAS PARA DAR COLOR A LAS OVEJITAS (USANDO FILTROS CSS) */
+        /* Oveja Negra (VN) */
+        .black-sheep-icon {
+            filter: brightness(0%); /* Vuelve la ovejita completamente negra */
+            text-shadow: none;
+        }
+        /* Oveja Gris Oscura (FN) */
+        .dark-gray-sheep-icon {
+            filter: grayscale(100%) brightness(50%); /* Simula gris oscuro */
+            text-shadow: none;
+        }
+        /* Oveja Gris Clara (FP) */
+        .light-gray-sheep-icon {
+             filter: grayscale(100%) brightness(80%); /* Simula gris claro */
+             text-shadow: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl w-full mx-auto p-6 md:p-8 bg-white rounded-xl shadow-2xl space-y-10">
+        
+        <header class="text-center border-b-4 border-blue-600 pb-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                Simulador de Métricas de Evaluación
+            </h1>
+            <p class="mt-2 text-xl text-gray-600">
+                Ajusta el conteo de ovejitas en la Matriz de Confusión para ver el impacto en las métricas.
+            </p>
+        </header>
+
+        <!-- Sección 1: Matriz de Confusión Interactiva -->
+        <section>
+            <h2 class="text-3xl font-bold text-blue-600 mb-6">1. Datos de Entrada (Conteo de Ovejitas)</h2>
+            <p class="text-gray-700 mb-6">Introduce el número de ovejitas para cada categoría:</p>
+
+            <!-- Inputs separados de la Matriz -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-blue-50 rounded-lg shadow-inner">
+                <div class="space-y-1">
+                    <label for="vp" class="block text-xs font-medium text-green-700">Verdaderos Positivos (VP)</label>
+                    <input type="number" id="vp" value="70" min="0" class="confusion-input text-green-600" oninput="calculateMetrics()">
+                </div>
+                <div class="space-y-1">
+                    <label for="fn" class="block text-xs font-medium text-red-700">Falsos Negativos (FN)</label>
+                    <input type="number" id="fn" value="10" min="0" class="confusion-input text-red-600" oninput="calculateMetrics()">
+                </div>
+                <div class="space-y-1">
+                    <label for="fp" class="block text-xs font-medium text-red-700">Falsos Positivos (FP)</label>
+                    <input type="number" id="fp" value="5" min="0" class="confusion-input text-red-600" oninput="calculateMetrics()">
+                </div>
+                <div class="space-y-1">
+                    <label for="vn" class="block text-xs font-medium text-green-700">Verdaderos Negativos (VN)</label>
+                    <input type="number" id="vn" value="215" min="0" class="confusion-input text-green-600" oninput="calculateMetrics()">
+                </div>
+            </div>
+
+            <!-- Matriz de Confusión VISUAL -->
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Visualización de la Matriz</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg border border-gray-200 shadow-md">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                            <th class="py-3 px-6 text-left">Real / Predicción</th>
+                            <th class="py-3 px-6 text-center">Predicción Positiva (P')</th>
+                            <th class="py-3 px-6 text-center">Predicción Negativa (N')</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700 text-base font-semibold">
+                        <!-- Fila: Realmente Positivo -->
+                        <tr class="border-b border-gray-200">
+                            <td class="py-4 px-6 text-left font-bold text-lg text-red-600">Realmente Positivo (P)</td>
+                            <!-- VP (Verdaderos Positivos - Blancas) -->
+                            <td class="py-4 px-6 text-center bg-green-100/70">
+                                <p class="text-xs font-medium text-green-800 mb-1">VP (Blancas) - Acierto</p>
+                                <div id="vp-display" class="flex flex-col items-center">
+                                    <span class="text-4xl">🐑</span> <!-- Icono blanco por defecto -->
+                                    <span class="sheep-display text-gray-900">70</span>
+                                </div>
+                            </td>
+                            <!-- FN (Falsos Negativos - Gris Oscuro) -->
+                            <td class="py-4 px-6 text-center bg-red-100/70">
+                                <p class="text-xs font-medium text-red-800 mb-1">FN (Gris Oscuro) - Error</p>
+                                <div id="fn-display" class="flex flex-col items-center">
+                                    <span class="text-4xl dark-gray-sheep-icon">🐑</span>
+                                    <span class="sheep-display text-gray-700">10</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Fila: Realmente Negativo -->
+                        <tr class="border-b border-gray-200">
+                            <td class="py-4 px-6 text-left font-bold text-lg text-blue-600">Realmente Negativo (N)</td>
+                            <!-- FP (Falsos Positivos - Grises Claras) -->
+                            <td class="py-4 px-6 text-center bg-red-100/70">
+                                <p class="text-xs font-medium text-red-800 mb-1">FP (Grises) - Error</p>
+                                <div id="fp-display" class="flex flex-col items-center">
+                                    <span class="text-4xl light-gray-sheep-icon">🐑</span>
+                                    <span class="sheep-display text-gray-500">5</span>
+                                </div>
+                            </td>
+                            <!-- VN (Verdaderos Negativos - Negras) -->
+                            <td class="py-4 px-6 text-center bg-green-100/70">
+                                <p class="text-xs font-medium text-green-800 mb-1">VN (Negras) - Acierto</p>
+                                <div id="vn-display" class="flex flex-col items-center">
+                                    <span class="text-4xl black-sheep-icon">🐑</span>
+                                    <span class="sheep-display text-black">215</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <p id="total-count" class="mt-4 text-center text-lg font-semibold text-gray-800">Total de Instancias: 300</p>
+        </section>
+
+        <!-- Separador -->
+        <div class="h-1 bg-gray-100 rounded"></div>
+
+        <!-- Sección 2: Resultados Calculados -->
+        <section>
+            <h2 class="text-3xl font-bold text-blue-600 mb-6">2. Resultados de las Métricas</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <!-- Exactitud -->
+                <div class="metric-card bg-green-50 border-green-500">
+                    <p class="text-sm font-semibold text-green-700">1. Exactitud (Accuracy)</p>
+                    <p id="accuracy-value" class="text-4xl font-extrabold text-green-800 mt-1">0.9500</p>
+                    <p class="text-gray-600 text-sm mt-2">Predicciones correctas totales.</p>
+                </div>
+
+                <!-- Precisión -->
+                <div class="metric-card bg-purple-50 border-purple-500">
+                    <p class="text-sm font-semibold text-purple-700">2. Precisión (Precision)</p>
+                    <p id="precision-value" class="text-4xl font-extrabold text-purple-800 mt-1">0.9333</p>
+                    <p class="text-gray-600 text-sm mt-2">Costo de Falsos Positivos (FP).</p>
+                </div>
+
+                <!-- Exhaustividad/Recall -->
+                <div class="metric-card bg-orange-50 border-orange-500">
+                    <p class="text-sm font-semibold text-orange-700">3. Exhaustividad (Recall)</p>
+                    <p id="recall-value" class="text-4xl font-extrabold text-orange-800 mt-1">0.8750</p>
+                    <p class="text-gray-600 text-sm mt-2">Costo de Falsos Negativos (FN).</p>
+                </div>
+
+                <!-- Puntuación F1 -->
+                <div class="metric-card bg-yellow-50 border-yellow-500">
+                    <p class="text-sm font-semibold text-yellow-700">4. Puntuación F1 (F1 Score)</p>
+                    <p id="f1-value" class="text-4xl font-extrabold text-yellow-800 mt-1">0.9032</p>
+                    <p class="text-gray-600 text-sm mt-2">Equilibrio entre Precisión y Recall.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Separador -->
+        <div class="h-1 bg-gray-100 rounded"></div>
+
+        <!-- Sección 3: Definiciones y Fórmulas (FORMULAS CORREGIDAS) -->
+        <section class="mt-8">
+            <h2 class="text-3xl font-bold text-gray-700 mb-6">3. Fórmulas de Referencia</h2>
+            
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-lg text-green-700">1. Exactitud (Accuracy)</h4>
+                    <p class="mt-1 font-mono text-lg text-gray-800">
+                        Exactitud = (VP + VN) / (VP + VN + FP + FN)
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">Proporción de instancias clasificadas correctamente sobre el total.</p>
+                </div>
+
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-lg text-purple-700">2. Precisión (Precision)</h4>
+                    <p class="mt-1 font-mono text-lg text-gray-800">
+                        Precisión = VP / (VP + FP)
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">Mide la fiabilidad de las predicciones positivas.</p>
+                </div>
+
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-lg text-orange-700">3. Exhaustividad (Recall / Sensibilidad)</h4>
+                    <p class="mt-1 font-mono text-lg text-gray-800">
+                        Exhaustividad = VP / (VP + FN)
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">Mide la capacidad del modelo para encontrar todas las instancias positivas.</p>
+                </div>
+
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="font-semibold text-lg text-yellow-700">4. Puntuación F1 (F1 Score)</h4>
+                    <p class="mt-1 font-mono text-lg text-gray-800">
+                        F1 = 2 * (Precisión * Exhaustividad) / (Precisión + Exhaustividad)
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">Media armónica que equilibra Precisión y Exhaustividad.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Función principal para calcular y mostrar las métricas
+        function calculateMetrics() {
+            // 1. Obtener valores de la matriz de confusión
+            const VP = parseInt(document.getElementById('vp').value) || 0;
+            const VN = parseInt(document.getElementById('vn').value) || 0;
+            const FP = parseInt(document.getElementById('fp').value) || 0;
+            const FN = parseInt(document.getElementById('fn').value) || 0;
+
+            const total = VP + VN + FP + FN;
+            
+            // Actualizar el total de instancias
+            document.getElementById('total-count').textContent = `Total de Instancias: ${total}`;
+            
+            // 2. Actualizar la visualización de la matriz con los valores de los inputs
+            document.querySelector('#vp-display .sheep-display').textContent = VP;
+            document.querySelector('#fn-display .sheep-display').textContent = FN;
+            document.querySelector('#fp-display .sheep-display').textContent = FP;
+            document.querySelector('#vn-display .sheep-display').textContent = VN;
+
+
+            // Asegurar que no haya división por cero
+            if (total === 0) {
+                updateResults(0, 0, 0, 0);
+                return;
+            }
+
+            // --- 2. Cálculos ---
+
+            // Exactitud (Accuracy)
+            const correct = VP + VN;
+            const accuracy = correct / total;
+
+            // Precisión (Precision)
+            const predPos = VP + FP;
+            const precision = predPos === 0 ? 0 : VP / predPos; // Evitar división por cero
+
+            // Exhaustividad (Recall)
+            const realPos = VP + FN;
+            const recall = realPos === 0 ? 0 : VP / realPos; // Evitar división por cero
+
+            // Puntuación F1 (F1 Score)
+            let f1 = 0;
+            if (precision + recall > 0) {
+                f1 = 2 * (precision * recall) / (precision + recall);
+            }
+
+            // --- 3. Mostrar Resultados ---
+            updateResults(accuracy, precision, recall, f1);
+        }
+
+        // Función para actualizar los elementos del DOM
+        function updateResults(accuracy, precision, recall, f1) {
+            const format = (value) => value.toFixed(4);
+
+            document.getElementById('accuracy-value').textContent = format(accuracy);
+            document.getElementById('precision-value').textContent = format(precision);
+            document.getElementById('recall-value').textContent = format(recall);
+            document.getElementById('f1-value').textContent = format(f1);
+        }
+
+        // Inicializar cálculos al cargar la página
+        window.onload = calculateMetrics;
+
+    </script>
+</body>
+</html>
+

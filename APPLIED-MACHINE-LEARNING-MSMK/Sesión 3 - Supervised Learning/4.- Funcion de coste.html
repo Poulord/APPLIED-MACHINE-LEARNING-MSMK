@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresión Lineal: Fundamentos y Entrenamiento</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container-shadow {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+        /* Estilos SVG comunes */
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 180px; /* Mayor altura para detalle */
+            margin: 1rem 0;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .svg-text {
+            font-size: 12px; /* Tamaño de fuente mejorado */
+            font-weight: bold;
+        }
+        .section-card {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            transition: transform 0.3s ease;
+        }
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(100, 116, 139, 0.1);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl container-shadow p-6 md:p-10">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-12 border-b pb-6 border-slate-200">
+            <span class="text-xs font-semibold uppercase tracking-widest text-sky-500">APRENDIZAJE SUPERVISADO CLÁSICO</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mt-2">
+                Regresión Lineal: Modelo, Coste y Optimización
+            </h1>
+            <p class="mt-2 text-md text-gray-600">
+                La base de la predicción continua: encontrar la línea recta óptima que se ajusta a los datos.
+            </p>
+        </header>
+
+        <!-- SECCIÓN 1: El Modelo (Teoría) -->
+        <div class="section-card bg-sky-50 border-2 border-sky-300">
+            <h2 class="text-2xl font-bold text-sky-800 mb-4 flex items-center">
+                <span class="text-3xl mr-3">1.</span> Hipótesis del Modelo (h<sub>&#x3b8;</sub>)
+            </h2>
+            
+            <p class="text-gray-700 mb-4">
+                La Regresión Lineal asume una relación lineal entre la variable de entrada (<strong>X</strong>) y la variable de salida (<strong>Y</strong>). La hipótesis es una ecuación de línea recta, donde &#x3b8;<sub>0</sub> es la <strong>intersección (bias)</strong> y &#x3b8;<sub>1</sub> es la <strong>pendiente</strong>.
+            </p>
+
+            <!-- Fórmula del Modelo -->
+            <div class="text-center bg-white p-4 rounded-lg border border-sky-200 shadow-md">
+                <span class="text-xl font-mono font-extrabold text-sky-700">
+                    h<sub>&#x3b8;</sub>(x) = &#x3b8;<sub>0</sub> + &#x3b8;<sub>1</sub> X
+                </span>
+            </div>
+            
+            <!-- CONTENEDOR VISUAL INTERACTIVO -->
+            <p class="text-center text-sm text-gray-500 my-2">Pulsa "Siguiente Paso" para ver la optimización iterativa.</p>
+            <div class="svg-container bg-white">
+                <svg id="regression-svg" viewBox="0 0 100 100" class="w-full h-full">
+                    <!-- Puntos de datos (Ejemplo): Nota: Y en SVG es 0 arriba, 100 abajo. Los puntos van de Y=20 a Y=80 (de abajo a arriba) -->
+                    <circle cx="15" cy="80" r="2" fill="#0369a1"/>
+                    <circle cx="30" cy="65" r="2" fill="#0369a1"/>
+                    <circle cx="45" cy="55" r="2" fill="#0369a1"/>
+                    <circle cx="60" cy="40" r="2" fill="#0369a1"/>
+                    <circle cx="75" cy="30" r="2" fill="#0369a1"/>
+                    <circle cx="90" cy="20" r="2" fill="#0369a1"/>
+                    
+                    <!-- Línea de Regresión (DINÁMICA) -->
+                    <line id="h-theta-line" x1="0" y1="0" x2="100" y2="0" stroke="#0ea5e9" stroke-width="2" transition="all 0.5s ease"/>
+                    
+                    <!-- Etiqueta de Coste J (Esquina superior derecha - Ajustada a y=10) -->
+                    <text x="98" y="10" class="svg-text" text-anchor="end" fill="#ef4444" id="cost-display-svg">Coste J: </text>
+
+                    <!-- Etiquetas de Ejes (ELIMINADAS) -->
+                </svg>
+            </div>
+            
+            <div class="flex justify-center space-x-4 mt-4">
+                <button onclick="nextStep()" id="next-step-btn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-150 ease-in-out">
+                    Siguiente Paso (Gradiente)
+                </button>
+                <button onclick="resetSimulation()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full shadow-lg transition duration-150 ease-in-out">
+                    Reiniciar
+                </button>
+            </div>
+            <p id="theta-display" class="text-center text-sm mt-3 font-mono text-sky-700"></p>
+
+        </div>
+        
+        <!-- SECCIÓN 2: Función de Coste (MSE) -->
+        <div class="section-card bg-green-50 border-2 border-green-300">
+            <h2 class="text-2xl font-bold text-green-800 mb-4 flex items-center">
+                <span class="text-3xl mr-3">2.</span> Función de Coste: MSE
+            </h2>
+
+            <p class="text-gray-700 mb-4">
+                La función de Coste <span class="font-semibold">J(&#x3b8;)</span> mide el rendimiento del modelo. El <strong>Error Cuadrático Medio (MSE)</strong> es la elección estándar, ya que calcula el promedio de las diferencias al cuadrado entre la predicción y el valor real.
+            </p>
+
+            <ul class="list-disc list-inside text-sm text-gray-700 mb-4 ml-4">
+                <li><strong>Objetivo:</strong> Minimizar J(&#x3b8;).</li>
+                <li><strong>Ventaja:</strong> Garantiza una superficie de coste convexa, lo que facilita el hallazgo del mínimo global.</li>
+            </ul>
+
+            <!-- Fórmula del MSE -->
+            <div class="text-center bg-white p-4 rounded-lg border border-green-200 shadow-md">
+                <span class="text-2xl font-mono font-extrabold text-green-700">
+                    J(&#x3b8;) = (1 / 2m) &#x2211; (h<sub>&#x3b8;</sub>(x<sup>(i)</sup>) - y<sup>(i)</sup>)<sup>2</sup>
+                </span>
+                <p class="text-xs text-gray-500 mt-2">Donde m es el número de muestras, h es la hipótesis y y es el valor real.</p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: Entrenamiento (Descenso de Gradiente) -->
+        <div class="section-card bg-violet-50 border-2 border-violet-300">
+            <h2 class="text-2xl font-bold text-violet-800 mb-4 flex items-center">
+                <span class="text-3xl mr-3">3.</span> Descenso de Gradiente (Gradient Descent)
+            </h2>
+
+            <p class="text-gray-700 mb-4">
+                El Descenso de Gradiente es el algoritmo iterativo utilizado para <strong>encontrar los valores óptimos</strong> de los parámetros (&#x3b8;<sub>0</sub>, &#x3b8;<sub>1</sub>) que minimizan la función de coste <span class="font-semibold">J(&#x3b8;)</span>.
+            </p>
+
+            <h3 class="text-lg font-semibold text-violet-700 mt-4 mb-2">Regla de Actualización</h3>
+            <div class="text-center bg-white p-4 rounded-lg border border-violet-200 shadow-md mb-4">
+                <span class="text-xl font-mono font-extrabold text-violet-700">
+                    &#x3b8; := &#x3b8; - &#x3b1; * Gradiente(J(&#x3b8;))
+                </span>
+                <p class="text-xs text-gray-500 mt-2">La actualización se repite simultáneamente para todos los parámetros (&#x3b8;<sub>0</sub> y &#x3b8;<sub>1</sub>).</p>
+            </div>
+
+            <p class="text-gray-700 text-sm">
+                La letra griega &#x3b1; (alpha) representa la <strong>tasa de aprendizaje (learning rate)</strong>, que controla el tamaño de cada paso. Un &#x3b1; muy grande puede saltar el mínimo; uno muy pequeño requiere demasiado tiempo.
+            </p>
+
+            <!-- VISUAL: Descenso de Gradiente (INTERACTIVO) -->
+            <div class="svg-container bg-white h-64">
+                <h3 class="sub-header text-center w-full mt-0 text-gray-600 absolute top-2">El objetivo es el mínimo global</h3>
+                <svg id="gradient-svg" viewBox="0 0 100 100" class="w-full h-full">
+                    <!-- Contorno del Coste (Convexo): Q(5, 95), (50, 10), (95, 95) -->
+                    <path d="M 5 95 Q 50 10, 95 95" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+                    <!-- Posición Y ajustada de 5 a 17 para evitar el recorte -->
+                    <text x="50" y="17" class="svg-text" text-anchor="middle" fill="#6b7280">Función J(&#x3b8;)</text> 
+                    <line x1="5" y1="95" x2="95" y2="95" stroke="#6b7280" stroke-width="1"/>
+                    <text x="98" y="95" class="svg-text" text-anchor="end" fill="#6b7280">&#x3b8;</text>
+
+                    <defs>
+                        <marker id="arrowhead" markerWidth="3" markerHeight="3" refX="2" refY="1.5" orient="auto" fill="#4b5563">
+                            <polygon points="0 0, 3 1.5, 0 3" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- Contenedor para los pasos del Descenso de Gradiente (DINÁMICO) -->
+                    <g id="gradient-steps-group">
+                        <!-- Los pasos y flechas se añadirán y actualizarán con JavaScript -->
+                    </g>
+                    
+                    <!-- Etiqueta del Mínimo (Fija) - Reposicionada a x=50, el mínimo real -->
+                    <text x="50" y="42" class="svg-text" text-anchor="middle" fill="#4c1d95" id="min-label">Mínimo</text>
+                </svg>
+            </div>
+            
+            <div class="flex justify-center space-x-4 mt-4">
+                <button onclick="nextStep3()" id="next-step-btn-3" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-150 ease-in-out">
+                    Siguiente Paso (Descenso)
+                </button>
+                <button onclick="resetSimulation3()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-full shadow-lg transition duration-150 ease-in-out">
+                    Reiniciar
+                </button>
+            </div>
+            <p id="theta-display-3" class="text-center text-sm mt-3 font-mono text-violet-700"></p>
+
+        </div>
+
+        <!-- Pie de página -->
+        <footer class="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+            La clave es el ciclo: <span class="font-semibold text-sky-600">Modelo</span> &#x2192; <span class="font-semibold text-green-600">Evaluar Coste</span> &#x2192; <span class="font-semibold text-violet-600">Optimizar Parámetros</span>.
+        </footer>
+
+    </div>
+
+    <script>
+        // ==========================================================
+        // Lógica para la Regresión Lineal Interactiva (Panel 1)
+        // ==========================================================
+
+        // Array de pasos de theta [theta0 (intercepto), theta1 (pendiente), costJ]
+        const THETA_STEPS = [
+            { theta0: 40, theta1: 0.0, costJ: 60.0, label: "Paso 0: Inicio, Línea Plana (J alto)" },
+            { theta0: 35, theta1: 0.2, costJ: 35.0, label: "Paso 1: Primer ajuste de pendiente" },
+            { theta0: 25, theta1: 0.5, costJ: 15.0, label: "Paso 2: Acercándose al Mínimo" },
+            { theta0: 18, theta1: 0.7, costJ: 5.5, label: "Paso 3: Muy cerca del óptimo" },
+            { theta0: 15, theta1: 0.8, costJ: 4.0, label: "Paso 4: Óptimo Encontrado (Mínimo Coste J)" }
+        ];
+        
+        let currentStep = 0;
+        const lineElement = document.getElementById('h-theta-line');
+        const thetaDisplay = document.getElementById('theta-display');
+        const nextStepBtn = document.getElementById('next-step-btn');
+
+        // Función para mapear el valor Y (0 a 100, donde 0 es el fondo) al SVG (donde Y=0 está arriba)
+        function mapYToSVG(y) {
+            return 100 - y;
+        }
+
+        // Función principal para dibujar la línea basada en los parámetros actuales
+        function drawRegressionLine() {
+            if (!lineElement) return;
+
+            const { theta0, theta1, costJ, label } = THETA_STEPS[currentStep];
+            
+            // h(x) = theta0 + theta1 * X
+            // Calculamos los puntos finales para X=0 y X=100 en la cuadrícula SVG
+            
+            // Y cuando X_svg = 0 (coordenada Y real)
+            const yStart = theta0;
+            const yStartSVG = mapYToSVG(yStart); // Convertir a coordenada SVG
+
+            // Y cuando X_svg = 100 (coordenada Y real)
+            const yEnd = theta0 + (theta1 * 100);
+            const yEndSVG = mapYToSVG(yEnd); // Convertir a coordenada SVG
+
+            // Actualizar la línea en el SVG
+            lineElement.setAttribute('x1', 0);
+            lineElement.setAttribute('y1', yStartSVG);
+            lineElement.setAttribute('x2', 100);
+            lineElement.setAttribute('y2', yEndSVG);
+            
+            // Actualizar el texto del Coste J sobre el gráfico
+            const costDisplaySVG = document.getElementById('cost-display-svg');
+            if (costDisplaySVG) {
+                costDisplaySVG.textContent = `Coste J: ${costJ.toFixed(2)}`;
+            }
+
+            // Mostrar los valores de theta y el estado
+            thetaDisplay.innerHTML = `<strong>Paso ${currentStep}:</strong> &#x3b8;<sub>0</sub> = ${theta0.toFixed(1)}, &#x3b8;<sub>1</sub> = ${theta1.toFixed(2)}. ${label}`;
+
+            // Deshabilitar el botón si es el último paso
+            if (currentStep === THETA_STEPS.length - 1) {
+                nextStepBtn.disabled = true;
+                nextStepBtn.textContent = 'Mínimo Encontrado (Final)';
+                nextStepBtn.classList.remove('bg-sky-600', 'hover:bg-sky-700');
+                nextStepBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                nextStepBtn.disabled = false;
+                nextStepBtn.textContent = 'Siguiente Paso (Gradiente)';
+                nextStepBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                nextStepBtn.classList.add('bg-sky-600', 'hover:bg-sky-700');
+            }
+        }
+
+        // Función para avanzar al siguiente paso
+        function nextStep() {
+            if (currentStep < THETA_STEPS.length - 1) {
+                currentStep++;
+                drawRegressionLine();
+            }
+        }
+
+        // Función para reiniciar la simulación
+        function resetSimulation() {
+            currentStep = 0;
+            drawRegressionLine();
+        }
+
+
+        // ==========================================================
+        // Lógica para el Descenso de Gradiente Interactivo (Panel 3)
+        // Coordenadas Y calculadas para la curva Q(5, 95), (50, 10), (95, 95)
+        // ==========================================================
+
+        const GRADIENT_STEPS = [
+            // X e Y están ahora en la curva y convergen al mínimo (x=50, y=52.5)
+            { x: 85, y: 78.2, label: "Paso 0: Inicio (Coste Alto)", color: "#ef4444" }, // t = 0.8889
+            { x: 65, y: 57.2, label: "Paso 1: Primer salto (Gradiente alto)", color: "#facc15" }, // t = 0.6667
+            { x: 55, y: 53.0, label: "Paso 2: Paso más pequeño", color: "#22c55e" }, // t = 0.5556
+            { x: 51, y: 52.5, label: "Paso 3: Cerca del mínimo", color: "#1d4ed8" }, // t = 0.5111
+            { x: 50, y: 52.5, label: "Paso 4: Mínimo (Óptimo)", color: "#4c1d95" } // t = 0.5 (Mínimo)
+        ];
+
+        let currentStepPanel3 = 0;
+        const stepsGroup = document.getElementById('gradient-steps-group');
+        const nextStepBtn3 = document.getElementById('next-step-btn-3');
+        const thetaDisplay3 = document.getElementById('theta-display-3');
+
+        // Función para dibujar el Descenso de Gradiente (Panel 3)
+        function drawGradientDescent() {
+            if (!stepsGroup) return;
+
+            // 1. Limpiar pasos anteriores
+            stepsGroup.innerHTML = '';
+
+            // 2. Dibujar pasos y flechas hasta el paso actual
+            for (let i = 0; i <= currentStepPanel3; i++) {
+                const current = GRADIENT_STEPS[i];
+                const prev = GRADIENT_STEPS[i - 1];
+
+                // Dibujar el punto (círculo)
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute('cx', current.x);
+                // Usamos la coordenada Y calculada para que esté exactamente sobre la curva.
+                circle.setAttribute('cy', current.y); 
+                circle.setAttribute('r', (i === 0 || i === GRADIENT_STEPS.length - 1) ? 3 : 2.5);
+                circle.setAttribute('fill', current.color);
+                stepsGroup.appendChild(circle);
+
+                // Si no es el primer paso, dibujar la flecha (polyline)
+                if (i > 0) {
+                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                    // Points definition: from (prev.x, prev.y) to (current.x, current.y)
+                    polyline.setAttribute('points', `${prev.x} ${prev.y}, ${current.x} ${current.y}`);
+                    polyline.setAttribute('stroke', prev.color);
+                    polyline.setAttribute('stroke-width', 1.5);
+                    polyline.setAttribute('marker-end', 'url(#arrowhead)');
+                    stepsGroup.appendChild(polyline);
+                }
+            }
+            
+            // 3. Actualizar la etiqueta de estado
+            const currentStepData = GRADIENT_STEPS[currentStepPanel3];
+            thetaDisplay3.textContent = currentStepData.label;
+
+            // 4. Actualizar el botón
+            if (currentStepPanel3 === GRADIENT_STEPS.length - 1) {
+                nextStepBtn3.disabled = true;
+                nextStepBtn3.textContent = 'Mínimo Alcanzado (Final)';
+                nextStepBtn3.classList.remove('bg-violet-600', 'hover:bg-violet-700');
+                nextStepBtn3.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                nextStepBtn3.disabled = false;
+                nextStepBtn3.textContent = 'Siguiente Paso (Descenso)';
+                nextStepBtn3.classList.remove('bg-green-600', 'hover:bg-green-700');
+                nextStepBtn3.classList.add('bg-violet-600', 'hover:bg-violet-700');
+            }
+        }
+
+        // Función para avanzar al siguiente paso (Panel 3)
+        function nextStep3() {
+            if (currentStepPanel3 < GRADIENT_STEPS.length - 1) {
+                currentStepPanel3++;
+                drawGradientDescent();
+            }
+        }
+
+        // Función para reiniciar la simulación (Panel 3)
+        function resetSimulation3() {
+            currentStepPanel3 = 0;
+            drawGradientDescent();
+        }
+
+        // Inicializar ambos paneles al cargar la página
+        window.onload = function() {
+            drawRegressionLine(); // Inicializa Panel 1
+            drawGradientDescent(); // Inicializa Panel 3
+        };
+    </script>
+</body>
+</html>
+

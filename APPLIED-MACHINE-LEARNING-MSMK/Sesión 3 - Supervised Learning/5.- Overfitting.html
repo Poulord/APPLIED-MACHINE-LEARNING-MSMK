@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regresión Polinómica: Ajuste y Sobreajuste</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo personalizado para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .container-shadow {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+        /* Estilos SVG comunes */
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px; /* Mayor altura para el gráfico */
+            margin: 1.5rem 0;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .svg-text {
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl container-shadow p-6 md:p-10">
+        
+        <!-- Título Principal -->
+        <header class="text-center mb-8 border-b pb-6 border-slate-200">
+            <span class="text-xs font-semibold uppercase tracking-widest text-indigo-500">MODELOS NO LINEALES</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mt-2">
+                Regresión Polinómica
+            </h1>
+            <p class="mt-2 text-md text-gray-600">
+                Añade complejidad para modelar curvas. Elige el <strong>grado</strong> para evitar el sobreajuste.
+            </p>
+        </header>
+
+        <!-- SECCIÓN INTERACTIVA -->
+        <div class="bg-indigo-50 border-2 border-indigo-300 p-6 rounded-xl">
+            <h2 class="text-2xl font-bold text-indigo-800 mb-4">
+                Simulación de Grado Polinómico
+            </h2>
+            <p class="text-gray-700 mb-6">
+                Observa cómo el ajuste de la curva cambia al seleccionar un grado diferente (potencia máxima de X).
+            </p>
+
+            <!-- CONTROLES -->
+            <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-white rounded-lg shadow-inner mb-6">
+                <label for="degree-select" class="font-semibold text-indigo-700 mr-4 whitespace-nowrap mb-2 sm:mb-0">
+                    Seleccionar Grado (n):
+                </label>
+                <select id="degree-select" onchange="updateChart()" 
+                        class="w-full sm:w-auto p-2 border border-indigo-400 rounded-lg bg-indigo-100 text-indigo-800 font-mono focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out">
+                    <option value="1">Grado 1 (Lineal)</option>
+                    <option value="3" selected>Grado 3 (Óptimo)</option>
+                    <option value="10">Grado 10 (Complejo)</option>
+                </select>
+            </div>
+
+            <!-- VISUALIZACIÓN SVG -->
+            <div class="svg-container relative border-4 border-indigo-400">
+                <!-- Marco del gráfico -->
+                <svg id="poly-regression-svg" viewBox="0 0 100 100" class="w-full h-full">
+                    <!-- Ejes (Simulados - línea de fondo) -->
+                    <line x1="5" y1="95" x2="95" y2="95" stroke="#ccc" stroke-width="0.5"/>
+                    <line x1="5" y1="5" x2="5" y2="95" stroke="#ccc" stroke-width="0.5"/>
+                    
+                    <!-- Curva de Regresión (DINÁMICA) -->
+                    <path id="h-theta-curve" d="" fill="none" stroke="#6366f1" stroke-width="2.5" class="transition duration-700 ease-in-out"/>
+
+                    <!-- Puntos de datos (Estáticos) -->
+                    <g id="data-points">
+                        <!-- Points will be added by JavaScript -->
+                    </g>
+                </svg>
+
+                <!-- Panel de Métricas (Superpuesto) -->
+                <div id="metric-panel" class="absolute top-2 left-2 p-3 bg-white bg-opacity-90 rounded-lg shadow-xl text-sm border border-indigo-200">
+                    <h4 class="font-bold text-indigo-700 mb-1">Diagnóstico del Modelo:</h4>
+                    <p class="text-gray-800">Ajuste: <span id="metric-fit" class="font-bold text-green-600"></span></p>
+                    <p class="text-gray-800">Error: <span id="metric-error" class="font-bold text-green-600"></span></p>
+                    <p class="text-gray-800">Complejidad: <span id="metric-complexity" class="font-bold text-green-600"></span></p>
+                </div>
+            </div>
+
+            <!-- EXPLICACIÓN (Subajuste vs Sobreajuste) -->
+            <div id="explanation-box" class="mt-6 p-4 rounded-lg text-center font-semibold text-white transition duration-500">
+                <p id="explanation-text"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================================
+        // Lógica para la Regresión Polinómica Interactiva
+        // ==========================================================
+
+        // Datos de entrenamiento que siguen una tendencia no lineal
+        const DATA_POINTS = [
+            { x: 5, y: 80 }, { x: 15, y: 70 }, { x: 25, y: 60 }, { x: 35, y: 55 },
+            { x: 45, y: 50 }, { x: 55, y: 55 }, { x: 65, y: 65 }, { x: 75, y: 80 },
+            { x: 85, y: 85 }, { x: 95, y: 75 }
+        ];
+
+        // Mapea el valor Y (0 es abajo) a la coordenada SVG (0 es arriba)
+        function mapYToSVG(y) {
+            return 100 - y;
+        }
+
+        // Definiciones simuladas de las curvas para los grados 1, 3 y 10
+        // (Las coordenadas SVG YA ESTÁN INVERTIDAS aquí para una representación visual correcta)
+        const PATH_MAP = {
+            // Grado 1 (Underfitting): Línea recta simple, no capta la curva
+            1: { 
+                path: `M 5 ${mapYToSVG(80)} L 95 ${mapYToSVG(75)}`,
+                fit: "Bajo",
+                error: "Alto",
+                complexity: "Baja",
+                text: "Subajuste (Underfitting): El modelo es demasiado simple (lineal) y no capta la estructura de los datos. Falla tanto en los datos de entrenamiento como en los nuevos datos.",
+                colorClass: "bg-red-500",
+                strokeColor: "#ef4444" // Rojo
+            },
+            // Grado 3 (Optimal Fit): Curva suave que sigue la tendencia
+            3: { 
+                // Aprox. de la curva de mejor ajuste
+                path: `M 5 ${mapYToSVG(80)} C 25 ${mapYToSVG(50)}, 75 ${mapYToSVG(50)}, 95 ${mapYToSVG(75)}`,
+                fit: "Óptimo",
+                error: "Bajo (Generalización)",
+                complexity: "Media",
+                text: "Ajuste Ideal: El modelo captura bien la tendencia de los datos sin reaccionar exageradamente al ruido. Tendrá un buen rendimiento con datos nuevos (generalización).",
+                colorClass: "bg-green-500",
+                strokeColor: "#22c55e" // Verde
+            },
+            // Grado 10 (Overfitting): Curva que oscila violentamente para tocar cada punto
+            10: { 
+                // Curva compleja simulando alta varianza y oscilación
+                path: `M 5 ${mapYToSVG(80)} C 10 ${mapYToSVG(10)}, 25 ${mapYToSVG(90)}, 40 ${mapYToSVG(5)} C 60 ${mapYToSVG(95)}, 75 ${mapYToSVG(10)}, 95 ${mapYToSVG(75)}`,
+                fit: "Excesivo",
+                error: "Casi Cero (Entrenamiento)",
+                complexity: "Alta",
+                text: "Sobreajuste (Overfitting): El modelo es demasiado complejo. Memoriza el ruido de los datos de entrenamiento y tendrá un rendimiento terrible con datos nuevos.",
+                colorClass: "bg-purple-500",
+                strokeColor: "#a855f7" // Púrpura
+            }
+        };
+
+        const curveElement = document.getElementById('h-theta-curve');
+        const pointsGroup = document.getElementById('data-points');
+        const selectElement = document.getElementById('degree-select');
+        const metricFit = document.getElementById('metric-fit');
+        const metricError = document.getElementById('metric-error');
+        const metricComplexity = document.getElementById('metric-complexity');
+        const explanationBox = document.getElementById('explanation-box');
+        const explanationText = document.getElementById('explanation-text');
+
+        // 1. Dibujar los puntos de datos estáticos
+        function drawDataPoints() {
+            pointsGroup.innerHTML = ''; // Limpiar
+            DATA_POINTS.forEach(p => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute('cx', p.x);
+                circle.setAttribute('cy', mapYToSVG(p.y));
+                circle.setAttribute('r', 2);
+                circle.setAttribute('fill', '#0f766e'); // Teal color
+                pointsGroup.appendChild(circle);
+            });
+        }
+
+        // 2. Actualizar el gráfico y las métricas
+        function updateChart() {
+            const degree = selectElement.value;
+            const data = PATH_MAP[degree];
+
+            if (!data) return;
+
+            // Actualizar la Curva
+            curveElement.setAttribute('d', data.path);
+            curveElement.setAttribute('stroke', data.strokeColor);
+
+            // Actualizar las Métricas
+            metricFit.textContent = data.fit;
+            metricError.textContent = data.error;
+            metricComplexity.textContent = data.complexity;
+
+            // Actualizar la Explicación
+            explanationText.textContent = data.text;
+            
+            // Actualizar el estilo del panel de explicación
+            explanationBox.className = `mt-6 p-4 rounded-lg text-center font-semibold text-white transition duration-500 ${data.colorClass}`;
+
+            // Ajustar el color del texto de las métricas
+            if (degree == 1) {
+                metricFit.className = 'font-bold text-red-600';
+                metricError.className = 'font-bold text-red-600';
+                metricComplexity.className = 'font-bold text-red-600';
+            } else if (degree == 3) {
+                metricFit.className = 'font-bold text-green-600';
+                metricError.className = 'font-bold text-green-600';
+                metricComplexity.className = 'font-bold text-green-600';
+            } else if (degree == 10) {
+                metricFit.className = 'font-bold text-purple-600';
+                metricError.className = 'font-bold text-purple-600';
+                metricComplexity.className = 'font-bold text-purple-600';
+            }
+        }
+
+        // Inicializar el gráfico al cargar la página
+        window.onload = function() {
+            drawDataPoints();
+            updateChart(); // Llama a la función con el valor seleccionado por defecto (Grado 3)
+        };
+    </script>
+</body>
+</html>
+

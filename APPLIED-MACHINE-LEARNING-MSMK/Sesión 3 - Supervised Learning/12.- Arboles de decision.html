@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Árboles de Decisión: Modelos Simples e Interpretables</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de fuente y fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Gris muy claro */
+        }
+        
+        /* Estilos generales de los nodos */
+        .node {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            @apply rounded-xl p-4 shadow-lg text-white font-semibold flex flex-col items-center justify-center text-center mx-auto mb-6;
+        }
+
+        /* Estilos específicos de los nodos */
+        .root-node {
+            @apply bg-blue-600 ring-4 ring-blue-300;
+        }
+        /* Color temático oscuro para nodos de decisión */
+        .decision-node {
+            @apply bg-slate-700 text-white hover:bg-slate-600 border-2 border-slate-500 w-full sm:w-11/12 md:w-5/6 lg:w-4/5;
+        }
+        /* Colores generales de la hoja (solo para la visualización del árbol) */
+        .leaf-node-classification {
+            @apply bg-orange-600 ring-4 ring-orange-300;
+        }
+        .leaf-node-regression {
+            @apply bg-indigo-600 ring-4 ring-indigo-300;
+        }
+        
+        /* Estilos de la interfaz de entrada */
+        #input-container {
+            transition: all 0.5s ease;
+        }
+
+        /* Estilo para el nodo activo (el camino que sigue el usuario) */
+        .active-path {
+            /* Cambio a una sombra más dramática y escala para un impacto visual claro */
+            @apply shadow-2xl scale-105 ring-8 ring-opacity-70;
+        }
+
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#1a73e8', // Color azul principal para el camino activo
+                    }
+                }
+            }
+        }
+        
+        // --- DEFINICIÓN DEL ÁRBOL (Simulación de un modelo entrenado) ---
+        
+        const NODES = {
+            1: { 
+                type: 'root', 
+                question: '¿Avistamiento en Zona Aislada?', 
+                next_yes: 2, 
+                next_no: 3,
+                yes_label: 'SÍ (Aislada)', 
+                no_label: 'NO (Cercana a Población)' 
+            },
+            
+            // Nivel 2: Subárbol de "SÍ: Avistamiento Aislado" (Clasificación)
+            2: { 
+                type: 'decision', 
+                question: '¿Hora del Encuentro es Nocturna?', 
+                next_yes: 4, // Conecta directamente a la hoja 4
+                next_no: 5,
+                title: 'Clasificación (Hostil o Amigable)',
+                yes_label: 'SÍ (Noche)', 
+                no_label: 'NO (Día)' 
+            },
+            
+            // Hoja (Nivel 3) - SÍ/SÍ (Aislada/Nocturna)
+            4: { type: 'leaf-classification', result: 'HOSTIL (Leyenda Peligrosa)', result_color: 'bg-red-700' }, 
+            
+            // Hoja (Nivel 3) - SÍ/NO (Aislada/Diurna)
+            5: { type: 'leaf-classification', result: 'AMIGABLE (Entidad Curiosa)', result_color: 'bg-green-600' },
+
+            // Nivel 2: Subárbol de "NO: Avistamiento No Aislado" (Regresión)
+            3: { 
+                type: 'decision', 
+                question: '¿Nivel de Magia Ambiental > 7?', 
+                next_yes: 6, 
+                next_no: 7,
+                title: 'Regresión (Estimación de Poder)',
+                yes_label: 'SÍ (> 7)', 
+                no_label: 'NO (<= 7)' 
+            },
+            
+            // Hojas de Regresión (Nivel 3)
+            6: { type: 'leaf-regression', result: '9.5 (Amenaza Crítica)', result_color: 'bg-purple-700' },
+            7: { type: 'leaf-regression', result: '4.0 (Apenas Notable)', result_color: 'bg-yellow-600' },
+        };
+
+        let currentNodeId = 1;
+        let pathHistory = [1];
+        
+        // Definición de las rutas precalculadas para asegurar la precisión del resaltado.
+        const FIXED_PATHS = {
+            1: [1],
+            2: [1, 2],
+            3: [1, 3],
+            4: [1, 2, 4], // Revertido a 3 niveles
+            5: [1, 2, 5], 
+            6: [1, 3, 6], 
+            7: [1, 3, 7]  
+        };
+
+        // --- DATOS DE ENTRADA PARA LA PREDICCIÓN POR LOTES (sin clima) ---
+        const CHARACTERS_DATA = [
+            { id: 101, name: "Explorador A", isolated: true, nocturnal: true, magic: 5 }, // -> Hostil (Node 4)
+            { id: 102, name: "Explorador B", isolated: true, nocturnal: false, magic: 9 },// -> Amigable (Node 5)
+            { id: 103, name: "Guardabosques C", isolated: false, nocturnal: true, magic: 4 }, // -> Notable (Node 7)
+            { id: 104, name: "Chamán D", isolated: false, nocturnal: false, magic: 8 }, // -> Crítica (Node 6)
+            { id: 105, name: "Novato E", isolated: true, nocturnal: true, magic: 0 }, // -> Hostil (Node 4)
+        ];
+
+        // --- FUNCIONES DE LÓGICA DEL MODELO ---
+
+        /**
+         * Ejecuta el árbol de decisión para un único personaje (punto de dato).
+         * @param {object} character - El punto de dato del personaje.
+         * @returns {object} { result: string, result_color: string, path: number[] }
+         */
+        function predictCharacter(character) {
+            let currentId = 1;
+            let path = [1];
+            let node = NODES[currentId];
+
+            // Simplificado: solo busca hojas de clasificación o regresión
+            while (node.type !== 'leaf-classification' && node.type !== 'leaf-regression') {
+                let isYes = false;
+
+                if (currentId === 1) {
+                    // Decision 1: ¿Avistamiento en Zona Aislada?
+                    isYes = character.isolated;
+                } else if (currentId === 2) {
+                    // Decision 2: ¿Hora del Encuentro es Nocturna? (Sub-árbol Aislada)
+                    isYes = character.nocturnal;
+                } else if (currentId === 3) {
+                    // Decision 3: ¿Nivel de Magia Ambiental > 7? (Sub-árbol No Aislada)
+                    isYes = character.magic > 7;
+                }
+                
+                let nextId = isYes ? node.next_yes : node.next_no;
+                
+                if (!nextId) break; 
+                
+                currentId = nextId;
+                path.push(currentId);
+                node = NODES[currentId];
+            }
+
+            return {
+                result: node.result,
+                result_color: node.result_color,
+                path: path,
+                type: node.type
+            };
+        }
+
+
+        // --- FUNCIONES DE RENDERIZACIÓN ---
+
+        /**
+         * Renderiza el estado actual del árbol resaltando el camino tomado.
+         */
+        function renderTree() {
+            const treeContainer = document.getElementById('tree-container');
+            if (!treeContainer) return;
+            treeContainer.innerHTML = '';
+            
+            // Definición de la estructura visual del árbol (IDs de nodos por nivel)
+            // Revertido a 3 niveles principales
+            const treeStructure = [
+                [{ id: 1, yesText: 'SÍ', noText: 'NO' }], // Nivel 1 (1 nodo)
+                [{ id: 2, yesText: 'SÍ', noText: 'NO' }, { id: 3, yesText: 'SÍ', noText: 'NO' }], // Nivel 2 (2 nodos)
+                // Nivel 3: Todas las hojas
+                [{ id: 4 }, { id: 5 }, { id: 6 }, { id: 7 }] 
+            ];
+
+            treeStructure.forEach((level, levelIndex) => {
+                // Contenedor para el nivel actual
+                const levelDiv = document.createElement('div');
+                const widthClass = level.length === 4 ? 'w-1/4' : (level.length === 2 ? 'w-1/2' : 'w-full');
+
+                levelDiv.className = `flex justify-center w-full ${levelIndex === 0 ? 'mt-4' : ''} space-x-2 md:space-x-4`;
+                
+                
+                level.forEach((nodeInfo) => {
+
+                    const nodeId = nodeInfo.id;
+                    const node = NODES[nodeId];
+                    const isActive = pathHistory.includes(nodeId);
+
+                    // 2. Renderizar el nodo
+                    const nodeWrapper = document.createElement('div');
+                    // El ancho del contenedor se ajusta según el nivel para mantener el layout.
+                    nodeWrapper.className = `${widthClass} flex flex-col items-center relative`;
+                    if (level.length === 1) nodeWrapper.className = 'w-full max-w-xs';
+
+
+                    const nodeElement = document.createElement('div');
+                    nodeElement.id = `node-${nodeId}`;
+                    nodeElement.classList.add('node', 'w-full', 'max-w-xs');
+                    
+                    let content = '';
+                    
+                    if (node.type === 'root') {
+                        nodeElement.classList.add('root-node', 'h-20');
+                        content = `
+                            <span class="text-xs opacity-80">Nodo Raíz (Comienza la Exploración)</span>
+                            <span class="text-lg">${node.question}</span>
+                        `;
+                    } else if (node.type === 'decision') {
+                        nodeElement.classList.add('decision-node', 'h-24');
+                        content = `
+                            <span class="text-xs opacity-80 font-bold tracking-wider">${node.title}</span>
+                            <span class="text-lg text-yellow-300">${node.question}</span>
+                            <span class="text-xs mt-1 text-slate-300">Responde para continuar</span>
+                        `;
+                    } else if (node.type.startsWith('leaf')) {
+                         nodeElement.classList.add(node.type, 'h-24');
+                        const label = node.type.includes('classification') ? 'Clasificación (Resultado)' : 'Regresión (Valor Estimado)';
+                        content = `
+                            <span class="text-xs opacity-80">Hoja (${label})</span>
+                            <span class="text-xl font-extrabold">${node.result}</span>
+                        `;
+                    }
+
+                    nodeElement.innerHTML = content;
+                    
+                    // Resaltar el nodo si está en el camino activo
+                    if (isActive) {
+                        nodeElement.classList.add('active-path');
+                    } else {
+                        nodeElement.classList.remove('active-path');
+                    }
+                    
+                    // Si es un nodo de decisión o raíz, mostrar las etiquetas SÍ/NO
+                    if (node.next_yes || node.next_no) {
+                        // Etiqueta SÍ (Izquierda)
+                        if (nodeInfo.yesText) {
+                            const yesPathActive = pathHistory.includes(node.next_yes);
+                            const yesArrow = `<span class="absolute top-full left-1/4 -mt-2 px-2 py-0.5 text-xs font-bold ${yesPathActive ? 'text-green-600' : 'text-gray-500'}">${nodeInfo.yesText}</span>`;
+                            nodeWrapper.innerHTML += yesArrow;
+                        }
+                        // Etiqueta NO (Derecha)
+                        if (nodeInfo.noText) {
+                            const noPathActive = pathHistory.includes(node.next_no);
+                            const noArrow = `<span class="absolute top-full right-1/4 -mt-2 px-2 py-0.5 text-xs font-bold ${noPathActive ? 'text-red-600' : 'text-gray-500'}">${nodeInfo.noText}</span>`;
+                            nodeWrapper.innerHTML += noArrow;
+                        }
+                    }
+
+                    nodeWrapper.appendChild(nodeElement);
+                    levelDiv.appendChild(nodeWrapper);
+                });
+                
+
+                treeContainer.appendChild(levelDiv);
+                
+                // --- CONECTORES (Bifurcaciones) ---
+                if (levelIndex < treeStructure.length - 1) {
+                    const connectorDiv = document.createElement('div');
+                    connectorDiv.className = 'flex justify-center w-full my-3';
+                    
+                    // Iterar sobre los nodos del nivel actual para dibujar sus bifurcaciones
+                    level.forEach((parentNodeInfo) => {
+
+                        const parentNode = NODES[parentNodeInfo.id];
+                        const widthClass = level.length === 1 ? 'max-w-xs mx-auto' : (level.length === 2 ? 'w-1/2' : 'w-1/4');
+
+                        // Solo si es un nodo de decisión (no hoja)
+                        if (parentNode.next_yes || parentNode.next_no) {
+                            const isParentActive = pathHistory.includes(parentNodeInfo.id);
+                            const isLeftActive = pathHistory.includes(parentNode.next_yes);
+                            const isRightActive = pathHistory.includes(parentNode.next_no);
+
+                            // Contenedor que restringe el ancho y centra la conexión
+                            const connectionWrapper = document.createElement('div');
+                            connectionWrapper.className = `flex flex-col items-center ${widthClass}`;
+
+                            // 1. Línea vertical central (desde el padre)
+                            const centerLine = document.createElement('div');
+                            // Se usa -mb-3 para alinear correctamente con el nodo de arriba
+                            centerLine.className = `w-0.5 h-6 -mb-3 ${isParentActive ? 'bg-brand-primary' : 'bg-gray-300'} mx-auto`;
+                            
+                            // 2. Horquilla (Línea Horizontal)
+                            const fork = document.createElement('div');
+                            fork.className = 'flex w-full';
+
+                            // Línea SÍ (izquierda)
+                            const leftLine = document.createElement('div');
+                            // Color activo: verde para SÍ
+                            leftLine.className = `w-1/2 h-0.5 border-t-2 ${isLeftActive ? 'border-green-500' : 'border-gray-300'} border-r-0`;
+                            
+                            // Línea NO (derecha)
+                            const rightLine = document.createElement('div');
+                            // Color activo: rojo para NO
+                            rightLine.className = `w-1/2 h-0.5 border-t-2 ${isRightActive ? 'border-red-500' : 'border-gray-300'} border-l-0`;
+                            
+                            fork.appendChild(leftLine);
+                            fork.appendChild(rightLine);
+
+                            connectionWrapper.appendChild(centerLine);
+                            connectionWrapper.appendChild(fork);
+
+                            connectorDiv.appendChild(connectionWrapper);
+                        } else {
+                             // Espacio para mantener el diseño horizontal en el nivel de hojas
+                            const spacer = document.createElement('div');
+                            spacer.className = widthClass;
+                            connectorDiv.appendChild(spacer);
+                        }
+                    });
+
+                    treeContainer.appendChild(connectorDiv);
+                }
+
+            });
+            
+            updateInterface();
+        }
+        
+        /**
+         * Renderiza la tabla de predicciones por lotes.
+         */
+        function renderBatchPredictions() {
+            const tableBody = document.getElementById('prediction-table-body');
+            if (!tableBody) return;
+
+            let html = '';
+            
+            CHARACTERS_DATA.forEach((character) => {
+                const prediction = predictCharacter(character);
+                
+                // Determinar la clase de color para el texto (ej: text-red-700)
+                const resultClass = prediction.result_color.replace('bg-', 'text-');
+                
+                // Determinar la clase de fondo para la fila
+                let rowClass = 'bg-white hover:bg-gray-50';
+                if (prediction.type.includes('classification')) {
+                    rowClass = prediction.result.includes('HOSTIL') ? 'bg-red-50/50 hover:bg-red-100' : 'bg-green-50/50 hover:bg-green-100';
+                } else {
+                    rowClass = prediction.result.includes('Crítica') ? 'bg-purple-50/50 hover:bg-purple-100' : 'bg-yellow-50/50 hover:bg-yellow-100';
+                }
+
+                html += `
+                    <tr class="${rowClass} border-b transition duration-150">
+                        <td class="px-6 py-3 font-bold text-gray-900 whitespace-nowrap rounded-l-lg">${character.name}</td>
+                        <td class="px-6 py-3 text-center">${character.isolated ? 'Sí' : 'No'}</td>
+                        <td class="px-6 py-3 text-center">${character.nocturnal ? 'Sí' : 'No'}</td>
+                        <td class="px-6 py-3 text-center">${character.magic}</td>
+                        <td class="px-6 py-3 font-extrabold text-lg ${resultClass} rounded-r-lg">${prediction.result}</td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+
+        /**
+         * Actualiza la interfaz de usuario para permitir la interacción del usuario
+         */
+        function updateInterface() {
+            const node = NODES[currentNodeId];
+            const inputContainer = document.getElementById('input-container');
+            const resultDisplay = document.getElementById('result-display');
+
+            // Limpiar resultados
+            resultDisplay.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+
+            if (node.type.startsWith('leaf')) {
+                // Es un nodo hoja, mostrar el resultado
+                inputContainer.classList.add('hidden');
+                resultDisplay.classList.remove('hidden');
+                
+                // Simplificado: solo clasificación o regresión
+                const typeText = node.type.includes('classification') ? 'Clasificación: Actitud Predicha' : 'Regresión: Nivel de Poder Estimado';
+                
+                resultDisplay.innerHTML = `
+                    <div class="p-8 rounded-xl ${node.result_color} text-white shadow-2xl transition duration-500">
+                        <p class="text-xl font-medium tracking-wide">${typeText}</p>
+                        <p class="text-5xl font-extrabold mt-3">${node.result}</p>
+                        <button onclick="resetTree()" class="mt-6 px-6 py-2 bg-white text-gray-800 font-bold rounded-full shadow-lg hover:bg-gray-200 transition">Reiniciar Exploración</button>
+                    </div>
+                `;
+            } else {
+                // Es un nodo de decisión o raíz, mostrar las opciones
+                const questionElement = document.getElementById('question-text');
+                questionElement.textContent = node.question;
+
+                const buttonYes = document.getElementById('btn-yes');
+                const buttonNo = document.getElementById('btn-no');
+
+                // FIX: Actualizar el texto de los botones dinámicamente
+                buttonYes.textContent = node.yes_label;
+                buttonNo.textContent = node.no_label;
+                
+                // Asegurar que los botones tengan eventos de navegación válidos
+                buttonYes.onclick = () => navigateTree(node.next_yes);
+                buttonNo.onclick = () => navigateTree(node.next_no);
+            }
+        }
+
+        /**
+         * Navega al siguiente nodo del árbol.
+         * Utiliza rutas fijas para garantizar la precisión del resaltado.
+         * @param {number} nextNodeId - El ID del siguiente nodo.
+         */
+        function navigateTree(nextNodeId) {
+            if (!nextNodeId || !NODES[nextNodeId]) return;
+            
+            // 1. Establecer el ID del nodo actual
+            currentNodeId = nextNodeId;
+            
+            // 2. Establecer el historial de camino completo a partir de las rutas fijas.
+            pathHistory = FIXED_PATHS[currentNodeId] || [1];
+
+            // 3. Renderizar el árbol con el camino correcto
+            renderTree();
+        }
+
+        /**
+         * Reinicia el recorrido del árbol al nodo raíz.
+         */
+        function resetTree() {
+            currentNodeId = 1;
+            pathHistory = [1];
+            renderTree();
+        }
+
+        // --- Inicialización ---
+        window.onload = () => {
+            renderTree();
+            renderBatchPredictions(); // Inicializar la tabla de predicciones
+        };
+
+    </script>
+</head>
+<body class="p-4 md:p-10">
+
+    <!-- Contenedor Principal de la Infografía -->
+    <div class="max-w-5xl w-full mx-auto p-6 md:p-10 bg-white rounded-xl shadow-2xl space-y-8">
+        
+        <header class="text-center border-b-4 border-brand-primary pb-4">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 tracking-tight">
+                Árbol de Decisión: Interpretación de Eventos
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Usando Machine Learning para predecir el resultado de un <strong>Encuentro Legendario</strong>.
+            </p>
+        </header>
+
+        <!-- Explicación Introductoria -->
+        <section class="bg-blue-50 p-5 rounded-lg border-l-4 border-brand-primary">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-2">Conceptos Clave</h2>
+            <p class="text-gray-600">
+                Un Árbol de Decisión es un sistema de reglas <strong>fácilmente interpretable</strong> que lleva a un resultado. Sigue el camino de las preguntas para predecir el tipo de evento:
+            </p>
+            <ul class="list-disc list-inside mt-3 space-y-1 ml-4 text-gray-600">
+                <li><strong>Clasificación:</strong> Predicción de una categoría (Hostil o Amigable).</li>
+                <li><strong>Regresión:</strong> Predicción de un valor continuo (Nivel de Poder 1.0 - 10.0).</li>
+                <li><strong>Profundidad Óptima:</strong> Mantenemos el modelo en 3 niveles para mayor claridad.</li>
+            </ul>
+        </section>
+
+        <!-- Contenedor de Interacción (Pregunta/Respuesta) -->
+        <div id="input-container" class="bg-gray-100 p-6 rounded-xl shadow-inner text-center">
+            <h3 class="text-xl font-bold text-gray-700 mb-4">Pregunta de Observación (Nodo Actual):</h3>
+            <p id="question-text" class="text-2xl font-extrabold text-brand-primary mb-6">¿Avistamiento en Zona Aislada?</p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-8">
+                <button id="btn-yes" class="px-8 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition duration-150">
+                    <!-- Texto inicial (se sobrescribe en JS) -->
+                </button>
+                <button id="btn-no" class="px-8 py-3 bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition duration-150">
+                    <!-- Texto inicial (se sobrescribe en JS) -->
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contenedor de Resultado Final (Oculto hasta llegar a una hoja) -->
+        <div id="result-display" class="hidden text-center">
+            <!-- El contenido se inyecta dinámicamente en JS -->
+        </div>
+
+        <!-- Visualización del Árbol -->
+        <section class="mt-8 pt-8 border-t-2 border-gray-200">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Mapa de Predicción (El Árbol)</h2>
+            <div id="tree-container" class="relative overflow-x-auto p-4 border border-gray-200 rounded-lg bg-white min-h-[600px]">
+                <!-- El árbol interactivo se renderiza aquí -->
+            </div>
+        </section>
+
+        <!-- Nuevo Panel: Predicción por Lotes (Tabla) -->
+        <section class="mt-8 pt-8 border-t-2 border-gray-200">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Simulación por Lotes (Predicción en Masa)</h2>
+            <p class="text-gray-600 mb-4 text-center">
+                El modelo simplificado de Árbol de Decisión predice el resultado para múltiples exploradores.
+            </p>
+
+            <div class="relative overflow-x-auto shadow-lg sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 rounded-l-lg">Explorador</th>
+                            <th scope="col" class="px-6 py-3 text-center">Zona Aislada</th>
+                            <th scope="col" class="px-6 py-3 text-center">Hora Nocturna</th>
+                            <th scope="col" class="px-6 py-3 text-center">Magia Ambiental (>7)</th>
+                            <th scope="col" class="px-6 py-3 rounded-r-lg">Predicción de Resultado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prediction-table-body">
+                        <!-- Las filas se inyectan dinámicamente en JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- Instrucciones -->
+        <footer class="text-center pt-8 border-t-2 border-gray-200">
+            <p class="text-md text-gray-600">
+                <strong>Instrucción:</strong> Haz <strong>clic</strong> en los botones para recorrer el árbol y obtener una predicción. El <strong>camino activo</strong> se resaltará.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
+
