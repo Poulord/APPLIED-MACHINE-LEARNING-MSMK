@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicio Interactivo: Red Neuronal Humana</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de fuente y colores temáticos */
+        :root {
+            --color-primary: #4f46e5; /* Indigo-600 */
+            --color-secondary: #10b981; /* Emerald-500 */
+            --color-background: #0f172a; /* Slate-900 */
+            --color-text: #f1f5f9; /* Slate-100 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+        .card {
+            background-color: #1e293b; /* Slate-800 */
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        /* Estilos específicos para el diagrama de colocación */
+        .grid-flow {
+            position: relative;
+            padding: 2rem 0;
+        }
+        .flow-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: #8b5cf650;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+        .flow-connector {
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background-color: #8b5cf650;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+        }
+        .role-box {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Título Principal -->
+        <header class="text-center py-12">
+            <h1 class="text-5xl md:text-6xl font-extrabold gradient-text mb-4">
+                La Red Neuronal Humana (20 Alumnos)
+            </h1>
+            <p class="text-xl text-slate-400 max-w-3xl mx-auto">
+                Implementación de una red de 4 entradas, 3 neuronas ocultas y 1 salida.
+            </p>
+        </header>
+
+        <!-- Sección 0: Preparación (Notas para el Docente) -->
+        <section class="mb-16">
+            <!-- Título 0. Preparación eliminado -->
+            <div class="card p-6 md:p-8 bg-purple-900/30 border-t-4 border-purple-500">
+                <h3 class="text-2xl font-semibold text-purple-400 mb-4">Preparación</h3>
+                <ul class="list-disc list-inside space-y-3 text-slate-300">
+                    <li><strong>Valores Iniciales (Inputs/Oculta):</strong> Prepara 12 tarjetas de Peso (W) con números decimales pequeños (ej: 0.1, -0.5, 1.2). Prepara 3 tarjetas de Bias (B) con números fijos (ej: -1, 0, 2). Estos valores son fijos durante la propagación frontal.</li>
+                    <li><strong>Valores Iniciales (Salida):</strong> Prepara 3 Pesos de Salida (W_out, ej: 0.8, -0.4, 0.5) para el alumno que representa el Nodo Y. Estos 3 pesos son cruciales para el cálculo final.</li>
+                    <li><strong>Coordinación Espacial:</strong> Coloca a los alumnos en filas: Fila 1 (Inputs), Fila 2 (Pesos), Fila 3 (Nodos Ocultos), Fila 4 (Salida). Remítase al <strong>Diagrama de Colocación (Sección 2.5)</strong> para la disposición espacial.</li>
+                    <li><strong>El Aprendizaje (Opcional):</strong> Si la clasificación final falla, explica: "La red se equivocó. Ahora, todos los <strong>Pesos (W)</strong> deben cambiar un poco su número para corregir el error." (Introduciendo el concepto de Backpropagation y entrenamiento).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección 1: La Arquitectura (4x3x1) -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 text-center text-indigo-300">
+                1. Arquitectura: 4 Entradas x 3 Nodos Ocultos x 1 Salida
+            </h2>
+            <div class="card p-6 md:p-10 text-center">
+                <p class="text-lg mb-4">
+                    Nuestra red procesará <span class="font-bold">4 características</span> para clasificar si un animal es un Gato o un Perro.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 mt-6 text-sm md:text-base">
+                    <div class="bg-indigo-700 p-3 rounded-xl font-semibold text-white shadow-lg">
+                        <span class="block mb-1">🐾 X1: Nariz (1-10)</span>
+                    </div>
+                    <div class="bg-indigo-700 p-3 rounded-xl font-semibold text-white shadow-lg">
+                        <span class="block mb-1">👂 X2: Orejas (1-10)</span>
+                    </div>
+                    <div class="bg-indigo-700 p-3 rounded-xl font-semibold text-white shadow-lg">
+                        <span class="block mb-1">🐈 X3: Bigote (1-10)</span>
+                    </div>
+                    <div class="bg-indigo-700 p-3 rounded-xl font-semibold text-white shadow-lg">
+                        <span class="block mb-1">🐕 X4: Cola (1-10)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 2: Distribución de 20 Roles -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8 text-center text-indigo-300">
+                2. Distribución de 20 Roles
+            </h2>
+            <div class="grid lg:grid-cols-3 gap-6">
+
+                <!-- GRUPO 1: INPUTS (4 Roles) -->
+                <div class="card p-6 border-b-4 border-emerald-500 col-span-1">
+                    <h3 class="text-2xl font-semibold text-emerald-400 mb-2 flex items-center"><span class="text-4xl mr-2">🔢</span> Inputs (4 Alumnos)</h3>
+                    <p class="text-slate-300">
+                        Cada alumno sostiene y comunica el valor de una característica al inicio.
+                    </p>
+                    <ul class="mt-3 text-sm text-slate-400 font-mono list-disc ml-4 space-y-1">
+                        <li><strong>X1, X2, X3, X4</strong> (4 alumnos)</li>
+                    </ul>
+                </div>
+
+                <!-- GRUPO 2: PESOS DE ENTRADA (12 Roles) -->
+                <div class="card p-6 border-b-4 border-yellow-500 col-span-2">
+                    <h3 class="text-2xl font-semibold text-yellow-400 mb-2 flex items-center"><span class="text-4xl mr-2">⚖️</span> Pesos (12 Alumnos)</h3>
+                    <p class="text-slate-300">
+                        Hay 12 conexiones entre los Inputs (4) y los Nodos Ocultos (3). Cada Peso realiza una multiplicación.
+                    </p>
+                    <div class="grid grid-cols-3 mt-3 text-sm text-slate-400 font-mono gap-y-1">
+                        <p>W1-N1, W2-N1, W3-N1, W4-N1</p>
+                        <p>W1-N2, W2-N2, W3-N2, W4-N2</p>
+                        <p>W1-N3, W2-N3, W3-N3, W4-N3</p>
+                    </div>
+                </div>
+
+                <!-- GRUPO 3: NODOS OCULTOS + BIAS (3 Roles) -->
+                <div class="card p-6 border-b-4 border-pink-500">
+                    <h3 class="text-2xl font-semibold text-pink-400 mb-2 flex items-center"><span class="text-4xl mr-2">🧠</span> Nodos Ocultos (3 Alumnos)</h3>
+                    <p class="text-slate-300">
+                        Son el centro de cálculo. Reciben 4 multiplicaciones, le añaden su <strong>Bias (sesgo)</strong> interno, y deciden.
+                    </p>
+                    <ul class="mt-3 text-sm text-slate-400 font-mono list-disc ml-4 space-y-1">
+                        <li><strong>Nodo N1</strong> (Recibe 4 W, tiene Bias B1)</li>
+                        <li><strong>Nodo N2</strong> (Recibe 4 W, tiene Bias B2)</li>
+                        <li><strong>Nodo N3</strong> (Recibe 4 W, tiene Bias B3)</li>
+                    </ul>
+                </div>
+
+                <!-- GRUPO 4: SALIDA (1 Rol) -->
+                <div class="card p-6 border-b-4 border-cyan-500 col-span-2">
+                    <h3 class="text-2xl font-semibold text-cyan-400 mb-2 flex items-center"><span class="text-4xl mr-2">📣</span> Nodo de Salida (1 Alumno)</h3>
+                    <p class="text-slate-300">
+                        Recibe las 3 activaciones (1s o 0s) de la capa oculta. El alumno tiene asignados los <strong>3 Pesos de Salida (W_out)</strong> para realizar el cálculo final.
+                    </p>
+                    <ul class="mt-3 text-sm text-slate-400 font-mono list-disc ml-4 space-y-1">
+                        <li><strong>Y (Clasificador):</strong> El alumno final.</li>
+                        <li>Gestión de 3 Pesos de Salida (W_out)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nueva Sección 2.5: Diagrama de Colocación (Geografía del Aula) -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8 text-center text-indigo-300">
+                2.5. Diagrama de Colocación en el Aula
+            </h2>
+            <div class="card p-6 md:p-10 border-4 border-purple-500 bg-purple-900/10">
+                <p class="text-lg mb-6 text-center text-slate-300">
+                    Coloca a los alumnos en 4 filas paralelas para simular el flujo de datos (de izquierda a derecha).
+                </p>
+
+                <div class="grid grid-cols-4 items-center justify-items-center gap-4 text-center">
+
+                    <!-- Columna 1: Inputs (4 Alumnos) -->
+                    <div class="space-y-4">
+                        <h4 class="text-xl font-bold text-emerald-400 mb-2">Fila 1: Inputs</h4>
+                        <div class="role-box bg-emerald-600/50 p-2 rounded-lg text-xs font-semibold">X1</div>
+                        <div class="role-box bg-emerald-600/50 p-2 rounded-lg text-xs font-semibold">X2</div>
+                        <div class="role-box bg-emerald-600/50 p-2 rounded-lg text-xs font-semibold">X3</div>
+                        <div class="role-box bg-emerald-600/50 p-2 rounded-lg text-xs font-semibold">X4</div>
+                        <p class="text-xs text-slate-500 mt-2">(4 alumnos)</p>
+                    </div>
+
+                    <!-- Columna 2: Pesos (12 Alumnos) -->
+                    <div class="space-y-4">
+                        <h4 class="text-xl font-bold text-yellow-400 mb-2">Fila 2: Pesos W</h4>
+                        <!-- Filas de Pesos Wx-N1, Wx-N2, Wx-N3 -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W1</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W1</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W1</div>
+
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W2</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W2</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W2</div>
+
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W3</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W3</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W3</div>
+
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W4</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W4</div>
+                            <div class="role-box bg-yellow-600/50 p-2 rounded-lg text-xs font-semibold">W4</div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">(12 alumnos)</p>
+                    </div>
+
+                    <!-- Columna 3: Nodos Ocultos (3 Alumnos) -->
+                    <div class="space-y-12 py-2">
+                        <h4 class="text-xl font-bold text-pink-400 mb-2">Fila 3: Nodos N</h4>
+                        <div class="role-box bg-pink-600/50 p-3 rounded-lg font-semibold">N1 (Bias B1)</div>
+                        <div class="role-box bg-pink-600/50 p-3 rounded-lg font-semibold">N2 (Bias B2)</div>
+                        <div class="role-box bg-pink-600/50 p-3 rounded-lg font-semibold">N3 (Bias B3)</div>
+                        <p class="text-xs text-slate-500 mt-2">(3 alumnos)</p>
+                    </div>
+
+                    <!-- Columna 4: Salida (1 Alumno) -->
+                    <div class="space-y-4">
+                        <h4 class="text-xl font-bold text-cyan-400 mb-2">Fila 4: Salida Y</h4>
+                        <div class="mt-[112px]"> <!-- Ajuste para centrar verticalmente al NODO Y -->
+                            <div class="role-box bg-cyan-600/50 p-3 rounded-lg font-semibold">Y (Clasificador)</div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-[160px]">(1 alumno)</p>
+                    </div>
+                </div>
+
+                <p class="text-center mt-6 pt-4 border-t border-purple-500/50 text-sm text-slate-400">
+                    <span class="font-bold text-purple-300">Flujo de Datos:</span> De izquierda (Fila 1) a derecha (Fila 4).
+                    Los alumnos de la Fila 2 (Pesos) deben colocarse físicamente entre los Inputs y los Nodos Ocultos para representar las <strong>conexiones</strong>.
+                </p>
+            </div>
+        </section>
+
+
+        <!-- Sección 3: Flujo de Proceso Detallado (Propagación Frontal) -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-8 text-center text-indigo-300">
+                3. Pasos del Ejercicio (Propagación Frontal)
+            </h2>
+            <div class="space-y-6 max-w-4xl mx-auto">
+
+                <!-- Paso 1 (Multiplicación en Pesos) -->
+                <div class="card p-5 border-l-8 border-indigo-500">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <span class="text-3xl font-extrabold text-indigo-300 bg-indigo-900 w-10 h-10 flex items-center justify-center rounded-full">1</span>
+                        <h4 class="text-xl font-semibold text-white">Inputs a Pesos (Multiplicación)</h4>
+                    </div>
+                    <p class="text-slate-400 mb-4">Los <strong>4 Inputs (X)</strong> gritan su valor (Ej: "X1 es 7"). Los <strong>12 Pesos (W)</strong> que escuchan, multiplican ese Input por su propio valor de Peso y gritan el resultado a su respectivo Nodo Oculto.</p>
+
+                    <!-- Ejemplo de Cómputo Peso -->
+                    <div class="bg-indigo-900/40 p-4 rounded-lg border border-indigo-700/50">
+                        <h5 class="font-bold text-indigo-300 mb-2">EJEMPLO DE CÓMPUTO EN UN PESO</h5>
+                        <ul class="text-sm text-slate-300 list-disc ml-4 space-y-1">
+                            <li>Input recibido (X1): <span class="font-bold">7</span> (por ejemplo, el valor de "Nariz")</li>
+                            <li>Peso asignado (W1-N1): <span class="font-bold">0.1</span></li>
+                            <li class="mt-2 font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Resultado enviado a N1 = X1 x W1-N1
+                            </li>
+                            <li class="font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Resultado enviado a N1 = 7 x 0.1 = <span class="font-bold">0.7</span>
+                            </li>
+                        </ul>
+                        <p class="mt-3 text-sm text-slate-400 font-semibold">
+                            Este resultado (0.7) es solo uno de los cuatro números que recibirá el Nodo N1.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Paso 2 (Cálculo en Nodos Ocultos) -->
+                <div class="card p-5 border-l-8 border-emerald-500">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <span class="text-3xl font-extrabold text-emerald-300 bg-emerald-900 w-10 h-10 flex items-center justify-center rounded-full">2</span>
+                        <h4 class="text-xl font-semibold text-white">Cálculo y Activación (Nodos Ocultos)</h4>
+                    </div>
+                    <p class="text-slate-400 mb-4">Cada <strong>Nodo Oculto (N)</strong>: 1) Suma los 4 resultados de los Pesos que le llegaron, y 2) Añade su valor fijo de <strong>Bias</strong>. 3) Aplica la Función de Activación (ej: Si Suma &gt; 5, grita "ACTIVO (1)"; si no, "INACTIVO (0)").</p>
+                    
+                    <!-- Ejemplo de Cómputo Oculto -->
+                    <div class="bg-emerald-900/40 p-4 rounded-lg border border-emerald-700/50">
+                        <h5 class="font-bold text-emerald-300 mb-2">EJEMPLO DE CÓMPUTO EN EL NODO N1</h5>
+                        <ul class="text-sm text-slate-300 list-disc ml-4 space-y-1">
+                            <li>Resultados de Pesos (W) recibidos: <span class="font-bold">2.5, -0.1, 3.0, 0.7</span></li>
+                            <li>Bias (B1) asignado: <span class="font-bold">0</span></li>
+                            <li class="mt-2 font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Suma Neta = (2.5) + (-0.1) + (3.0) + (0.7) + Bias
+                            </li>
+                            <li class="font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Suma Neta = 6.1 + 0 = <span class="font-bold">6.1</span>
+                            </li>
+                        </ul>
+                        <p class="mt-3 text-sm text-yellow-300 font-semibold">
+                            Decisión: Si Suma Neta &ge; 5, se activa. Como 6.1 &ge; 5, el Nodo N1 grita: "¡ACTIVO (1)!".
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Paso 3 (Salida y Clasificación Final) -->
+                <div class="card p-5 border-l-8 border-cyan-500">
+                    <div class="flex items-center space-x-4 mb-4">
+                        <span class="text-3xl font-extrabold text-cyan-300 bg-cyan-900 w-10 h-10 flex items-center justify-center rounded-full">3</span>
+                        <h4 class="text-xl font-semibold text-white">Salida y Clasificación Final</h4>
+                    </div>
+                    
+                    <p class="text-slate-400 mb-4">El <strong>Nodo de Salida (Y)</strong> recibe las 3 decisiones (1s o 0s) de la Capa Oculta. Multiplica cada activación por sus <strong>Pesos de Salida (W_out) asignados</strong>, suma los resultados y compara con un umbral final. Finalmente, anuncia: "¡ES UN GATO!" o "¡ES UN PERRO!".</p>
+
+                    <!-- Ejemplo de Cómputo Salida -->
+                    <div class="bg-cyan-900/40 p-4 rounded-lg border border-cyan-700/50">
+                        <h5 class="font-bold text-cyan-300 mb-2">EJEMPLO DE CÓMPUTO EN EL NODO Y</h5>
+                        <ul class="text-sm text-slate-300 list-disc ml-4 space-y-1">
+                            <li>Activaciones recibidas (N1, N2, N3): <span class="font-bold">1, 0, 1</span></li>
+                            <li>Pesos de Salida asignados (W_out): <span class="font-bold">0.8, -0.4, 0.5</span></li>
+                            <li class="mt-2 font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Suma = (N1 x 0.8) + (N2 x -0.4) + (N3 x 0.5)
+                            </li>
+                            <li class="font-mono text-base bg-slate-700/50 p-1 rounded-sm">
+                                Suma = (1 x 0.8) + (0 x -0.4) + (1 x 0.5) = <span class="font-bold">1.3</span>
+                            </li>
+                        </ul>
+                        <p class="mt-3 text-sm text-yellow-300 font-semibold">
+                            Decisión: Si Suma &ge; 0.5, es Gato. Como 1.3 &ge; 0.5, el Nodo Y anuncia: "¡ES UN GATO!".
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center pt-8 border-t border-slate-700/50 mt-12">
+            <p class="text-slate-500 text-sm">Modelo de Perceptrón Multicapa 4x3x1, adaptado para 20 participantes.</p>
+        </footer>
+    </div>
+
+</body>
+</html>
+

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Interactiva: Ejemplo MNIST</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fuente Inter para modernidad y legibilidad */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .matrix-cell {
+            /* Se eliminan width/height fijos para usar 1fr del grid */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1f2937; /* Gray-800 */
+            aspect-ratio: 1 / 1; /* Mantiene la celda perfectamente cuadrada */
+            min-width: 25px; /* Evita que colapse en pantallas muy pequeñas */
+        }
+        
+        /* Estilo específico para las celdas de input cuando están resaltadas */
+        .input-cell-highlight {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 0 3px #10b981 inset; /* Anillo verde interior */
+            position: relative;
+            z-index: 10;
+        }
+
+        .kernel-cell {
+            aspect-ratio: 1 / 1; /* Mantiene la celda cuadrada */
+            min-width: 35px;
+            font-size: 1rem;
+            font-weight: 700;
+            background-color: #f0fdf4; /* Emerald-50 */
+            border: 1px solid #34d399; /* Emerald-400 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Estilos de gradiente para el botón principal */
+        .btn-primary {
+            background-image: linear-gradient(to right, #4c51bf, #667eea);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-image: linear-gradient(to right, #5a67d8, #7f9cf5);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Estilos específicos para las matrices */
+        #inputMatrix, #convolutionOutput, #reluOutput, #poolingOutput {
+            display: grid;
+            gap: 1px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e5e7eb;
+            background-color: #fff;
+            width: 100%; /* Asegura que la matriz usa todo el ancho disponible del panel */
+        }
+        #inputMatrix { grid-template-columns: repeat(7, 1fr); max-width: 300px; /* Tamaño máximo visual */ }
+        #convolutionOutput, #reluOutput { grid-template-columns: repeat(5, 1fr); max-width: 300px; }
+        #poolingOutput { grid-template-columns: repeat(2, 1fr); max-width: 300px; }
+        
+        /* Estilo para los paneles de capa cuando están inactivos/dimmed */
+        .layer-panel {
+            min-height: 250px;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .matrix-cell {
+                font-size: 0.6rem;
+            }
+            /* Restringir un poco el ancho en móvil para que no se pegue a los bordes */
+            #inputMatrix, #convolutionOutput, #reluOutput, #poolingOutput {
+                max-width: 250px; 
+            }
+        }
+    </style>
+    <script>
+        // --- 1. DATOS Y ESTADO DEL MODELO (SIMPLIFICADOS) ---
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+
+        const STEPS = [
+            "Capa de Entrada",
+            "Convolución (Aplicación de Filtro)",
+            "Activación ReLU",
+            "Max Pooling (Reducción de Muestreo)",
+            "Capa Totalmente Conectada (Clasificación)"
+        ];
+
+        const LEGENDS = {
+            0: "Paso 1: Capa de Entrada. La imagen en escala de grises. 255 (Negro) es píxel con información; 0 (Blanco) es vacío.",
+            1: "Paso 2: Convolución. Desliza el <span class='font-bold text-emerald-700'>Filtro (Kernel)</span> 3x3 sobre la imagen para extraer características. Los valores indican dónde se detectó el patrón.",
+            2: "Paso 3: Activación ReLU. Elimina todos los valores negativos (los convierte a 0), introduciendo no-linealidad en el modelo. Esto es crucial para que la red pueda aprender patrones complejos.",
+            3: "Paso 4: Max Pooling. Reduce la dimensionalidad al tomar el valor máximo de cada cuadrante 2x2. Esto hace el modelo más eficiente, acelera el entrenamiento y reduce el riesgo de sobreajuste.",
+            4: "Paso 5: Capa Totalmente Conectada (FC). El tensor final se 'aplana' en un vector y se alimenta a una red densa para obtener las probabilidades de clasificación. Aquí es donde se toma la decisión final."
+        };
+
+        let currentState = 0; // 0 a 4 (Pasos principales)
+        let convSubStep = 0;  // 0 a 25 (Sub-pasos de convolución. 25 es el final)
+        let activeKernelKey = 'vertical'; // Filtro seleccionado por defecto
+
+        // Imagen de Entrada 7x7 (Dígito '5' simplificado, 0=Blanco, 255=Negro)
+        const INPUT_IMAGE = [
+            [0, 255, 255, 255, 255, 255, 0],
+            [0, 255, 0, 0, 0, 0, 0],
+            [0, 255, 0, 0, 0, 0, 0],
+            [0, 255, 255, 255, 255, 0, 0],
+            [0, 0, 0, 0, 0, 255, 0],
+            [0, 0, 0, 0, 0, 255, 0],
+            [0, 255, 255, 255, 255, 0, 0]
+        ];
+
+        // Múltiples Kernels y sus resultados precalculados para el input '5'
+        const KERNELS = {
+            'vertical': {
+                name: "Detector de Borde Vertical",
+                matrix: [
+                    [-1, 0, 1],
+                    [-1, 0, 1],
+                    [-1, 0, 1]
+                ],
+                output: [
+                    [ 0,  255, 255, 255,  0],
+                    [ -255, -255, 0, 0, 255],
+                    [ -255, -255, 0, 0, 255],
+                    [ -255, -255, 0, 0, 255],
+                    [ 0,  255, 255, 255,  0]
+                ],
+                pooling: [
+                    [255, 255],
+                    [255, 255]
+                ],
+                confidence: 0.70
+            },
+            'horizontal': {
+                name: "Detector de Borde Horizontal",
+                matrix: [
+                    [-1, -1, -1],
+                    [ 0,  0,  0],
+                    [ 1,  1,  1]
+                ],
+                output: [
+                    [ 0, 0, 0, 0, 0],
+                    [ -255, -255, -255, -255, -255],
+                    [ 255, 255, 255, 255, 255],
+                    [ 0, 0, 0, 0, 0],
+                    [ 0, 0, 0, 0, 0]
+                ],
+                pooling: [
+                    [0, 0],
+                    [255, 0]
+                ],
+                confidence: 0.25
+            },
+            'blur': {
+                name: "Filtro de Suavizado (Blur)",
+                matrix: [
+                    [1/9, 1/9, 1/9],
+                    [1/9, 1/9, 1/9],
+                    [1/9, 1/9, 1/9]
+                ],
+                output: [
+                    [170, 204, 204, 204, 170],
+                    [113, 170, 170, 170, 113],
+                    [113, 170, 170, 170, 113],
+                    [85, 142, 142, 142, 113],
+                    [113, 142, 142, 142, 85]
+                ],
+                pooling: [
+                    [204, 204],
+                    [170, 142]
+                ],
+                confidence: 0.50
+            }
+        };
+
+        /**
+         * Obtiene los outputs de CONV, ReLU y Pooling para el filtro activo.
+         */
+        function getCurrentOutputs() {
+            const data = KERNELS[activeKernelKey];
+            const conv = data.output;
+            // ReLU se calcula dinámicamente: Max(0, valor)
+            const relu = conv.map(row => row.map(val => Math.max(0, val)));
+            const pooling = data.pooling;
+            return { conv, relu, pooling };
+        }
+
+        // --- 2. FUNCIONES DE RENDERIZADO ESPECÍFICAS PARA ANIMACIÓN ---
+
+        /**
+         * Renderiza la matriz de entrada con IDs para permitir el resaltado.
+         */
+        function renderInputMatrix(matrix) {
+            const container = document.getElementById('inputMatrix');
+            if (!container) return;
+
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(7, 1fr)`;
+
+            matrix.forEach((row, r) => {
+                row.forEach((value, c) => {
+                    const div = document.createElement('div');
+                    const normalizedValue = 255 - Math.min(255, Math.max(0, value));
+                    const bgColor = `rgb(${normalizedValue}, ${normalizedValue}, ${normalizedValue})`;
+                    const textColor = value > 128 ? 'text-white' : 'text-gray-900';
+
+                    div.className = `matrix-cell rounded-sm transition-all duration-300`;
+                    div.style.backgroundColor = bgColor;
+                    div.textContent = value.toFixed(0);
+                    div.id = `input-cell-${r}-${c}`; // ID para el resaltado
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        /**
+         * Resalta la ventana 3x3 en la matriz de entrada.
+         */
+        function highlightWindow(startR, startC) {
+            // 1. Limpiar el resaltado anterior en todo el input
+            document.querySelectorAll('#inputMatrix .matrix-cell').forEach(cell => {
+                cell.classList.remove('input-cell-highlight', 'bg-emerald-100');
+                cell.style.backgroundColor = cell.style.backgroundColor.replace(/rgba\(.*?\)/, '');
+            });
+
+            // 2. Aplicar nuevo resaltado para la ventana 3x3
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const cell = document.getElementById(`input-cell-${startR + r}-${startC + c}`);
+                    if (cell) {
+                        cell.classList.add('input-cell-highlight');
+                    }
+                }
+            }
+        }
+
+        /**
+         * Renderiza el Mapa de Características (CONV Output), llenando hasta 'filledCount'.
+         */
+        function renderPartialConvolution(matrix, filledCount) {
+            const container = document.getElementById('convolutionOutput');
+            if (!container) return;
+
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(5, 1fr)`;
+
+            let index = 0;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const value = matrix[r][c];
+                    const div = document.createElement('div');
+                    const cellClass = 'matrix-cell rounded-sm transition-all duration-300 text-sm';
+                    div.id = `conv-cell-${r}-${c}`;
+
+                    if (index < filledCount) {
+                        // Celda llenada (ya calculada)
+                        let bgColor = '';
+                        let textColor = 'text-gray-900';
+
+                        if (value > 0) {
+                            const intensity = Math.min(1, value / 255); 
+                            bgColor = `rgba(52, 211, 153, ${intensity})`; /* Esmeralda */
+                        } else if (value < 0) {
+                            const intensity = Math.min(1, Math.abs(value) / 255);
+                            bgColor = `rgba(252, 165, 165, ${intensity})`; /* Rojo */
+                        } else {
+                            bgColor = 'rgb(243, 244, 246)'; /* Gris-100 */
+                            textColor = 'text-gray-500';
+                        }
+
+                        div.className = `${cellClass} ${textColor}`;
+                        div.style.backgroundColor = bgColor;
+                        div.textContent = value.toFixed(value < 1 && value > 0 ? 2 : 0); 
+
+                    } else {
+                        // Celda pendiente
+                        div.className = `${cellClass} bg-gray-100 text-gray-400 border border-dashed border-gray-300`;
+                        div.textContent = '?';
+                    }
+                    container.appendChild(div);
+                    index++;
+                }
+            }
+
+            // Resaltar la celda que *se acaba de calcular*
+            if (filledCount > 0 && filledCount <= 25) {
+                const prevIndex = filledCount - 1;
+                const prevR = Math.floor(prevIndex / 5);
+                const prevC = prevIndex % 5;
+                const calculatedCell = document.getElementById(`conv-cell-${prevR}-${prevC}`);
+                if (calculatedCell) {
+                    calculatedCell.classList.add('ring-4', 'ring-indigo-500'); 
+                }
+            }
+        }
+
+
+        // --- 3. FUNCIONES DE RENDERIZADO GENERALES ---
+
+        /**
+         * Renderiza una matriz como una cuadrícula HTML (usada para ReLU y Pooling).
+         */
+        function renderMatrix(matrix, elementId) {
+            const container = document.getElementById(elementId);
+            if (!container) return;
+
+            container.innerHTML = '';
+            const size = matrix.length;
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+            matrix.forEach(row => {
+                row.forEach(value => {
+                    const div = document.createElement('div');
+                    
+                    // Colores para Feature Maps (ReLU/Pooling)
+                    let bgColor = '';
+                    let textColor = 'text-gray-800';
+
+                    if (value > 0) {
+                        const intensity = Math.min(1, value / 255);
+                        bgColor = `rgba(52, 211, 153, ${intensity})`;
+                    } else {
+                        bgColor = 'rgb(243, 244, 246)';
+                        textColor = 'text-gray-500';
+                    }
+
+                    div.className = `matrix-cell ${textColor} rounded-sm transition-all duration-500`;
+                    div.style.backgroundColor = bgColor;
+                    div.textContent = value.toFixed(0);
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        /**
+         * Renderiza el kernel seleccionado
+         */
+        function renderKernel(matrix) {
+            const kernelContainer = document.getElementById('kernel');
+            kernelContainer.innerHTML = '';
+            matrix.forEach(row => {
+                row.forEach(value => {
+                    const div = document.createElement('div');
+                    const displayValue = (typeof value === 'number' && value < 1 && value > 0) ? '1/9' : value;
+                    
+                    div.className = 'kernel-cell flex justify-center items-center rounded-md bg-emerald-100 text-emerald-800';
+                    div.textContent = displayValue;
+                    kernelContainer.appendChild(div);
+                });
+            });
+        }
+
+
+        /**
+         * Renderiza la información de la Capa Totalmente Conectada.
+         */
+        function renderFC(kernelKey) {
+            const container = document.getElementById('fcOutput');
+            container.innerHTML = '';
+            container.classList.add('space-y-2');
+
+            const confidence = KERNELS[kernelKey].confidence;
+            const mainDigit = 5;
+
+            // Ajuste dinámico de probabilidades
+            const probabilities = [];
+            const totalOthers = 1.0 - confidence;
+            const baseOther = totalOthers / 9;
+
+            for (let digit = 0; digit <= 9; digit++) {
+                if (digit === mainDigit) {
+                    probabilities.push({ digit, prob: confidence });
+                } else {
+                    probabilities.push({ digit, prob: baseOther });
+                }
+            }
+
+            probabilities.forEach(({ digit, prob }) => {
+                const percent = (prob * 100).toFixed(1);
+                const isMax = digit === mainDigit;
+                const barColor = isMax ? 'bg-indigo-600' : 'bg-gray-300';
+                const textColor = isMax ? 'font-bold text-indigo-700' : 'text-gray-600';
+
+                const item = document.createElement('div');
+                item.className = 'flex items-center space-x-2';
+                item.innerHTML = `
+                    <div class="w-8 text-right text-sm ${textColor}">${digit}:</div>
+                    <div class="flex-grow h-6 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width: ${percent}%;"></div>
+                    </div>
+                    <div class="w-12 text-sm text-right ${textColor}">${percent}%</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+
+        /**
+         * Actualiza el contenido de los contenedores según el estado actual.
+         */
+        function updateUI() {
+            document.getElementById('stepTitle').textContent = STEPS[currentState];
+
+            // Obtener los datos actuales del Kernel seleccionado
+            const { conv: CONV_OUTPUT, relu: RELU_OUTPUT, pooling: POOLING_OUTPUT } = getCurrentOutputs();
+            const currentKernelMatrix = KERNELS[activeKernelKey].matrix;
+
+            // 1. Manejo del botón Siguiente/Anterior y título
+            const nextBtn = document.getElementById('nextBtn');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtnText = document.getElementById('nextBtnText');
+            
+            // ** 1.1. Actualización de la Leyenda/Explicación del paso **
+            let currentLegend = LEGENDS[currentState];
+            if (currentState === 4) {
+                // Caso especial para la leyenda de FC (Clasificación)
+                const confidence = KERNELS[activeKernelKey].confidence;
+                const name = KERNELS[activeKernelKey].name;
+                const mainDigit = 5;
+                currentLegend += ` <br><br> <strong>Resultado:</strong> Con el filtro de <span class="font-bold text-green-700">${name}</span>, el modelo predice el dígito '${mainDigit}' con un ${ (confidence * 100).toFixed(1) }% de confianza.`;
+            }
+            document.getElementById('currentLegendText').innerHTML = currentLegend;
+
+
+            if (currentState === 1 && convSubStep < 25) {
+                // Estamos en animación de Convolución
+                nextBtnText.textContent = `Calcular Píxel ${convSubStep + 1} de 25`;
+                nextBtn.disabled = false;
+            } else if (currentState === 1 && convSubStep === 25) {
+                 // Convolución terminada
+                nextBtnText.textContent = "Siguiente Paso →";
+                nextBtn.disabled = false;
+            } else {
+                // Pasos normales
+                nextBtnText.textContent = "Siguiente Paso →";
+                nextBtn.disabled = currentState === STEPS.length - 1;
+            }
+            prevBtn.disabled = currentState === 0 && convSubStep === 0;
+
+            // 2. Resaltado de pasos principales en la barra
+            document.querySelectorAll('.step-indicator').forEach((el, index) => {
+                el.classList.remove('bg-indigo-600', 'ring-4', 'bg-gray-400');
+                if (index === currentState) {
+                    el.classList.add('bg-indigo-600', 'ring-4');
+                } else {
+                    el.classList.add('bg-gray-400');
+                }
+            });
+
+            // 3. Lógica de Resaltado/Dimensión de Paneles 
+            const layers = [
+                'inputSection', 
+                'convSection', 
+                'reluSection', 
+                'poolingSection', 
+                'fcSection'
+            ];
+            
+            layers.forEach((id, index) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (index === currentState) {
+                        el.classList.add('ring-4', 'ring-indigo-500', 'shadow-xl', 'bg-indigo-50', 'border-indigo-300');
+                        el.classList.remove('opacity-50', 'bg-white', 'shadow-md', 'border-gray-200');
+                    } else {
+                        el.classList.remove('ring-4', 'ring-indigo-500', 'shadow-xl', 'bg-indigo-50', 'border-indigo-300');
+                        el.classList.add('opacity-50', 'bg-white', 'shadow-md', 'border-gray-200');
+                    }
+                }
+            });
+
+
+            
+            // 4. Input y Kernel View 
+            renderInputMatrix(INPUT_IMAGE);
+            renderKernel(currentKernelMatrix);
+
+
+            // 5. CONVOLUCIÓN: Manejo de animación
+            if (currentState === 1 && convSubStep < 25) {
+                // Mostrar animación parcial
+                renderPartialConvolution(CONV_OUTPUT, convSubStep);
+                const r = Math.floor(convSubStep / 5);
+                const c = convSubStep % 5;
+                highlightWindow(r, c); 
+            } else {
+                // Mostrar mapa completo si no estamos animando o si ya terminamos la animación
+                renderMatrix(CONV_OUTPUT, 'convolutionOutput');
+                // Limpiar el highlight del input si no estamos en convolución
+                document.querySelectorAll('#inputMatrix .matrix-cell').forEach(cell => {
+                    cell.classList.remove('input-cell-highlight', 'bg-emerald-100');
+                });
+            }
+            
+            // 6. RELU, POOLING, FC (Siempre se renderizan los resultados completos)
+            renderMatrix(RELU_OUTPUT, 'reluOutput');
+            renderMatrix(POOLING_OUTPUT, 'poolingOutput');
+            renderFC(activeKernelKey); 
+        }
+
+        // --- 4. MANEJO DE ESTADO Y EVENTOS ---
+
+        function nextStep() {
+            if (currentState === 1 && convSubStep < 25) {
+                // Avanzar sub-paso de convolución
+                convSubStep++;
+            } else if (currentState < STEPS.length - 1) {
+                // Avanzar paso principal
+                currentState++;
+                convSubStep = 0; // Reset sub-step when changing main steps
+            }
+            updateUI();
+        }
+
+        function prevStep() {
+            if (currentState === 1 && convSubStep > 0) {
+                // Retroceder sub-paso de convolución
+                convSubStep--;
+            } else if (currentState > 0) {
+                // Retroceder paso principal
+                currentState--;
+                // Si volvemos a Conv, preparamos la Conv para que esté completa (si no avanzamos al subpaso 25)
+                if (currentState === 1) {
+                    convSubStep = 25;
+                } else {
+                    convSubStep = 0;
+                }
+            }
+            updateUI();
+        }
+
+        /**
+         * Inicializa el selector de kernels y el kernel de visualización.
+         */
+        function initializeKernelSelector() {
+            const selector = document.getElementById('kernelSelector');
+            for (const key in KERNELS) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = KERNELS[key].name;
+                selector.appendChild(option);
+            }
+
+            selector.value = activeKernelKey;
+            selector.addEventListener('change', (e) => {
+                activeKernelKey = e.target.value;
+                // Reset a la Capa de Entrada y al sub-paso 0 al cambiar de filtro
+                currentState = 0;
+                convSubStep = 0; 
+                updateUI();
+            });
+            
+            renderKernel(KERNELS[activeKernelKey].matrix);
+        }
+
+        // Inicialización al cargar la página
+        window.onload = () => {
+            initializeKernelSelector();
+            updateUI();
+            document.getElementById('nextBtn').addEventListener('click', nextStep);
+            document.getElementById('prevBtn').addEventListener('click', prevStep);
+        };
+    </script>
+</head>
+<body>
+
+    <div class="max-w-7xl w-full bg-white p-8 md:p-12 rounded-2xl shadow-2xl border border-gray-100 transition-all duration-500">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700">CNN Interactiva: Clasificación MNIST</h1>
+            <p class="text-gray-600 mt-2">Explora el flujo de trabajo completo de una Red Neuronal Convolucional (CNN) procesando el dígito '5'.</p>
+        </header>
+
+        <!-- INICIO Panel de Filtro/Kernel (Mantenido arriba para control central) -->
+        <div class="flex justify-center mb-8">
+             <div id="kernelView" class="p-4 border border-emerald-200 rounded-xl shadow-md bg-emerald-50 transition-all duration-500 w-full max-w-xs">
+                <h3 class="text-lg font-semibold text-emerald-700 mb-3 text-center">Filtro/Kernel (3x3)</h3>
+                
+                <!-- Selector -->
+                <select id="kernelSelector" class="w-full p-2 mb-4 border border-emerald-400 rounded-lg bg-white text-emerald-800 font-medium cursor-pointer focus:ring-2 focus:ring-emerald-500">
+                    <!-- Options filled by JS -->
+                </select>
+                
+                <div id="kernel" class="grid grid-cols-3 gap-1 mx-auto max-w-[120px]">
+                    <!-- El Kernel se renderiza aquí -->
+                </div>
+                <p class="mt-3 text-sm text-emerald-600 text-center">Selecciona el filtro para cambiar la detección de patrones.</p>
+            </div>
+        </div>
+        <!-- FIN Panel de Filtro/Kernel -->
+
+        <!-- Barra de Progreso -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex-grow flex justify-between space-x-1 sm:space-x-4">
+                <div class="flex flex-col items-center relative group">
+                    <div id="step-0" class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">1</div>
+                    <span class="mt-2 text-xs text-gray-500 group-hover:text-indigo-600 hidden sm:block">Entrada</span>
+                </div>
+                <div class="flex-grow h-0.5 bg-gray-300 self-center"></div>
+                <div class="flex flex-col items-center relative group">
+                    <div id="step-1" class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">2</div>
+                    <span class="mt-2 text-xs text-gray-500 group-hover:text-indigo-600 hidden sm:block">Conv.</span>
+                </div>
+                <div class="flex-grow h-0.5 bg-gray-300 self-center"></div>
+                <div class="flex flex-col items-center relative group">
+                    <div id="step-2" class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">3</div>
+                    <span class="mt-2 text-xs text-gray-500 group-hover:text-indigo-600 hidden sm:block">ReLU</span>
+                </div>
+                <div class="flex-grow h-0.5 bg-gray-300 self-center"></div>
+                <div class="flex flex-col items-center relative group">
+                    <div id="step-3" class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">4</div>
+                    <span class="mt-2 text-xs text-gray-500 group-hover:text-indigo-600 hidden sm:block">Pooling</span>
+                </div>
+                <div class="flex-grow h-0.5 bg-gray-300 self-center"></div>
+                <div class="flex flex-col items-center relative group">
+                    <div id="step-4" class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">5</div>
+                    <span class="mt-2 text-xs text-gray-500 group-hover:text-indigo-600 hidden sm:block">FC</span>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Barra de Progreso -->
+
+        <!-- Controles de Navegación -->
+        <div class="flex justify-center space-x-4 mb-6">
+            <button id="prevBtn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-full shadow-md hover:bg-gray-400 disabled:opacity-50 transition duration-150">
+                &larr; Anterior
+            </button>
+            <button id="nextBtn" class="btn-primary text-white font-semibold px-6 py-2 rounded-full shadow-lg disabled:opacity-50 transition duration-150">
+                <span id="nextBtnText">Siguiente Paso &rarr;</span>
+            </button>
+        </div>
+        <!-- Fin Controles de Navegación -->
+
+
+        <h2 id="stepTitle" class="text-2xl font-bold text-gray-800 text-center">Capa de Entrada</h2>
+        
+        <!-- Leyenda/Explicación -->
+        <div id="infoLegend" class="mt-3 mb-6 p-4 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg text-sm text-indigo-700 w-full transition-all duration-500">
+            <p id="currentLegendText">Paso 1: Capa de Entrada. La imagen en escala de grises. 255 (Negro) es píxel con información; 0 (Blanco) es vacío.</p>
+        </div>
+
+
+        <!-- CONTENEDOR PRINCIPAL DE LAS CAPAS (Horizontal) -->
+        <div id="layersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            
+            <!-- 1. CAPA DE ENTRADA -->
+            <div id="inputSection" class="layer-panel flex flex-col items-center p-4 border border-gray-200 rounded-xl shadow-md bg-white transition-all duration-500">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Entrada 7x7</h3>
+                <!-- Se ha eliminado la restricción max-w-[250px] para que sea fluido -->
+                <div id="inputMatrix" class="w-full mx-auto">
+                    <!-- La matriz de entrada se renderiza aquí -->
+                </div>
+            </div>
+
+            <!-- 2. CONVOLUCIÓN -->
+            <div id="convSection" class="layer-panel flex flex-col items-center p-4 border border-gray-200 rounded-xl shadow-md bg-white transition-all duration-500">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Convolución 5x5</h3>
+                <!-- Se ha eliminado la restricción max-w-[250px] para que sea fluido -->
+                <div id="convolutionOutput" class="w-full mx-auto">
+                    <!-- Resultado de la Convolución -->
+                </div>
+            </div>
+
+            <!-- 3. RELU -->
+            <div id="reluSection" class="layer-panel flex flex-col items-center p-4 border border-gray-200 rounded-xl shadow-md bg-white transition-all duration-500">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Activación ReLU 5x5</h3>
+                <!-- Se ha eliminado la restricción max-w-[250px] para que sea fluido -->
+                <div id="reluOutput" class="w-full mx-auto">
+                    <!-- Resultado de ReLU -->
+                </div>
+            </div>
+
+            <!-- 4. POOLING -->
+            <div id="poolingSection" class="layer-panel flex flex-col items-center p-4 border border-gray-200 rounded-xl shadow-md bg-white transition-all duration-500">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Max Pooling 2x2</h3>
+                <!-- Se ha eliminado la restricción max-w-[250px] para que sea fluido -->
+                <div id="poolingOutput" class="w-full mx-auto">
+                    <!-- Resultado del Pooling -->
+                </div>
+            </div>
+            
+            <!-- 5. CAPA DENSE (FC) -->
+            <div id="fcSection" class="layer-panel flex flex-col items-center p-4 border border-gray-200 rounded-xl shadow-md bg-white transition-all duration-500">
+                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Clasificación (FC)</h3>
+                <div id="fcOutput" class="w-full">
+                    <!-- Barras de probabilidad se renderizan aquí -->
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+
+</body>
+</html>
+

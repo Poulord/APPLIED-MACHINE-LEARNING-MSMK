@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía Interactiva de Redes Neuronales</title>
+    <!-- Carga de Tailwind CSS para estilos modernos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de la fuente Inter y color de fondo general */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro (similar a GitHub dark) */
+            color: #c9d1d9; /* Texto claro */
+        }
+        /* Estilo para los botones de función de activación */
+        .activation-button {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .activation-button:hover:not(.active) {
+            transform: translateY(-2px);
+            background-color: #21262d;
+        }
+        .activation-button.active {
+            background-color: #238636; /* Verde fuerte para el activo */
+            border-color: #238636;
+            color: white;
+        }
+        /* Estilos para el SVG de la red (Grafico 1) */
+        .neuron {
+            fill: #58a6ff; /* Azul por defecto para neuronas */
+            cursor: pointer;
+            transition: r 0.15s ease, fill 0.15s ease;
+        }
+        .neuron:hover {
+            r: 24; /* Aumentar radio al pasar el ratón (BASE 12, MAX 22, HOVER 24) */
+        }
+        .connection {
+            stroke: #484f58; /* Gris oscuro para conexiones */
+            stroke-width: 1.5;
+            transition: stroke-width 0.1s ease, stroke 0.1s ease;
+        }
+        .neuron-label {
+            fill: #c9d1d9;
+            pointer-events: none; /* Ignorar eventos de ratón */
+        }
+        /* Estilos para el 'track' del slider */
+        .slider-track {
+            height: 4px;
+            background: #484f58;
+            border-radius: 2px;
+        }
+
+        /* Estilo para el 'thumb' (manija) del slider - Soluciona el error de getComputedStyle */
+        #z-slider::-webkit-slider-thumb, .input-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #58a6ff;
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -6px;
+            box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.3);
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        #z-slider::-moz-range-thumb, .input-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #58a6ff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(88, 166, 255, 0.3);
+            border: none;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        /* Clase para el track de los sliders de input */
+        .input-slider {
+             /* Esto aplica el track de tailwind, pero necesitas asegurar el color del thumb */
+             @apply h-2 bg-gray-600 rounded-lg appearance-none;
+        }
+    </style>
+    <script>
+        // --- Red Neuronal Estado Global y Parámetros ---
+
+        // Configuración: [Input, Hidden, Output]
+        const NETWORK_CONFIG = [3, 5, 2];
+        let inputs = [0.5, 0.5, 0.5]; // Valores de entrada iniciales (0 a 1)
+        let activations = []; // Almacena las activaciones (a) de cada capa
+
+        // Pesos (W) y Sesgos (B) de forma estática y arbitraria para la demo
+        // Se ha incrementado la magnitud de W1 para hacer la visualización más sensible a los cambios de input
+        // W1 (5x3) - Conexiones de Input a Capa Oculta (Hidden)
+        const W1 = [
+            [ 3.0, -1.5, 2.0], // W for H1 (Más sensible a x1 y x3)
+            [-1.5, 4.0, -0.5], // W for H2 (Más sensible a x2)
+            [ 2.5, -2.0, 1.5], // W for H3
+            [-0.5, 2.5, 4.5],  // W for H4 (Muy sensible a x3)
+            [ 2.0, 0.5, -3.0]  // W for H5
+        ];
+        const B1 = [0.1, -0.2, 0.3, 0.0, -0.1]; // Sesgos para las 5 neuronas ocultas
+
+        // W2 (2x5) - Conexiones de Capa Oculta a Capa de Salida (Output)
+        const W2 = [
+            [ 0.5, -0.3, 0.2, 0.7, -0.1], // W for O1
+            [-0.4, 0.6, -0.5, 0.2, 0.3]   // W for O2
+        ];
+        const B2 = [0.0, 0.1]; // Sesgos para las 2 neuronas de salida
+
+        // Constantes para el cambio de tamaño de las neuronas ocultas
+        const BASE_RADIUS = 12; // Radio base para todas las neuronas
+        const MAX_RADIUS = 22; // Radio máximo para las neuronas ocultas activas
+
+        // --- Funciones de Activación y Lógica General ---
+
+        const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+        const relu = (z) => Math.max(0, z);
+        const tanh = (z) => Math.tanh(z);
+
+        // Softmax para la capa de salida (para interpretar como probabilidad)
+        const softmax = (zArray) => {
+            const maxZ = Math.max(...zArray);
+            const expZs = zArray.map(z => Math.exp(z - maxZ));
+            const sumExpZs = expZs.reduce((sum, expZ) => sum + expZ, 0);
+            return expZs.map(expZ => expZ / sumExpZs);
+        };
+
+        const activationFunctions = {
+            'Sigmoide': { func: sigmoid, range: [-5, 5] },
+            'ReLU': { func: relu, range: [-5, 5] },
+            'Tanh': { func: tanh, range: [-5, 5] },
+        };
+
+        // Estado global para la función activa
+        let activeFunction = 'Sigmoide';
+
+        // --- Lógica de Mapeo de Activación a Estilo ---
+
+        /**
+         * Normaliza el valor de activación al rango [0, 1] y lo mapea a un color (Azul->Naranja).
+         * Se utiliza para las capas de Input y Oculta.
+         * @param {number} value - Valor de activación (a).
+         * @returns {string} Código de color HEX.
+         */
+        function activationToFill(value) {
+            // Normalizar el valor al rango [0, 1] para el color mapping
+            let normalizedValue;
+            if (activeFunction === 'Sigmoide' || activeFunction === 'Softmax') {
+                normalizedValue = value; // Ya está en [0, 1]
+            } else if (activeFunction === 'Tanh') {
+                normalizedValue = (value + 1) / 2; // Mapear [-1, 1] a [0, 1]
+            } else {
+                // Para ReLU, limitamos el mapping a un valor máximo de 2.0
+                normalizedValue = Math.min(Math.max(value, 0), 2.0) / 2.0;
+            }
+
+            // Interpolación de color: Azul oscuro 'inactivo' a Naranja 'máximo'
+            let r, g, b;
+            const c1 = [30, 40, 60];    // Azul oscuro (Inactivo/Bajo)
+            const c2 = [88, 166, 255];  // Azul brillante (Activación Media)
+            const c3 = [253, 151, 31];  // Naranja (Máxima Activación)
+
+            if (normalizedValue < 0.5) {
+                // Oscuro -> Azul (0 a 0.5)
+                const ratio = normalizedValue * 2;
+                r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
+                g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
+                b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
+            } else {
+                // Azul -> Naranja (0.5 a 1.0)
+                const ratio = (normalizedValue - 0.5) * 2;
+                r = Math.round(c2[0] + (c3[0] - c2[0]) * ratio);
+                g = Math.round(c2[1] + (c3[1] - c2[1]) * ratio);
+                b = Math.round(c2[2] + (c3[2] - c2[2]) * ratio);
+            }
+
+            // Retornar en formato HEX
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).padStart(6, '0');
+        }
+
+        /**
+         * Mapea la probabilidad [0, 1] a una escala de color de Rojo (0) a Verde (1).
+         * Utilizado exclusivamente para las neuronas de la Capa de Salida (Output).
+         * @param {number} p - Probabilidad (0 a 1).
+         * @returns {string} Código de color HEX.
+         */
+        function colorToProbability(p) {
+            // Rojo Fuerte (0.0) -> Verde Fuerte (1.0)
+            const low = [220, 50, 50]; // Rojo
+            const mid = [255, 255, 100]; // Amarillo
+            const high = [50, 220, 50]; // Verde
+
+            let r, g, b;
+            
+            if (p < 0.5) {
+                // Rojo -> Amarillo (0 a 0.5)
+                const ratio = p * 2;
+                r = Math.round(low[0] + (mid[0] - low[0]) * ratio);
+                g = Math.round(low[1] + (mid[1] - low[1]) * ratio);
+                b = Math.round(low[2] + (mid[2] - low[2]) * ratio);
+            } else {
+                // Amarillo -> Verde (0.5 a 1.0)
+                const ratio = (p - 0.5) * 2;
+                r = Math.round(mid[0] + (high[0] - mid[0]) * ratio);
+                g = Math.round(mid[1] + (high[1] - mid[1]) * ratio);
+                b = Math.round(mid[2] + (high[2] - mid[2]) * ratio);
+            }
+            
+            // Retornar en formato HEX
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).padStart(6, '0');
+        }
+
+        /**
+         * Normaliza el valor de activación al rango [0, 1] y lo mapea a un radio.
+         * Se utiliza para el 'r' de las neuronas de la capa oculta.
+         * @param {number} value - Valor de activación (a).
+         * @returns {number} El radio del círculo (entre BASE_RADIUS y MAX_RADIUS).
+         */
+        function activationToRadius(value) {
+            let normalizedValue;
+            if (activeFunction === 'Sigmoide') {
+                normalizedValue = value; // Ya está en [0, 1]
+            } else if (activeFunction === 'Tanh') {
+                normalizedValue = (value + 1) / 2; // Mapear [-1, 1] a [0, 1]
+            } else {
+                // Para ReLU, limitamos el mapping a un valor máximo de 2.0
+                normalizedValue = Math.min(Math.max(value, 0), 2.0) / 2.0;
+            }
+
+            // Mapear [0, 1] a [BASE_RADIUS, MAX_RADIUS]
+            const minEffectiveRadius = BASE_RADIUS;
+            const maxEffectiveRadius = MAX_RADIUS;
+            
+            return minEffectiveRadius + (maxEffectiveRadius - minEffectiveRadius) * normalizedValue;
+        }
+
+        // --- Lógica del Gráfico 2 (Activación) ---
+        const SVG_WIDTH = 450;
+        const SVG_HEIGHT = 250;
+        const PADDING = 30;
+        const INNER_WIDTH = SVG_WIDTH - 2 * PADDING;
+        const INNER_HEIGHT = SVG_HEIGHT - 2 * PADDING;
+
+        const scaleX = (z, domain) => PADDING + INNER_WIDTH * (z - domain[0]) / (domain[1] - domain[0]);
+        const scaleY = (a, range) => SVG_HEIGHT - PADDING - INNER_HEIGHT * (a - range[0]) / (range[1] - range[0]);
+
+        function drawActivationGraph() {
+            const svg = document.getElementById('activation-svg');
+            const slider = document.getElementById('z-slider');
+            const z = parseFloat(slider.value);
+            const { func } = activationFunctions[activeFunction];
+            const a = func(z);
+
+            let yRange;
+            if (activeFunction === 'Sigmoide') yRange = [0, 1];
+            else if (activeFunction === 'ReLU') yRange = [0, 5];
+            else yRange = [-1, 1];
+            const zDomain = [-5, 5];
+
+            svg.innerHTML = '';
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            svg.appendChild(g);
+
+            const y_origin = scaleY(0, yRange);
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', PADDING);
+            xAxis.setAttribute('y1', y_origin);
+            xAxis.setAttribute('x2', SVG_WIDTH - PADDING);
+            xAxis.setAttribute('y2', y_origin);
+            xAxis.setAttribute('stroke', '#484f58');
+            xAxis.setAttribute('stroke-width', 1);
+            g.appendChild(xAxis);
+
+            const x_origin = scaleX(0, zDomain);
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', x_origin);
+            yAxis.setAttribute('y1', PADDING);
+            yAxis.setAttribute('x2', x_origin);
+            yAxis.setAttribute('y2', SVG_HEIGHT - PADDING);
+            yAxis.setAttribute('stroke', '#484f58');
+            yAxis.setAttribute('stroke-width', 1);
+            g.appendChild(yAxis);
+
+            let pathData = '';
+            const steps = 100;
+            for (let i = 0; i <= steps; i++) {
+                const currentZ = zDomain[0] + (zDomain[1] - zDomain[0]) * (i / steps);
+                const currentA = func(currentZ);
+                const x = scaleX(currentZ, zDomain);
+                const y = scaleY(currentA, yRange);
+                pathData += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+            }
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#58a6ff');
+            path.setAttribute('stroke-width', 3);
+            g.appendChild(path);
+
+            const dotX = scaleX(z, zDomain);
+            const dotY = scaleY(a, yRange);
+
+            const lineZ = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineZ.setAttribute('x1', dotX);
+            lineZ.setAttribute('y1', y_origin);
+            lineZ.setAttribute('x2', dotX);
+            lineZ.setAttribute('y2', dotY);
+            lineZ.setAttribute('stroke', '#a0aec0');
+            lineZ.setAttribute('stroke-dasharray', '4 2');
+            g.appendChild(lineZ);
+
+            const lineA = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineA.setAttribute('x1', x_origin);
+            lineA.setAttribute('y1', dotY);
+            lineA.setAttribute('x2', dotX);
+            lineA.setAttribute('y2', dotY);
+            lineA.setAttribute('stroke', '#238636');
+            lineA.setAttribute('stroke-dasharray', '4 2');
+            g.appendChild(lineA);
+
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', dotX);
+            dot.setAttribute('cy', dotY);
+            dot.setAttribute('r', 5);
+            dot.setAttribute('fill', '#f06b3a');
+            dot.setAttribute('stroke', 'white');
+            dot.setAttribute('stroke-width', 1.5);
+            g.appendChild(dot);
+
+            document.getElementById('z-value').textContent = z.toFixed(3);
+            document.getElementById('a-value').textContent = a.toFixed(3);
+            document.getElementById('func-name').textContent = activeFunction;
+            document.getElementById('func-description').textContent = getActivationDescription(activeFunction);
+        }
+
+        // --- Lógica del Gráfico 1 (Red y Forward Pass) ---
+
+        /**
+         * Calcula el resultado de la propagación hacia adelante.
+         * Actualiza la variable global 'activations'.
+         * @returns {number[]} El array de activaciones de la última capa (Outputs).
+         */
+        function runForwardPass() {
+            const func = activationFunctions[activeFunction].func;
+            activations = [];
+
+            // 1. Capa 0 (Input)
+            let layer0_a = inputs;
+            activations.push(layer0_a);
+
+            // 2. Capa 1 (Hidden)
+            let layer1_z = [];
+            for (let j = 0; j < NETWORK_CONFIG[1]; j++) { // Por cada neurona oculta (j)
+                let z_val = B1[j]; // Empezar con el sesgo
+                for (let i = 0; i < NETWORK_CONFIG[0]; i++) { // Por cada input (i)
+                    z_val += W1[j][i] * layer0_a[i];
+                }
+                layer1_z.push(z_val);
+            }
+            let layer1_a = layer1_z.map(func); // Aplicar función de activación
+            activations.push(layer1_a);
+
+            // 3. Capa 2 (Output)
+            let layer2_z = [];
+            for (let k = 0; k < NETWORK_CONFIG[2]; k++) { // Por cada neurona de salida (k)
+                let z_val = B2[k]; // Empezar con el sesgo
+                for (let j = 0; j < NETWORK_CONFIG[1]; j++) { // Por cada neurona oculta (j)
+                    z_val += W2[k][j] * layer1_a[j];
+                }
+                layer2_z.push(z_val);
+            }
+
+            // Usar Softmax en la capa de salida para interpretar como probabilidad
+            let layer2_a = softmax(layer2_z);
+            activations.push(layer2_a);
+
+            return layer2_a;
+        }
+
+        /**
+         * Dibuja la estructura estática de la red y luego actualiza los estilos
+         * basándose en la activación.
+         */
+        function drawNetworkStructure() {
+            const svg = document.getElementById('network-svg');
+            const svgWidth = svg.clientWidth;
+            const svgHeight = svg.clientHeight;
+            const horizontalSpacing = svgWidth / (NETWORK_CONFIG.length + 1);
+            const initialNeuronRadius = BASE_RADIUS; // Usamos el radio base
+
+            svg.innerHTML = ''; // Limpiar SVG anterior
+            const neurons = []; // Almacenar posiciones de neuronas
+
+            // Dibujar capas y neuronas
+            NETWORK_CONFIG.forEach((numNeurons, layerIndex) => {
+                const layerX = horizontalSpacing * (layerIndex + 1);
+                const verticalSpacing = svgHeight / (numNeurons + 1);
+                neurons[layerIndex] = [];
+
+                // Etiqueta de la capa
+                const layerLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                layerLabel.setAttribute('x', layerX);
+                layerLabel.setAttribute('y', 20);
+                layerLabel.setAttribute('class', 'neuron-label font-bold');
+                layerLabel.setAttribute('text-anchor', 'middle');
+                let labelText = '';
+                if (layerIndex === 0) labelText = 'Input';
+                else if (layerIndex === NETWORK_CONFIG.length - 1) labelText = 'Output';
+                else labelText = `Capa Oculta ${layerIndex}`;
+                layerLabel.textContent = labelText;
+                svg.appendChild(layerLabel);
+
+
+                for (let i = 0; i < numNeurons; i++) {
+                    const neuronY = verticalSpacing * (i + 1);
+                    neurons[layerIndex].push({ x: layerX, y: neuronY, layer: layerIndex, index: i });
+
+                    // Dibujar la neurona (círculo)
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', layerX);
+                    circle.setAttribute('cy', neuronY);
+                    circle.setAttribute('r', initialNeuronRadius);
+                    circle.setAttribute('class', 'neuron');
+                    circle.setAttribute('data-layer', layerIndex);
+                    circle.setAttribute('data-index', i);
+                    circle.setAttribute('id', `neuron-${layerIndex}-${i}`); // ID para actualización
+                    svg.appendChild(circle);
+
+                    // Etiqueta de neurona
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    const xOffset = layerIndex === 0 ? -30 : (layerIndex === NETWORK_CONFIG.length - 1 ? 30 : 0);
+                    label.setAttribute('x', layerX + xOffset);
+                    label.setAttribute('y', neuronY + 4);
+                    label.setAttribute('class', 'neuron-label text-sm');
+                    label.setAttribute('text-anchor', layerIndex === 0 ? 'end' : (layerIndex === NETWORK_CONFIG.length - 1 ? 'start' : 'middle'));
+                    label.textContent = layerIndex === 0 ? `x${i + 1}` : (layerIndex === NETWORK_CONFIG.length - 1 ? `y${i + 1}` : `h${i + 1}`);
+                    svg.appendChild(label);
+                }
+            });
+
+            // Dibujar conexiones
+            for (let i = 0; i < NETWORK_CONFIG.length - 1; i++) {
+                const currentLayer = neurons[i];
+                const nextLayer = neurons[i + 1];
+                const W = i === 0 ? W1 : W2;
+
+                currentLayer.forEach(n1 => {
+                    nextLayer.forEach(n2 => {
+                        const weight = W[n2.index][n1.index];
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', n1.x);
+                        line.setAttribute('y1', n1.y);
+                        line.setAttribute('x2', n2.x);
+                        line.setAttribute('y2', n2.y);
+                        line.setAttribute('class', 'connection');
+                        line.setAttribute('data-weight', weight);
+                        line.setAttribute('id', `conn-${n1.layer}-${n1.index}-${n2.layer}-${n2.index}`);
+                        svg.insertBefore(line, svg.firstChild);
+                    });
+                });
+            }
+
+            // Añadir eventos de hover (mantener la funcionalidad de resaltado)
+            svg.querySelectorAll('.neuron').forEach(neuron => {
+                neuron.addEventListener('mouseenter', (e) => {
+                    const cx = parseFloat(e.target.getAttribute('cx'));
+                    const cy = parseFloat(e.target.getAttribute('cy'));
+                    const layerIndex = parseInt(e.target.getAttribute('data-layer'));
+
+                    // Resaltar conexiones salientes
+                    if (layerIndex < NETWORK_CONFIG.length - 1) {
+                        svg.querySelectorAll('.connection').forEach(line => {
+                            if (Math.abs(parseFloat(line.getAttribute('x1')) - cx) < 1 && Math.abs(parseFloat(line.getAttribute('y1')) - cy) < 1) {
+                                line.setAttribute('stroke', '#a6e22e'); // Verde neón
+                                line.setAttribute('stroke-width', 2.5);
+                            }
+                        });
+                    }
+                    // Resaltar conexiones entrantes
+                    if (layerIndex > 0) {
+                         svg.querySelectorAll('.connection').forEach(line => {
+                            if (Math.abs(parseFloat(line.getAttribute('x2')) - cx) < 1 && Math.abs(parseFloat(line.getAttribute('y2')) - cy) < 1) {
+                                line.setAttribute('stroke', '#fd971f'); // Naranja
+                                line.setAttribute('stroke-width', 2.5);
+                            }
+                        });
+                    }
+                });
+
+                neuron.addEventListener('mouseleave', () => {
+                    svg.querySelectorAll('.connection').forEach(line => {
+                        // Restaurar stroke y width (updateNetworkViz lo repinta)
+                        const weight = parseFloat(line.getAttribute('data-weight'));
+                        line.setAttribute('stroke', weight > 0 ? '#484f58' : '#484f58'); // Color base
+                        line.setAttribute('stroke-width', 1.5);
+                    });
+                    updateNetworkViz(); // Llamar a la actualización para repintar los estilos reales
+                });
+            });
+
+            // Una vez dibujada la estructura, actualizar la visualización de la activación
+            updateNetworkViz();
+        }
+
+        /**
+         * Actualiza el color y TAMAÑO de las neuronas y los resultados de salida.
+         */
+        function updateNetworkViz() {
+            const outputs = runForwardPass();
+            const outputLayerIndex = activations.length - 1;
+
+            // 1. Actualizar colores/tamaños de las neuronas según su activación
+            for (let l = 0; l < activations.length; l++) {
+                const layerActivations = activations[l];
+                layerActivations.forEach((a, i) => {
+                    const neuron = document.getElementById(`neuron-${l}-${i}`);
+                    if (neuron) {
+                        let fill_color;
+                        let neuron_radius = BASE_RADIUS;
+
+                        if (l === outputLayerIndex) { // Capa de Salida (l=2)
+                            // Usamos Rojo/Verde para mostrar la probabilidad
+                            fill_color = colorToProbability(a); 
+                        } else if (l === 1) { // Capa Oculta (Hidden)
+                            // Usamos Azul/Naranja y TAMAÑO VARIABLE
+                            fill_color = activationToFill(a); 
+                            neuron_radius = activationToRadius(a);
+                        } else { // Capa de Entrada (Input, l=0)
+                            // Usamos Azul/Naranja y TAMAÑO CONSTANTE
+                            fill_color = activationToFill(a); 
+                        }
+
+                        neuron.setAttribute('fill', fill_color);
+                        neuron.setAttribute('r', neuron_radius);
+                    }
+                });
+            }
+
+            // 2. Actualizar el estado de la función de activación de la capa oculta
+            document.getElementById('hidden-activation-status').textContent = activeFunction;
+            
+            // 3. Actualizar resultados de salida
+            document.getElementById('output-y1').textContent = outputs[0].toFixed(3);
+            document.getElementById('output-y2').textContent = outputs[1].toFixed(3);
+
+            // Actualizar el "título" del resultado para mostrar la clase predicha (la más alta)
+            const winningClass = outputs[0] > outputs[1] ? 'Clase 1' : 'Clase 2';
+            document.getElementById('prediction-title').textContent = `Predicción: ${winningClass}`;
+            document.getElementById('prediction-title').className = `text-xl font-bold p-2 rounded-lg ${outputs[0] > outputs[1] ? 'bg-red-900 text-red-300' : 'bg-green-900 text-green-300'}`;
+        }
+
+        /**
+         * Maneja el cambio de la función de activación.
+         * @param {string} funcName - Nombre de la función.
+         */
+        function setActiveFunction(funcName) {
+            activeFunction = funcName;
+            // Actualizar botones (Lógica del Gráfico 2)
+            document.querySelectorAll('.activation-button').forEach(btn => {
+                btn.classList.remove('active', 'bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            });
+            const activeBtn = document.getElementById(`btn-${funcName}`);
+            activeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            activeBtn.classList.add('active', 'bg-green-600', 'hover:bg-green-700');
+
+            // Redibujar AMBOS gráficos
+            drawActivationGraph();
+            updateNetworkViz(); // Recalcular la red con la nueva función
+        }
+
+        /**
+         * Devuelve la descripción de la función de activación.
+         */
+        function getActivationDescription(name) {
+            switch(name) {
+                case 'Sigmoide':
+                    return 'Comprime la entrada (z) a un rango entre 0 y 1. Ideal para la capa de salida en problemas de clasificación binaria, ya que su salida puede interpretarse como una probabilidad. ¡Cuidado con el gradiente desvanecedor!';
+                case 'ReLU':
+                    return 'Devuelve z si es positivo, y 0 si es negativo. Es la más común en capas ocultas. Resuelve el problema del "gradiente que se desvanece" (para z>0), pero puede sufrir del problema de "neuronas muertas" (para z<=0).';
+                case 'Tanh':
+                    return 'Comprime la entrada (z) a un rango entre -1 y 1. Es una versión centrada en 0 de la Sigmoide. Al ser centrada en 0, generalmente converge más rápido que la Sigmoide.';
+                default:
+                    return '';
+            }
+        }
+
+        // Inicializar el gráfico al cargar la página y hacerlo responsivo
+        window.onload = function() {
+            // Inicialización de la red y el gráfico de activación
+            drawNetworkStructure();
+            drawActivationGraph();
+            setActiveFunction('Sigmoide');
+
+            // 1. Evento para el slider de entrada Z (Gráfico 2)
+            document.getElementById('z-slider').addEventListener('input', drawActivationGraph);
+
+            // 2. Eventos para los sliders de Input (Gráfico 1)
+            document.querySelectorAll('.network-input-slider').forEach((slider, index) => {
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    inputs[index] = value;
+                    document.getElementById(`input-x${index + 1}-value`).textContent = value.toFixed(2);
+                    updateNetworkViz(); // Recalcular la red con el nuevo input
+                });
+            });
+
+            // 3. Eventos para los botones (Gráfico 2)
+            document.getElementById('btn-Sigmoide').addEventListener('click', () => setActiveFunction('Sigmoide'));
+            document.getElementById('btn-ReLU').addEventListener('click', () => setActiveFunction('ReLU'));
+            document.getElementById('btn-Tanh').addEventListener('click', () => setActiveFunction('Tanh'));
+        };
+
+        // Redibujar la red al cambiar el tamaño de la ventana
+        window.addEventListener('resize', drawNetworkStructure);
+    </script>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-8 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-extrabold text-blue-400">Infografía: El Corazón de una Red Neuronal</h1>
+        <p class="text-gray-400 mt-2">Visualización interactiva de la estructura de capas y el impacto de las funciones de activación.</p>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- GRÁFICO 1: ESTRUCTURA Y RELACIONES Y CÁLCULO DE FORWARD PASS -->
+        <section class="bg-[#161b22] p-6 rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-center border-b border-gray-600 pb-2 text-blue-300">1. Estructura, Activación y Resultados</h2>
+
+            <p class="text-sm text-gray-400 mb-4">
+                Mueva los <i>sliders</i> de entrada ($x_1, x_2, x_3$) para ver cómo la activación se propaga. El <b>tamaño</b> de las neuronas ocultas y el <b>color (Rojo/Verde)</b> de las de salida indican la intensidad de su activación.
+            </p>
+
+            <!-- Contenedor del SVG más grande -->
+            <div class="w-full bg-[#0d1117] rounded-lg p-4" style="height: 550px;">
+                <svg id="network-svg" class="w-full h-full"></svg>
+            </div>
+
+            <div class="mt-6">
+                <!-- Controles de Entrada (Inputs) -->
+                <h3 class="text-lg font-semibold text-orange-400 mb-3">Valores de Entrada (Inputs)</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Input 1 -->
+                    <div>
+                        <label for="input-x1" class="block text-xs font-medium text-gray-400 mb-1">x₁: <span id="input-x1-value" class="font-bold">0.50</span></label>
+                        <input type="range" id="input-x1" min="0" max="1" step="0.01" value="0.5" class="w-full input-slider slider-track network-input-slider" role="slider">
+                    </div>
+                    <!-- Input 2 -->
+                    <div>
+                        <label for="input-x2" class="block text-xs font-medium text-gray-400 mb-1">x₂: <span id="input-x2-value" class="font-bold">0.50</span></label>
+                        <input type="range" id="input-x2" min="0" max="1" step="0.01" value="0.5" class="w-full input-slider slider-track network-input-slider" role="slider">
+                    </div>
+                    <!-- Input 3 -->
+                    <div>
+                        <label for="input-x3" class="block text-xs font-medium text-gray-400 mb-1">x₃: <span id="input-x3-value" class="font-bold">0.50</span></label>
+                        <input type="range" id="input-x3" min="0" max="1" step="0.01" value="0.5" class="w-full input-slider slider-track network-input-slider" role="slider">
+                    </div>
+                </div>
+
+                <!-- Resultados de Salida (Outputs) -->
+                <h3 class="text-lg font-semibold text-green-400 mt-6 mb-1">Resultados de Salida</h3>
+                <!-- Nuevo elemento que muestra la función activa en la capa oculta -->
+                <p class="text-sm text-gray-500 mb-3">Activación de Capa Oculta: <span id="hidden-activation-status" class="font-bold text-green-400">Sigmoide</span></p>
+
+                <div id="prediction-title" class="text-xl font-bold p-2 rounded-lg bg-green-900 text-green-300 text-center mb-3">Predicción: Clase 1</div>
+                <div class="flex justify-between space-x-4">
+                    <div class="flex-1 bg-gray-800 p-3 rounded-lg border border-red-700">
+                        <span class="text-sm font-medium text-gray-300 block">P(Clase 1 / y₁):</span>
+                        <span id="output-y1" class="text-2xl font-extrabold text-red-400">0.500</span>
+                    </div>
+                    <div class="flex-1 bg-gray-800 p-3 rounded-lg border border-green-700">
+                        <span class="text-sm font-medium text-gray-300 block">P(Clase 2 / y₂):</span>
+                        <span id="output-y2" class="text-2xl font-extrabold text-green-400">0.500</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- GRÁFICO 2: FUNCIONES DE ACTIVACIÓN -->
+        <section class="bg-[#161b22] p-6 rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-semibold mb-4 text-center border-b border-gray-600 pb-2 text-blue-300">2. Impacto de las Funciones de Activación (f(z))</h2>
+
+            <!-- Selector de Función -->
+            <div class="flex justify-center space-x-2 mb-4">
+                <button id="btn-Sigmoide" class="activation-button px-4 py-2 rounded-lg bg-gray-700 text-sm font-medium text-gray-200" role="button">Sigmoide</button>
+                <button id="btn-ReLU" class="activation-button px-4 py-2 rounded-lg bg-gray-700 text-sm font-medium text-gray-200" role="button">ReLU</button>
+                <button id="btn-Tanh" class="activation-button px-4 py-2 rounded-lg bg-gray-700 text-sm font-medium text-gray-200" role="button">Tanh</button>
+            </div>
+
+            <!-- Gráfico y Controles -->
+            <div class="flex flex-col items-center">
+                <div class="w-full bg-[#0d1117] rounded-lg p-2 mb-4">
+                    <svg id="activation-svg" width="450" height="250" class="mx-auto"></svg>
+                </div>
+
+                <!-- Controles y Resultados -->
+                <div class="w-full md:w-3/4 max-w-sm">
+                    <div class="mb-4">
+                        <label for="z-slider" class="block text-md font-medium text-gray-300 mb-2">
+                            Entrada Neta (z = Wx + b): <span id="z-value" class="font-bold text-orange-400">0.000</span>
+                        </label>
+                        <input type="range" id="z-slider" min="-5" max="5" step="0.1" value="0" class="w-full h-2 rounded-lg appearance-none bg-gray-600 slider-track"
+                               style="--tw-ring-color: #58a6ff;">
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-lg flex justify-between items-center border border-green-700">
+                        <span class="text-md font-medium text-gray-300">Salida Activada (h = f(z)):</span>
+                        <span id="a-value" class="text-xl font-extrabold text-green-400">0.500</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descripción de la Función -->
+            <div class="mt-6 border-t border-gray-600 pt-4">
+                <h3 class="text-lg font-semibold text-green-400 mb-2">Función Activa: <span id="func-name">Sigmoide</span></h3>
+                <p id="func-description" class="text-sm text-gray-400">
+                    Comprime la entrada (z) a un rango entre 0 y 1. Ideal para la capa de salida en problemas de clasificación binaria, ya que su salida puede interpretarse como una probabilidad. ¡Cuidado con el gradiente desvanecedor!
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="text-center mt-12 pt-4 border-t border-gray-700">
+        <p class="text-xs text-gray-600">Infografía desarrollada con HTML, Tailwind CSS y SVG/JavaScript.</p>
+    </footer>
+
+</body>
+</html>
+

@@ -1,0 +1,25 @@
+I. Fundamentos del Aprendizaje Profundo (1h)
+○ Introducción a las Redes Neuronales (15’):
+■ Conceptos básicos: neuronas, capas, funciones de activación (ReLU,
+sigmoidea, etc.).
+■ Redes Feedforward: arquitectura y funcionamiento.
+○ Entrenamiento de Redes Neuronales (20’):
+■ Funciones de pérdida (p. ej., entropía cruzada).
+■ Algoritmo de retropropagación.
+■ Técnicas de descenso de gradiente y optimización (p. ej., SGD, Adam).
+○ Redes Neuronales Convolucionales (CNN) (25’):
+■ Capas convolucionales, capas de agrupamiento y su propósito.
+
+● II. Redes Generativas Adversarias (GAN) (1h)
+○ Introducción a las GAN (20’):
+■ El concepto de modelos generativos y discriminativos.
+■ El proceso de entrenamiento antagónico.
+○ Comprensión del generador y el discriminador. Tipos de GAN (20’):
+■ GAN estándar: arquitectura básica y limitaciones.
+■ DCGAN (GAN convolucionales profundas): uso de CNN en GAN.
+■ Otras variantes (p. ej., GAN condicionales, CycleGAN).
+○ Aplicaciones de las GAN (20’):
+■ Generación y manipulación de imágenes (p. ej., imágenes
+fotorrealistas, transferencia de estilos).
+■ Aumento de datos para el entrenamiento de otros modelos.
+■ Otras aplicaciones (p. ej., generación de texto, generación de música).

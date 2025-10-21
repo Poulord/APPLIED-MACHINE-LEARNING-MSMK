@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funciones de Pérdida y Entropía Cruzada</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de la fuente Inter y fondo oscuro */
+        :root {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Eliminamos las clases de interacción para las secciones estáticas */
+        .concept-card-static {
+            transition: all 0.3s ease;
+        }
+        /* Clase para los símbolos matemáticos, ajustada para que el tamaño base sea 2.5rem */
+        .math-symbol {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5rem; 
+            font-weight: bold;
+            display: inline-block;
+        }
+        #lossChart {
+            /* Asegurar que el canvas ocupe todo el ancho disponible */
+            display: block;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#4f46e5', // indigo-600
+                        'accent-teal': '#10b981', // teal-500
+                    }
+                }
+            }
+        }
+
+        // --- Lógica de la Gráfica y Simulación ---
+        let currentEpoch = 0;
+        const MAX_EPOCHS = 20;
+        // CE starts higher and MSE starts lower for visual difference in penalty severity
+        const losses = {
+            ce: [2.5], 
+            mse: [1.2] 
+        };
+        const colors = {
+            ce: '#facc15', // yellow-400
+            mse: '#38bdf8' // sky-400
+        };
+
+        // Función para simular la reducción de pérdida (convergencia)
+        function simulateLoss(lossType) {
+            let lastLoss = losses[lossType][losses[lossType].length - 1];
+            if (lastLoss <= 0.05) return 0.05; // Mínimo de pérdida
+
+            // La Entropía Cruzada (ce) decae más rápido inicialmente
+            let decay = (lossType === 'ce') ? 0.9 : 0.95; 
+            let noise = (Math.random() * 0.1) - 0.05; // Ruido aleatorio
+            
+            let newLoss = lastLoss * decay + noise;
+            
+            // Asegurar que la pérdida se mantenga positiva y no suba mucho
+            newLoss = Math.min(lastLoss * 1.05, Math.max(0.05, newLoss));
+            return newLoss;
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('lossChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+
+            // Relleno (Padding)
+            const padding = 30;
+            const chartWidth = width - 2 * padding;
+            const chartHeight = height - 2 * padding;
+            
+            // Escala Y
+            const allLosses = [...losses.ce, ...losses.mse].filter(l => l !== undefined);
+            // Máximo de pérdida + 10% de buffer
+            const maxLoss = Math.max(...allLosses, 1) * 1.1; 
+
+            // --- Dibujar Ejes ---
+            ctx.strokeStyle = '#4b5563'; // gray-600
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Eje Y
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            // Eje X
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+
+            ctx.fillStyle = '#9ca3af'; // gray-400
+            ctx.font = '10px Inter';
+            
+            // Etiquetas Eje Y
+            ctx.textAlign = 'right';
+            const numYTicks = 4;
+            for (let i = 0; i <= numYTicks; i++) {
+                const value = (maxLoss / numYTicks) * i;
+                const y = height - padding - (i / numYTicks) * chartHeight;
+                if (i > 0) { // Líneas de cuadrícula
+                    ctx.strokeStyle = '#374151'; // gray-700
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+                ctx.fillText(value.toFixed(2), padding - 5, y + 3);
+            }
+            ctx.textAlign = 'center';
+            ctx.fillText('Pérdida (Loss)', padding / 2, padding - 10);
+
+            // Etiquetas Eje X
+            ctx.textAlign = 'center';
+            const maxTicks = 10;
+            const step = Math.ceil(MAX_EPOCHS / maxTicks);
+            for (let i = 0; i <= MAX_EPOCHS; i += step) {
+                const x = padding + (i / MAX_EPOCHS) * chartWidth;
+                ctx.fillText(i.toString(), x, height - padding + 15);
+            }
+            ctx.fillText('Épocas (Epochs)', width / 2, height - 5);
+
+
+            // --- Dibujar Líneas de Datos ---
+            
+            const plotLine = (lossArray, color, label) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                lossArray.forEach((loss, i) => {
+                    // Mapear el índice (época) a la posición X. Usar MAX_EPOCHS para la escala completa.
+                    const x = padding + (i / MAX_EPOCHS) * chartWidth; 
+                    // Mapear el valor de pérdida a la posición Y
+                    const y = height - padding - (loss / maxLoss) * chartHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+                
+                // Etiqueta al final
+                if(lossArray.length > 0) {
+                     const lastLoss = lossArray[lossArray.length - 1];
+                     const lastX = padding + ((lossArray.length - 1) / MAX_EPOCHS) * chartWidth;
+                     const lastY = height - padding - (lastLoss / maxLoss) * chartHeight;
+                     
+                     ctx.fillStyle = color;
+                     ctx.font = '12px Inter Bold';
+                     // Dibujar un pequeño círculo en el punto final
+                     ctx.beginPath();
+                     ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+                     ctx.fill();
+
+                     // Dibujar la etiqueta a la derecha
+                     ctx.textAlign = 'left';
+                     ctx.fillText(label, lastX + 10, lastY + 4); 
+                }
+            };
+            
+            plotLine(losses.ce, colors.ce, 'Entropía Cruzada');
+            plotLine(losses.mse, colors.mse, 'MSE');
+        }
+
+
+        function nextEpoch() {
+            if (currentEpoch >= MAX_EPOCHS) {
+                document.getElementById('epoch-counter').textContent = `✅ Entrenamiento Finalizado.`;
+                document.getElementById('next-epoch-btn').disabled = true;
+                document.getElementById('next-epoch-btn').classList.replace('bg-primary-blue', 'bg-gray-500');
+                document.getElementById('next-epoch-btn').classList.replace('hover:bg-indigo-500', 'hover:bg-gray-500');
+                return;
+            }
+            
+            currentEpoch++;
+            
+            // Simular nuevos valores de pérdida
+            losses.ce.push(simulateLoss('ce'));
+            losses.mse.push(simulateLoss('mse'));
+            
+            // Actualizar la pantalla
+            document.getElementById('epoch-counter').textContent = `Época Actual: ${currentEpoch} / ${MAX_EPOCHS}`;
+            document.getElementById('loss-ce-value').textContent = losses.ce[losses.ce.length - 1].toFixed(4);
+            document.getElementById('loss-mse-value').textContent = losses.mse[losses.mse.length - 1].toFixed(4);
+
+            // Redibujar la gráfica
+            drawChart();
+        }
+
+        window.onload = function() {
+            // Inicializar la gráfica y la simulación
+            const canvas = document.getElementById('lossChart');
+            const container = document.getElementById('chart-container');
+            if (canvas && container) {
+                // Hacer el canvas responsive
+                canvas.width = container.clientWidth;
+                canvas.height = 300; 
+            }
+
+            // Inicializar valores de pantalla
+            document.getElementById('epoch-counter').textContent = `Época Actual: ${currentEpoch} / ${MAX_EPOCHS}`;
+            document.getElementById('loss-ce-value').textContent = losses.ce[0].toFixed(4);
+            document.getElementById('loss-mse-value').textContent = losses.mse[0].toFixed(4);
+
+            drawChart();
+
+            // Event listener para redibujar la gráfica al cambiar el tamaño de la ventana
+            window.addEventListener('resize', () => {
+                if (canvas && container) {
+                    canvas.width = container.clientWidth;
+                    drawChart();
+                }
+            });
+        };
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-10">
+
+    <!-- Encabezado Principal -->
+    <header class="text-center mb-10">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-accent-teal mb-2">
+            El Corazón del Aprendizaje: Funciones de Pérdida
+        </h1>
+        <p class="text-xl text-gray-400">Infografía sobre Entropía Cruzada y Convergencia</p>
+    </header>
+
+    <!-- Contenedor Principal de la Infografía -->
+    <main class="max-w-6xl mx-auto">
+        
+        <!-- Sección 1: La Función de Pérdida General (ESTÁTICA) -->
+        <div id="loss-function" class="concept-card-static bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold text-primary-blue mb-4 flex items-center">
+                1. ¿Qué es una Función de Pérdida (Loss Function)? 
+            </h2>
+            <p class="text-lg text-gray-300 mb-4">
+                Mide la diferencia entre lo que el modelo predijo y el valor real. Es la <strong>"multa"</strong> que recibe el modelo por equivocarse, sirviendo como guía para el proceso de entrenamiento.
+            </p>
+            <div class="bg-indigo-900/50 p-4 rounded-xl border-l-4 border-primary-blue">
+                <h3 class="text-xl font-bold text-primary-blue mb-2">Objetivo Clave: Minimización</h3>
+                <p class="text-gray-200">
+                    Durante el entrenamiento, el algoritmo de optimización (como el Descenso de Gradiente) ajusta los pesos del modelo con un único fin: <strong>reducir el valor de esta función de pérdida</strong>. Un valor de pérdida bajo significa que el modelo es preciso.
+                </p>
+            </div>
+        </div>
+
+        <!-- Sección 2: Entropía Cruzada - El Estándar para Clasificación (ESTÁTICA y FUSIONADA) -->
+        <div id="cross-entropy" class="concept-card-static bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold text-accent-teal mb-4 flex items-center">
+                2. Foco: Entropía Cruzada (Cross-Entropy Loss) 
+            </h2>
+            <div class="bg-indigo-900/50 p-4 rounded-xl border-l-4 border-accent-teal">
+                <p class="text-lg text-gray-200 mb-4">
+                    Es la función de pérdida más usada para tareas de <strong>Clasificación</strong> (binaria o multi-clase). Mide la "sorpresa" o la diferencia entre dos distribuciones de probabilidad (la real y la predicha).
+                    <a href="https://keras.io/api/losses/probabilistic_losses/" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline text-sm ml-2 font-semibold">[Ver Otras Probabilísticas en Keras]</a>
+                </p>
+                
+                <h3 class="text-xl font-bold text-accent-teal mb-4">Estructura y Penalización Logarítmica</h3>
+                
+                <p class="text-gray-200 mb-6 border-l-4 border-yellow-400 pl-3 italic">
+                    La Entropía Cruzada castiga las predicciones de alta confianza que resultan ser incorrectas de manera <strong>logarítmicamente severa</strong>. Esto la hace muy efectiva para forzar la convergencia rápida del modelo en las etapas iniciales del entrenamiento.
+                </p>
+                
+                <!-- Representación de la Ecuación (CE) - Usa math-symbol clase CSS -->
+                <div class="bg-gray-900 p-6 rounded-lg shadow-inner mb-6 text-center overflow-x-auto">
+                    <span class="text-3xl text-gray-300 whitespace-nowrap">L = - [ </span>
+                    <span class="math-symbol text-primary-blue mx-1">y</span>
+                    <span class="text-3xl text-gray-300"> log(</span>
+                    <span class="math-symbol text-red-500 mx-1">ŷ</span>
+                    <span class="text-3xl text-gray-300">) + (1-</span>
+                    <span class="math-symbol text-primary-blue mx-1">y</span>
+                    <span class="text-3xl text-gray-300">) log(1-</span>
+                    <span class="math-symbol text-red-500 mx-1">ŷ</span>
+                    <span class="text-3xl text-gray-300">) ]</span>
+                </div>
+
+                <!-- Detalles de los Símbolos (Static) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    
+                    <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-primary-blue">
+                        <h4 class="font-bold text-primary-blue">Símbolo "y" (Etiqueta Verdadera)</h4>
+                        <p class="text-sm text-gray-300">El valor binario (0 o 1) que indica la clase real. Es el objetivo a predecir.</p>
+                    </div>
+
+                    <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-red-500">
+                        <h4 class="font-bold text-red-500">Símbolo "ŷ" (Predicción del Modelo)</h4>
+                        <p class="text-sm text-gray-300">La probabilidad (valor entre 0 y 1) que el modelo asignó a la clase positiva. Resultado de la función Sigmoid/Softmax.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección 3: Error Cuadrático Medio (Mean Squared Error - MSE) - NUEVO PANEL -->
+        <div id="mse-loss" class="concept-card-static bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold text-sky-400 mb-4 flex items-center">
+                3. Alternativa: Error Cuadrático Medio (MSE) 
+            </h2>
+            <div class="bg-indigo-900/50 p-4 rounded-xl border-l-4 border-sky-400">
+                <p class="text-lg text-gray-200 mb-4">
+                    El MSE es la función de pérdida más usada para tareas de <strong>Regresión</strong>, donde el objetivo es predecir un valor numérico continuo (ej: precio de una casa, temperatura).
+                    <a href="https://keras.io/api/losses/regression_losses/" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline text-sm ml-2 font-semibold">[Ver Otras de Regresión en Keras]</a>
+                </p>
+                
+                <h3 class="text-xl font-bold text-sky-400 mb-4">Estructura del Error Cuadrático Medio</h3>
+                
+                <!-- Representación de la Ecuación en HTML/CSS -->
+                <div class="bg-gray-900 p-6 rounded-lg shadow-inner mb-6 text-center overflow-x-auto text-3xl font-mono">
+                    <span class="text-gray-300">MSE = </span>
+                    
+                    <!-- Fracción 1/n (Usando barra para simplicidad) -->
+                    <span class="inline-block text-gray-300 align-middle">
+                        <span class="text-2xl">1</span>
+                        <span class="text-3xl mx-1">/</span>
+                        <span class="text-2xl">n</span>
+                    </span>
+                    
+                    <!-- Sumatoria -->
+                    <span class="inline-block relative align-middle mx-2">
+                        <!-- Símbolo de sumatoria grande -->
+                        <span class="text-5xl font-extralight text-gray-300">&sum;</span>
+                        <!-- Índices: usando sub y sup con posicionamiento absoluto -->
+                        <span class="absolute text-sm text-gray-400 top-0 transform -translate-y-full left-1/2 -ml-2">n</span>
+                        <span class="absolute text-sm text-gray-400 bottom-0 transform translate-y-full left-1/2 -ml-3">i=1</span>
+                    </span>
+
+                    <!-- Término (y_i - ŷ_i)^2 -->
+                    <span class="text-gray-300 align-middle"> (</span>
+                    <span class="text-primary-blue">y<sub class="text-xl">i</sub></span>
+                    <span class="text-gray-300"> - </span>
+                    <span class="text-red-500">ŷ<sub class="text-xl">i</sub></span>
+                    <span class="text-gray-300">)</span>
+                    <sup class="text-xl">2</sup>
+                </div>
+
+                <p class="text-gray-200 mb-4 border-l-4 border-sky-600 pl-3 italic">
+                    <strong>Característica Clave (Error al Cuadrado):</strong> Elevar al cuadrado el error (diferencia) garantiza que la función sea derivable (suave) y que los errores grandes se penalicen <strong>mucho más</strong> que los errores pequeños.
+                </p>
+
+                <!-- Detalles de los Símbolos (Static) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    
+                    <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-primary-blue">
+                        <h4 class="font-bold text-primary-blue">Símbolo "yᵢ" (Valor Real)</h4>
+                        <p class="text-sm text-gray-300">El valor numérico real que debería haber sido predicho.</p>
+                    </div>
+
+                    <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-red-500">
+                        <h4 class="font-bold text-red-500">Símbolo "ŷᵢ" (Predicción)</h4>
+                        <p class="text-sm text-gray-300">El valor numérico predicho por el modelo para la instancia i.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 4: SIMULACIÓN INTERACTIVA DEL ENTRENAMIENTO (RENOMBRADA DE 3) -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl mt-8">
+            <h2 class="text-2xl font-bold text-accent-teal mb-4 flex items-center">
+                4. Simulación Interactiva: Pérdida vs. Época 
+            </h2>
+            
+            <!-- Controles y Métrica -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 p-4 bg-gray-900 rounded-lg">
+                <button id="next-epoch-btn" onclick="nextEpoch()"
+                        class="bg-primary-blue hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-200 w-full md:w-auto mb-4 md:mb-0 disabled:bg-gray-500">
+                    Avanzar 1 Época (Paso de Entrenamiento)
+                </button>
+                <div id="epoch-counter" class="text-xl font-mono text-gray-200">
+                    Época Actual: 0 / 20
+                </div>
+            </div>
+
+            <!-- Gráfica Canvas -->
+            <div id="chart-container" class="bg-gray-900 rounded-lg p-4">
+                <canvas id="lossChart"></canvas>
+            </div>
+
+            <!-- Leyenda y Conclusiones -->
+            <div class="mt-4 p-4 bg-gray-900 rounded-lg text-sm md:text-base">
+                <p class="font-bold mb-2">Pérdida Actual:</p>
+                <div class="flex flex-wrap gap-4">
+                    <span class="flex items-center">
+                        <span class="inline-block w-3 h-3 rounded-full mr-2" style="background-color: #facc15;"></span>
+                        <span class="text-yellow-400">Entropía Cruzada: <span id="loss-ce-value" class="font-mono">0.0000</span></span>
+                    </span>
+                    <span class="flex items-center">
+                        <span class="inline-block w-3 h-3 rounded-full mr-2" style="background-color: #38bdf8;"></span>
+                        <span class="text-sky-400">MSE (Error Cuadrático Medio): <span id="loss-mse-value" class="font-mono">0.0000</span></span>
+                    </span>
+                </div>
+                
+                <p class="mt-4 text-gray-400">
+                    <span class="font-semibold text-accent-teal">Observa:</span> La Entropía Cruzada (amarilla) suele descender más pronunciadamente al inicio comparada con el MSE (azul) en problemas de clasificación, lo que refleja su mayor castigo por los errores iniciales.
+                </p>
+            </div>
+        </div>
+
+    </main>
+    
+    <!-- Pie de página simple -->
+    <footer class="text-center mt-10 text-gray-500 text-sm">
+        Infografía interactiva sobre L(y, ŷ) en el entrenamiento de modelos de Machine Learning.
+    </footer>
+</body>
+</html>
+

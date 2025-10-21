@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía: Modelos Generativos</title>
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración para usar la fuente Inter y un esquema de colores oscuros --><style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro */
+            color: #e6e6e6; /* Texto claro */
+        }
+        .card {
+            background-color: #161b22; /* Color de tarjeta ligeramente más claro */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.7);
+        }
+        .tab-button.active {
+            background-color: #238636;
+            color: white;
+            font-weight: 600;
+        }
+        /* Clase para destacar el paso activo (usado como borde en pasos estáticos ahora) */
+        .step-highlight {
+            border-left: 4px solid #3fb950;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div id="app" class="max-w-6xl mx-auto">
+
+        <!-- Título Principal --><header class="text-center mb-12 p-4 rounded-xl bg-gray-800/50">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-[#3fb950] mb-2">Modelos Generativos 🧠✨</h1>
+            <p class="text-xl text-gray-400">Infografía: Cómo la IA aprende a crear</p>
+        </header>
+
+        <!-- Módulo 1: Concepto Central (AHORA FIJO) --><section class="mb-12 p-6 card rounded-xl">
+            <h2 class="text-2xl font-bold text-teal-400 mb-4">
+                1. ¿Qué Son Realmente?
+            </h2>
+            <div id="concept-body" class="mt-4 pt-4 border-t border-gray-700">
+                <p class="text-lg mb-4">Un <strong>Modelo Generativo</strong> es una clase de inteligencia artificial que no solo predice o clasifica datos, sino que <strong>aprende los patrones internos</strong> de un conjunto de datos para luego <strong>generar</strong> instancias nuevas, originales y realistas.</p>
+
+                <div class="flex items-center space-x-4 bg-gray-700/50 p-4 rounded-lg">
+                    <span class="text-4xl">🎨</span>
+                    <p>En esencia, actúa como un artista que ha estudiado miles de obras y ahora puede pintar algo completamente nuevo con ese conocimiento.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo 2: El Proceso - ¿Cómo se Obtienen? (ESTÁTICO) --><section class="mb-12 p-6 card rounded-xl">
+            <h2 class="text-2xl font-bold text-orange-400 mb-6">2. Proceso de Obtención (Entrenamiento)</h2>
+            <p class="mb-6 text-gray-400">Las tres etapas clave para entrenar un modelo generativo:</p>
+
+            <!-- Contenido Estático del Proceso --><div class="space-y-6">
+                <!-- Paso 1 --><div class="p-4 bg-gray-800 rounded-lg step-highlight">
+                    <div class="flex items-start space-x-4">
+                        <span class="text-4xl flex-shrink-0">📚</span>
+                        <div>
+                            <h4 class="text-xl font-bold text-gray-200 mb-2">Paso 1: Recolección de Datos (Dataset)</h4>
+                            <p class="text-gray-400">El modelo es alimentado con miles o millones de ejemplos de datos reales (imágenes, textos, etc.). Aprenderá las características fundamentales de este conjunto.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 2 --><div class="p-4 bg-gray-800 rounded-lg step-highlight">
+                    <div class="flex items-start space-x-4">
+                        <span class="text-4xl flex-shrink-0">⚖️</span>
+                        <div>
+                            <h4 class="text-xl font-bold text-gray-200 mb-2">Paso 2: Entrenamiento Adversario o de Pérdida</h4>
+                            <p class="text-gray-400">El modelo se entrena constantemente ajustando sus 'pesos' internos. Si es un GAN, compite contra un Discriminador; si es un VAE o Difusión, minimiza una 'función de pérdida' (loss function) que mide qué tan falsa es su creación. Este es el aprendizaje real.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paso 3 --><div class="p-4 bg-gray-800 rounded-lg step-highlight">
+                    <div class="flex items-start space-x-4">
+                        <span class="text-4xl flex-shrink-0">💡</span>
+                        <div>
+                            <h4 class="text-xl font-bold text-gray-200 mb-2">Paso 3: Generación Autónoma (Listo)</h4>
+                            <p class="text-gray-400">El entrenamiento ha finalizado. El modelo ya no necesita los datos reales. Puede tomar una entrada aleatoria (ruido o un prompt) y transformarla en una salida de datos nueva, coherente y de alta calidad.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Módulo 3: Tipos Principales (Pestañas/Tabs) --><section class="p-6 card rounded-xl">
+            <h2 class="text-2xl font-bold text-purple-400 mb-6">3. Tipos Populares de Modelos Generativos</h2>
+
+            <!-- Botones de Pestañas --><div class="flex flex-wrap gap-3 mb-6 border-b border-gray-700 pb-3">
+                <button class="tab-button active px-4 py-2 rounded-full text-sm transition-colors duration-200 bg-gray-700 hover:bg-gray-600" data-model="vae" onclick="openModelTab('vae')">VAE (Autoencoders)</button>
+                <button class="tab-button px-4 py-2 rounded-full text-sm transition-colors duration-200 bg-gray-700 hover:bg-gray-600" data-model="gan" onclick="openModelTab('gan')">GAN (Redes Adversarias)</button>
+                <button class="tab-button px-4 py-2 rounded-full text-sm transition-colors duration-200 bg-gray-700 hover:bg-gray-600" data-model="diffusion" onclick="openModelTab('diffusion')">Modelos de Difusión</button>
+            </div>
+
+            <!-- Contenido de Pestañas --><div id="model-content" class="min-h-[200px]">
+                <!-- Contenido VAE (Inicialmente visible) --><div id="tab-vae" class="model-tab">
+                    <h3 class="text-xl font-semibold mb-3 text-[#3fb950]">VAE (Autoencoders Variacionales) 🖼️</h3>
+                    <p class="mb-4 text-gray-400">Aprendieron a codificar los datos de entrada en un espacio vectorial llamado <strong>Espacio Latente</strong> y luego a decodificarlos. Al muestrear puntos cercanos en este espacio latente, generan variaciones suaves de los datos originales.</p>
+                    
+                    <div class="p-4 rounded-xl border border-blue-600 bg-blue-900/10 mb-4">
+                        <p class="font-bold mb-2 text-blue-300">¿Qué tipo de imágenes generan?</p>
+                        <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+                            <li>Imágenes de rostros (a menudo con control sobre atributos como la edad o el género).</li>
+                            <li>Generación de fuentes (tipografías) o estilos artísticos.</li>
+                            <li>Variaciones creativas de imágenes existentes, manteniendo la coherencia.</li>
+                            <li><strong class="text-blue-200">Ejemplo:</strong> Rostros sintéticos con expresiones modificadas.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Contenido GAN -->
+                <div id="tab-gan" class="model-tab hidden">
+                    <h3 class="text-xl font-semibold mb-3 text-[#3fb950]">GAN (Redes Generativas Adversarias) ⚔️</h3>
+                    <p class="mb-4 text-gray-400">Implica un juego de suma cero entre dos redes: el <strong>Generador</strong> (crea datos falsos) y el <strong>Discriminador</strong> (intenta distinguir lo real de lo falso). Esta competición conduce a resultados de altísimo realismo.</p>
+
+                    <div class="p-4 rounded-xl border border-red-600 bg-red-900/10 mb-4">
+                        <p class="font-bold mb-2 text-red-300">¿Qué tipo de imágenes generan?</p>
+                        <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+                            <li>Imágenes fotorrealistas de alta resolución (paisajes, objetos, texturas).</li>
+                            <li>Generación de personas que no existen (la cualidad "Deepfake" más conocida).</li>
+                            <li>Conversión de imágenes de un dominio a otro (ej: cebra a caballo, foto a estilo artístico).</li>
+                            <li><strong class="text-red-200">Ejemplo:</strong> Retratos hiperrealistas indistinguibles de una foto real.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Contenido Difusión -->
+                <div id="tab-diffusion" class="model-tab hidden">
+                    <h3 class="text-xl font-semibold mb-3 text-[#3fb950]">Modelos de Difusión (DALL-E, Midjourney) 💡</h3>
+                    <p class="mb-4 text-gray-400">Funcionan en dos fases: primero añaden <strong>ruido gaussiano</strong> a una imagen hasta que es puro ruido, y luego aprenden el proceso inverso: <strong>eliminar el ruido gradualmente</strong> en cientos de pasos, transformando el ruido en una imagen coherente.</p>
+                    
+                    <div class="p-4 rounded-xl border border-green-600 bg-green-900/10 mb-4">
+                        <p class="font-bold mb-2 text-green-300">¿Qué tipo de imágenes generan?</p>
+                        <ul class="list-disc list-inside text-sm text-gray-300 space-y-1">
+                            <li>Imágenes de altísima calidad y coherencia conceptual.</li>
+                            <li>Creaciones artísticas complejas a partir de prompts de texto detallados.</li>
+                            <li>Fácil manipulación de estilos (fotográfico, óleo, acuarela, 3D).</li>
+                            <li><strong class="text-green-200">Ejemplo:</strong> "Un astronauta montando un caballo en estilo de pintura al óleo."</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // --- Lógica JavaScript para la Interactividad ---
+
+        // Módulo 3: Pestañas de Tipos
+        function openModelTab(modelName) {
+            // Ocultar todos los contenidos de las pestañas
+            document.querySelectorAll('.model-tab').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+
+            // Desactivar todos los botones
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'bg-[#238636]', 'text-white');
+                button.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            });
+
+            // Mostrar el contenido seleccionado
+            document.getElementById(`tab-${modelName}`).classList.remove('hidden');
+
+            // Activar el botón seleccionado
+            document.querySelector(`.tab-button[data-model="${modelName}"]`).classList.add('active', 'bg-[#238636]', 'text-white');
+            document.querySelector(`.tab-button[data-model="${modelName}"]`).classList.remove('bg-gray-700', 'hover:bg-gray-600');
+        }
+
+        // Inicializar
+        window.onload = function() {
+            openModelTab('vae'); // Asegura que la pestaña VAE esté activa al inicio
+        };
+    </script>
+</body>
+</html>
+

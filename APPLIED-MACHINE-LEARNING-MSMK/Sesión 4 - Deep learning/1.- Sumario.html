@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía Interactiva: Deep Learning y GANs</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de Tailwind para usar el color principal -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1c4587',
+                        'light-blue': '#ebf4ff',
+                        'accent-orange': '#ff7849',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos base para el cuerpo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Clase para el contenido colapsable - Transición suave */
+        .collapse-content {
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            max-height: 0;
+            overflow: hidden;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        
+        /* Clase cuando el contenido está expandido */
+        .collapse-content.expanded {
+            max-height: 1000px; /* Suficientemente grande para el contenido */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        /* Rotación del icono para indicar el estado expandido */
+        .rotate-90 {
+            transform: rotate(90deg);
+            transition: transform 0.3s;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 border-t-8 border-primary-blue">
+        <!-- Título principal -->
+        <h1 class="text-3xl md:text-4xl font-extrabold text-primary-blue mb-6 border-b-2 pb-3 text-center">
+            Ruta de Aprendizaje: Deep Learning y GANs
+        </h1>
+
+        <p class="text-gray-600 mb-8 text-center">Haz clic en cada sección para explorar los conceptos y detalles.</p>
+
+        <!-- Bloque Principal I: Fundamentos del Aprendizaje Profundo -->
+        <div class="mb-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div id="header-i" class="flex justify-between items-center cursor-pointer p-4 md:p-6 bg-primary-blue text-white rounded-t-lg rounded-b-lg transition duration-300 hover:bg-opacity-90" onclick="toggleSection('content-i', 'icon-i')">
+                <h2 class="text-xl md:text-2xl font-bold flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.618a8 8 0 11-11.236 0 8 8 0 0111.236 0z"></path></svg>
+                    I. Fundamentos del Aprendizaje Profundo
+                </h2>
+                <span id="icon-i" class="text-2xl transition duration-300">►</span>
+            </div>
+            
+            <!-- Contenido Colapsable I -->
+            <div id="content-i" class="collapse-content bg-light-blue p-4 rounded-b-lg">
+                <div class="space-y-4">
+                    
+                    <!-- Subtema 1.1 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-i-1', 'icon-i-1')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Introducción a las Redes Neuronales
+                            </h3>
+                            <span id="icon-i-1" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-i-1" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>Conceptos básicos:</b> Neuronas (unidades de cálculo), Capas (organización), y <b>Funciones de activación</b> (ReLU, Sigmoidea, etc.) que introducen no linealidad.</li>
+                                <li><b>Redes Feedforward:</b> Arquitectura donde la información fluye solo hacia adelante, desde la entrada hasta la salida.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Subtema 1.2 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-i-2', 'icon-i-2')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Entrenamiento de Redes Neuronales
+                            </h3>
+                            <span id="icon-i-2" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-i-2" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>Funciones de pérdida:</b> Miden qué tan lejos está la predicción de la verdad (e.g., entropía cruzada para clasificación).</li>
+                                <li><b>Algoritmo de retropropagación:</b> Técnica para calcular el gradiente de la función de pérdida con respecto a los pesos, usando la regla de la cadena.</li>
+                                <li><b>Descenso de gradiente y optimización:</b> Métodos como SGD o Adam para ajustar iterativamente los pesos en la dirección de la pérdida mínima.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Subtema 1.3 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-i-3', 'icon-i-3')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Redes Neuronales Convolucionales (CNN)
+                            </h3>
+                            <span id="icon-i-3" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-i-3" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>Capas convolucionales:</b> Utilizan filtros (kernels) para extraer características locales como bordes y texturas en imágenes.</li>
+                                <li><b>Capas de agrupamiento (Pooling):</b> Reducen la dimensionalidad espacial, lo que hace al modelo más robusto a las variaciones en la posición.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Separador Visual -->
+        <div class="h-2 w-1/4 mx-auto my-8 bg-accent-orange rounded-full"></div>
+
+        <!-- Bloque Principal II: Redes Generativas Adversarias (GAN) -->
+        <div class="mb-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+            <div id="header-ii" class="flex justify-between items-center cursor-pointer p-4 md:p-6 bg-primary-blue text-white rounded-t-lg rounded-b-lg transition duration-300 hover:bg-opacity-90" onclick="toggleSection('content-ii', 'icon-ii')">
+                <h2 class="text-xl md:text-2xl font-bold flex items-center">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l-4 4-4-4m-4 4l4 4-4 4"></path></svg>
+                    II. Redes Generativas Adversarias (GAN)
+                </h2>
+                <span id="icon-ii" class="text-2xl transition duration-300">►</span>
+            </div>
+            
+            <!-- Contenido Colapsable II -->
+            <div id="content-ii" class="collapse-content bg-light-blue p-4 rounded-b-lg">
+                <div class="space-y-4">
+                    
+                    <!-- Subtema 2.1 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-ii-1', 'icon-ii-1')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Introducción a las GAN
+                            </h3>
+                            <span id="icon-ii-1" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-ii-1" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>Modelos Generativos y Discriminativos:</b> El Generador crea contenido, el Discriminador evalúa su autenticidad.</li>
+                                <li><b>Entrenamiento Antagónico:</b> Un "juego de suma cero" donde el Generador intenta engañar al Discriminador, y el Discriminador intenta mejorar en la detección. </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Subtema 2.2 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-ii-2', 'icon-ii-2')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Generador, Discriminador y Tipos de GAN
+                            </h3>
+                            <span id="icon-ii-2" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-ii-2" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>GAN estándar:</b> Arquitectura básica con MLPs; presenta problemas de inestabilidad y <i>mode collapse</i>.</li>
+                                <li><b>DCGAN (Deep Convolutional GAN):</b> Utiliza CNNs para generar imágenes de mayor calidad y mejorar la estabilidad del entrenamiento.</li>
+                                <li><b>Otras variantes:</b> GAN Condicionales (generan imágenes bajo condiciones, e.g., una clase), CycleGAN (transferencia de estilo de una imagen a otra sin datos pareados).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Subtema 2.3 -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center cursor-pointer" onclick="toggleSection('content-ii-3', 'icon-ii-3')">
+                            <h3 class="text-lg font-semibold text-primary-blue">
+                                Aplicaciones de las GAN
+                            </h3>
+                            <span id="icon-ii-3" class="text-lg text-primary-blue transition duration-300">►</span>
+                        </div>
+                        <div id="content-ii-3" class="collapse-content ml-4 border-l-2 border-gray-200 pl-4">
+                            <ul class="list-disc space-y-2 text-gray-700">
+                                <li><b>Generación de imágenes:</b> Creación de imágenes fotorrealistas de alta calidad o manipulación de imágenes (e.g., cambiar el estilo de un paisaje). </li>
+                                <li><b>Aumento de datos:</b> Generar muestras sintéticas realistas para expandir conjuntos de datos de entrenamiento limitados.</li>
+                                <li><b>Otros:</b> Generación de texto, generación de música o vídeo, y super-resolución de imágenes.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Función para alternar la visibilidad de las secciones
+        function toggleSection(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+
+            // Verifica si está expandido
+            if (content.classList.contains('expanded')) {
+                // Colapsar
+                content.classList.remove('expanded');
+                icon.classList.remove('rotate-90');
+            } else {
+                // Expandir
+                content.classList.add('expanded');
+                icon.classList.add('rotate-90');
+            }
+        }
+
+        // Inicializa el estado para asegurar que solo la clase 'collapse-content' esté presente al inicio
+        document.addEventListener('DOMContentLoaded', () => {
+            // Asegura que todas las secciones están colapsadas al cargar
+            document.querySelectorAll('.collapse-content').forEach(content => {
+                content.classList.remove('expanded');
+            });
+            // Asegura que todos los iconos están en posición inicial
+            document.querySelectorAll('.transition.duration-300').forEach(icon => {
+                icon.classList.remove('rotate-90');
+            });
+        });
+    </script>
+
+</body>
+</html>
+

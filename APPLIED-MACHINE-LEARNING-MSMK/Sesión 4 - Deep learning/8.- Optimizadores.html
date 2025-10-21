@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía Interactiva de Optimizadores de Machine Learning</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para el canvas y la superficie de pérdida */
+        #optimizerCanvas {
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #f7f7f7;
+            cursor: crosshair;
+        }
+
+        /* Estilo para los inputs de rango */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563EB;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563EB',
+                        'secondary-cyan': '#06B6D4',
+                        'accent-red': '#DC2626',
+                        'background-light': '#F9FAFB',
+                    }
+                },
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                },
+            }
+        }
+    </script>
+</head>
+<body class="bg-background-light min-h-screen p-4 md:p-8 font-sans antialiased">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl p-6 md:p-10">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-primary-blue mb-2">
+                Optimizadores de Machine Learning
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Visualiza y Compara el Impacto de los Hiperparámetros
+            </p>
+        </header>
+
+        <!-- Controles de Interacción -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
+
+            <!-- Columna 1: Selección de Optimizador -->
+            <div class="col-span-1 border-b lg:border-b-0 lg:border-r border-gray-200 lg:pr-6 pb-4 lg:pb-0">
+                <label for="optimizerSelect" class="block text-lg font-semibold text-gray-700 mb-2">
+                    1. Selecciona el Optimizador
+                </label>
+                <select id="optimizerSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue transition duration-150 text-gray-800 bg-white">
+                    <option value="SGD">SGD (Descenso de Gradiente Estocástico)</option>
+                    <option value="Momentum">SGD con Momento</option>
+                    <option value="RMSprop">RMSprop</option>
+                    <option value="Adam" selected>Adam (Adaptativo)</option>
+                </select>
+                <button id="resetButton" class="mt-4 w-full bg-accent-red text-white py-2 rounded-lg font-bold hover:bg-red-700 transition duration-150 shadow-md">
+                    Reiniciar
+                </button>
+            </div>
+
+            <!-- Columna 2: Tasa de Aprendizaje -->
+            <div class="col-span-1 border-b lg:border-b-0 lg:border-r border-gray-200 lg:px-6 pb-4 lg:pb-0">
+                <label for="lrSlider" class="block text-lg font-semibold text-gray-700 mb-2">
+                    2. Tasa de Aprendizaje (LR: α)
+                </label>
+                <input type="range" id="lrSlider" min="0.001" max="0.1" step="0.001" value="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="mt-2 text-sm text-gray-600">Valor actual: <span id="lrValue" class="font-mono font-semibold text-primary-blue">0.010</span></p>
+                <p class="mt-1 text-xs text-gray-500">
+                    Controla el tamaño de cada paso. Un valor alto es rápido pero inestable; un valor bajo es lento pero preciso.
+                </p>
+            </div>
+
+            <!-- Columna 3: Parámetros Adaptativos y de Momento -->
+            <div class="col-span-1 lg:pl-6 space-y-4">
+                <h3 class="block text-lg font-semibold text-gray-700">3. Parámetros de Memoria/Adaptación</h3>
+
+                <!-- Control: Momento (β / β₁) -->
+                <div id="momentumControl" class="pt-2 border-t border-gray-100">
+                    <label for="momentumSlider" id="momentumLabel" class="block text-base font-medium text-gray-700 mb-1">
+                        Momento (β / β₁)
+                    </label>
+                    <input type="range" id="momentumSlider" min="0.0" max="0.999" step="0.001" value="0.9" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <p class="mt-1 text-sm text-gray-600">Valor actual: <span id="momentumValue" class="font-mono font-semibold text-primary-blue">0.900</span></p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Controla la inercia (promedio del gradiente).
+                    </p>
+                </div>
+
+                <!-- Control: Decaimiento (β₂) -->
+                <div id="beta2Control" class="pt-2 border-t border-gray-100 hidden">
+                    <label for="beta2Slider" class="block text-base font-medium text-gray-700 mb-1">
+                        Decaimiento (β₂)
+                    </label>
+                    <input type="range" id="beta2Slider" min="0.9" max="0.9999" step="0.0001" value="0.999" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <p class="mt-1 text-sm text-gray-600">Valor actual: <span id="beta2Value" class="font-mono font-semibold text-primary-blue">0.999</span></p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Controla el promedio de los gradientes al cuadrado (adaptación).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Visualización y Explicación -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Columna de Visualización (Canvas) -->
+            <div class="lg:col-span-2 relative">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Visualización de la Ruta de Optimización</h2>
+                <canvas id="optimizerCanvas" width="800" height="600" class="w-full h-auto max-h-[600px]"></canvas>
+                <div id="statusMessage" class="absolute top-4 left-1/2 -translate-x-1/2 bg-yellow-100 text-yellow-800 text-sm font-medium px-3 py-1.5 rounded-full shadow-lg hidden">
+                    ¡Mínimo encontrado!
+                </div>
+            </div>
+
+            <!-- Columna de Explicación -->
+            <div class="lg:col-span-1 p-4 bg-gray-50 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Detalles del Optimizador <span id="optimizerName" class="text-primary-blue">Adam</span></h2>
+                <div id="optimizerDescription" class="text-gray-700 space-y-3 text-sm">
+                    <!-- Contenido dinámico -->
+                </div>
+
+                <!-- Sección de Consejos Dinámicos -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Consejo de Hiperparámetros</h3>
+                    <div id="optimizerTips" class="text-xs text-gray-600 space-y-1">
+                        <!-- Contenido dinámico generado por JS -->
+                    </div>
+                </div>
+
+                <!-- Sección de Documentación Externa -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Documentación Externa</h3>
+                    <p class="text-sm space-y-2">
+                        <a href="https://docs.pytorch.org/docs/stable/optim.html" target="_blank" class="block text-primary-blue hover:text-blue-700 underline font-medium transition duration-150">
+                            → PyTorch Optimizers (docs.pytorch.org)
+                        </a>
+                        <a href="https://keras.io/api/optimizers/" target="_blank" class="block text-primary-blue hover:text-blue-700 underline font-medium transition duration-150">
+                            → Keras Optimizers (keras.io)
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Variables Globales y Configuración del Canvas ---
+        const canvas = document.getElementById('optimizerCanvas');
+        const ctx = canvas.getContext('2d');
+        const scale = 20; // Factor de escala para el gráfico (píxeles por unidad)
+        const center = { x: canvas.width / 2, y: canvas.height / 2 };
+        const maxSteps = 1000;
+        let steps = 0;
+        let animationFrameId = null;
+
+        // --- Estado del Optimizador ---
+        let state = {
+            // Posición inicial (parámetros x, y del modelo)
+            x: -15 / scale + (Math.random() * 30 / scale - 15 / scale), // Valor inicial aleatorio para la simulación
+            y: -15 / scale + (Math.random() * 30 / scale - 15 / scale),
+            v: { x: 0, y: 0 }, // Variables de Momento (v)
+            m: { x: 0, y: 0 }, // Momento de primer orden (Adam)
+            v_hat: { x: 0, y: 0 }, // Momento de segundo orden (Adam/RMSprop)
+            t: 0, // Contador de tiempo para Adam Bias Correction
+            path: [], // Historial de la ruta
+            is_stuck: false
+        };
+
+        // --- Hiperparámetros por defecto ---
+        const params = {
+            lr: 0.01,
+            momentum: 0.9,
+            beta1: 0.9,
+            beta2: 0.999,
+            epsilon: 1e-8,
+            optimizer: 'Adam'
+        };
+
+        // --- Funciones de Pérdida (Loss) y Gradiente (Gradient) ---
+
+        // Función de Pérdida 2D ilustrativa (tipo "Valle y Mínimo Local")
+        // L(x, y) = 0.5 * x^2 + 5 * y^2 + 0.1 * sin(x)
+        // El mínimo global está cerca de (0, 0).
+        function lossFunction(x, y) {
+            return 0.5 * x * x + 5 * y * y + 0.1 * Math.sin(x);
+        }
+
+        // Gradiente de la Función de Pérdida
+        function gradient(x, y) {
+            return {
+                dx: x + 0.1 * Math.cos(x), // Gradiente respecto a X
+                dy: 10 * y                 // Gradiente respecto a Y
+            };
+        }
+
+        // --- Lógica del Optimizador ---
+
+        function updateOptimizer(optimizer, p, g) {
+            const lr = params.lr;
+
+            switch (optimizer) {
+                case 'SGD':
+                    // Descenso de Gradiente Estocástico (Simple)
+                    p.x -= lr * g.dx;
+                    p.y -= lr * g.dy;
+                    break;
+
+                case 'Momentum':
+                    // SGD con Momento
+                    p.v.x = params.momentum * p.v.x + lr * g.dx;
+                    p.v.y = params.momentum * p.v.y + lr * g.dy;
+                    p.x -= p.v.x;
+                    p.y -= p.v.y;
+                    break;
+
+                case 'RMSprop':
+                    // RMSprop (Promedio móvil de cuadrados de gradientes)
+                    // Usa params.beta2 como factor de decaimiento
+                    p.v_hat.x = params.beta2 * p.v_hat.x + (1 - params.beta2) * g.dx * g.dx;
+                    p.v_hat.y = params.beta2 * p.v_hat.y + (1 - params.beta2) * g.dy * g.dy;
+
+                    p.x -= lr * g.dx / (Math.sqrt(p.v_hat.x) + params.epsilon);
+                    p.y -= lr * g.dy / (Math.sqrt(p.v_hat.y) + params.epsilon);
+                    break;
+
+                case 'Adam':
+                    // Adam (Momento + Adaptativo)
+                    p.t++; // Incremento del tiempo
+
+                    // 1. Momento de primer orden (m) - Usa params.beta1
+                    p.m.x = params.beta1 * p.m.x + (1 - params.beta1) * g.dx;
+                    p.m.y = params.beta1 * p.m.y + (1 - params.beta1) * g.dy;
+
+                    // 2. Momento de segundo orden (v_hat) - Usa params.beta2
+                    p.v_hat.x = params.beta2 * p.v_hat.x + (1 - params.beta2) * g.dx * g.dx;
+                    p.v_hat.y = params.beta2 * p.v_hat.y + (1 - params.beta2) * g.dy * g.dy;
+
+                    // 3. Corrección de sesgo (Bias Correction)
+                    const m_hat_x = p.m.x / (1 - Math.pow(params.beta1, p.t));
+                    const m_hat_y = p.m.y / (1 - Math.pow(params.beta1, p.t));
+                    const v_hat_x_corrected = p.v_hat.x / (1 - Math.pow(params.beta2, p.t));
+                    const v_hat_y_corrected = p.v_hat.y / (1 - Math.pow(params.beta2, p.t));
+
+                    // 4. Actualización de parámetros
+                    p.x -= lr * m_hat_x / (Math.sqrt(v_hat_x_corrected) + params.epsilon);
+                    p.y -= lr * m_hat_y / (Math.sqrt(v_hat_y_corrected) + params.epsilon);
+                    break;
+            }
+        }
+
+        // --- Funciones de Dibujo (Canvas) ---
+
+        // Dibuja el fondo de la superficie de pérdida
+        function drawLossSurface() {
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
+            const maxVal = lossFunction(-10, 0) - lossFunction(0, 0); // Rango de pérdida para normalizar color
+
+            for (let i = 0; i < canvas.width; i++) {
+                for (let j = 0; j < canvas.height; j++) {
+                    const x = (i - center.x) / scale;
+                    const y = (center.y - j) / scale; // Y invertido para eje cartesiano
+
+                    const loss = lossFunction(x, y);
+                    const normalizedLoss = Math.max(0, Math.min(1, (loss - lossFunction(0, 0)) / maxVal));
+
+                    const idx = (j * canvas.width + i) * 4;
+                    // Mapeo a color (más oscuro = pérdida alta, más claro = pérdida baja)
+                    const colorVal = Math.floor(255 * (1 - normalizedLoss * 0.8)); // Invertir y oscurecer un poco
+
+                    data[idx] = colorVal;      // R (Rojo)
+                    data[idx + 1] = colorVal;  // G (Verde)
+                    data[idx + 2] = 255;       // B (Azul, para un toque frío/azul)
+                    data[idx + 3] = 255;       // Alpha
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            // Dibuja los ejes
+            ctx.strokeStyle = '#6B7280';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]); // Líneas discontinuas
+            ctx.beginPath();
+            ctx.moveTo(0, center.y); ctx.lineTo(canvas.width, center.y); // Eje X
+            ctx.moveTo(center.x, 0); ctx.lineTo(center.x, canvas.height); // Eje Y
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Dibuja la ruta de optimización
+        function drawPath() {
+            if (state.path.length < 2) return;
+
+            // Dibujar la ruta (línea)
+            ctx.strokeStyle = params.optimizer === 'Adam' ? 'rgba(37, 99, 235, 0.9)' : 'rgba(220, 38, 38, 0.9)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            state.path.forEach((p, index) => {
+                const drawX = center.x + p.x * scale;
+                const drawY = center.y - p.y * scale;
+
+                if (index === 0) {
+                    ctx.moveTo(drawX, drawY);
+                } else {
+                    ctx.lineTo(drawX, drawY);
+                }
+            });
+            ctx.stroke();
+
+            // Dibujar el punto inicial (Inicio)
+            const start = state.path[0];
+            ctx.fillStyle = '#10B981'; // Verde
+            ctx.beginPath();
+            ctx.arc(center.x + start.x * scale, center.y - start.y * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Dibujar el punto final (Actual)
+            const current = state.path[state.path.length - 1];
+            ctx.fillStyle = '#F59E0B'; // Ámbar
+            ctx.beginPath();
+            ctx.arc(center.x + current.x * scale, center.y - current.y * scale, 7, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // --- Bucle de Animación ---
+
+        function animate() {
+            // 1. Dibuja la superficie de pérdida
+            drawLossSurface();
+
+            // 2. Realiza un paso de optimización (si aún no se ha detenido)
+            if (steps < maxSteps && !state.is_stuck) {
+                const g = gradient(state.x, state.y);
+                updateOptimizer(params.optimizer, state, g);
+                state.path.push({ x: state.x, y: state.y });
+                steps++;
+
+                // 3. Comprueba la convergencia (gradiente muy pequeño)
+                if (Math.hypot(g.dx, g.dy) < 0.001) {
+                    state.is_stuck = true;
+                    document.getElementById('statusMessage').textContent = `¡Mínimo encontrado en ${steps} pasos!`;
+                    document.getElementById('statusMessage').classList.remove('hidden');
+                }
+            } else if (steps >= maxSteps && !state.is_stuck) {
+                 state.is_stuck = true;
+                 document.getElementById('statusMessage').textContent = `Máximo de ${maxSteps} pasos alcanzado.`;
+                 document.getElementById('statusMessage').classList.remove('hidden');
+            }
+
+            // 4. Dibuja la ruta
+            drawPath();
+
+            // 5. Continúa el bucle
+            if (!state.is_stuck) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        // --- Funciones de Utilidad y Manejo de Eventos ---
+
+        function resetSimulation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            // Reinicia el estado del optimizador y la posición
+            state = {
+                x: Math.random() * (canvas.width / scale * 0.8) - (canvas.width / scale * 0.4),
+                y: Math.random() * (canvas.height / scale * 0.8) - (canvas.height / scale * 0.4),
+                v: { x: 0, y: 0 },
+                m: { x: 0, y: 0 },
+                v_hat: { x: 0, y: 0 },
+                t: 0,
+                path: [],
+                is_stuck: false
+            };
+            state.path.push({ x: state.x, y: state.y });
+            steps = 0;
+
+            document.getElementById('statusMessage').classList.add('hidden');
+            document.getElementById('statusMessage').textContent = '';
+
+            // Vuelve a iniciar la animación
+            animate();
+        }
+
+        function updateUI(optimizer) {
+            const descDiv = document.getElementById('optimizerDescription');
+            const nameSpan = document.getElementById('optimizerName');
+            const tipsDiv = document.getElementById('optimizerTips'); // Referencia a los consejos
+
+            nameSpan.textContent = optimizer;
+
+            const momentumControl = document.getElementById('momentumControl');
+            const beta2Control = document.getElementById('beta2Control');
+            const momentumLabel = document.getElementById('momentumLabel');
+            
+            // Ocultar por defecto
+            momentumControl.classList.add('hidden');
+            beta2Control.classList.add('hidden');
+
+            // Define las descripciones y los consejos
+            const descriptions = {
+                'SGD': {
+                    title: "SGD (Descenso de Gradiente Estocástico)",
+                    details: "Es el optimizador fundamental. Da un paso en la dirección opuesta al gradiente (la pendiente) de la función de pérdida. <strong>Parámetro clave: Tasa de Aprendizaje (LR)</strong>. No tiene memoria ni adaptatividad.",
+                    tips: [
+                        '<strong>Tasa de Aprendizaje (LR):</strong> Es el único hiperparámetro. Debe ser pequeño (ej. `0.001`) para evitar saltos, pero no demasiado para no ser excesivamente lento.'
+                    ]
+                },
+                'Momentum': {
+                    title: "SGD con Momento",
+                    details: "Añade 'inercia' al movimiento. Utiliza un promedio móvil de los gradientes (Momento) para que el optimizador siga avanzando en direcciones consistentes, ayudando a superar pequeños mínimos locales y a acelerar en valles planos. <strong>Parámetro clave: Momento (β)</strong>.",
+                    showMomentum: true, momentumLabelText: 'Momento (β)',
+                    tips: [
+                        '<strong>Tasa de Aprendizaje (LR):</strong> Crucial para el tamaño del paso. Un buen inicio es `0.01` o `0.001`.',
+                        '<strong>Momento (β):</strong> El valor más común es `0.9`. Los valores altos (ej. `0.99`) le dan mucha "inercia" y pueden sobrepasar el mínimo.'
+                    ]
+                },
+                'RMSprop': {
+                    title: "RMSprop",
+                    details: "Un optimizador adaptativo de segundo orden. Ajusta la Tasa de Aprendizaje para cada parámetro dividiéndola por la raíz cuadrada de los gradientes cuadrados promedio (RMS). Esto desacelera en dimensiones con gradientes grandes y acelera donde son pequeños. <strong>Parámetro clave: β₂ (Factor de Decaimiento)</strong>.",
+                    showBeta2: true,
+                    tips: [
+                        '<strong>Tasa de Aprendizaje (LR):</strong> Puede ser más alta que SGD (ej. `0.01`) ya que se adapta a los gradientes.',
+                        '<strong>Decaimiento (β₂):</strong> Controla la ventana de promedio de los gradientes cuadrados. `0.999` es un valor seguro, aunque `0.9` se usa a veces para un decaimiento más rápido.'
+                    ]
+                },
+                'Adam': {
+                    title: "Adam (Adaptative Moment Estimation)",
+                    details: "Combina lo mejor de Momentum y RMSprop. Usa el Momento de primer orden (promedio de gradientes, β₁) y el Momento de segundo orden (RMS de gradientes, β₂). Es el optimizador más común y robusto. <strong>Parámetros clave: β₁ y β₂</strong>.",
+                    showMomentum: true, momentumLabelText: 'Momento (β₁)', showBeta2: true,
+                    tips: [
+                        '<strong>Tasa de Aprendizaje (LR):</strong> Valor estándar de la industria: `0.001`. Es robusto y rara vez necesita ajustarse.',
+                        '<strong>Momento (β₁):</strong> Generalmente se deja en `0.9`. Controla la memoria del promedio del gradiente.',
+                        '<strong>Decaimiento (β₂):</strong> Generalmente se deja en `0.999`. Controla la memoria del promedio del gradiente al cuadrado.'
+                    ]
+                }
+            };
+
+            const desc = descriptions[optimizer];
+            descDiv.innerHTML = `
+                <h3 class="font-bold text-md text-secondary-cyan">${desc.title}</h3>
+                <p>${desc.details}</p>
+            `;
+            
+            // Actualizar visibilidad y etiquetas de los controles
+            if (desc.showMomentum) {
+                momentumControl.classList.remove('hidden');
+                momentumLabel.textContent = desc.momentumLabelText;
+            }
+            if (desc.showBeta2) {
+                beta2Control.classList.remove('hidden');
+            }
+
+            // Generar e insertar consejos de hiperparámetros
+            const tipsHtml = `
+                <ul class="list-disc list-inside space-y-1">
+                    ${desc.tips.map(tip => `<li>${tip}</li>`).join('')}
+                </ul>
+            `;
+            tipsDiv.innerHTML = tipsHtml;
+        }
+
+        // --- Inicialización y Event Listeners ---
+
+        window.onload = function() {
+            // Inicializar la visualización de la superficie de pérdida (solo una vez)
+            drawLossSurface();
+            // Inicializar la descripción con Adam
+            updateUI(params.optimizer);
+
+            const lrSlider = document.getElementById('lrSlider');
+            const lrValueSpan = document.getElementById('lrValue');
+            const momentumSlider = document.getElementById('momentumSlider');
+            const momentumValueSpan = document.getElementById('momentumValue');
+            const beta2Slider = document.getElementById('beta2Slider');
+            const beta2ValueSpan = document.getElementById('beta2Value');
+            const optimizerSelect = document.getElementById('optimizerSelect');
+            const resetButton = document.getElementById('resetButton');
+
+            // 1. Manejo de Sliders (Tasa de Aprendizaje)
+            lrSlider.addEventListener('input', (e) => {
+                params.lr = parseFloat(e.target.value);
+                lrValueSpan.textContent = params.lr.toFixed(3);
+                resetSimulation();
+            });
+
+            // 2. Manejo de Sliders (Momento / Beta1)
+            momentumSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                params.momentum = val; // Para Momentum
+                params.beta1 = val;    // Para Adam
+                momentumValueSpan.textContent = val.toFixed(3);
+                resetSimulation();
+            });
+            
+            // 3. Manejo de Sliders (Beta2 / Decaimiento)
+            beta2Slider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                params.beta2 = val;
+                beta2ValueSpan.textContent = val.toFixed(3);
+                resetSimulation();
+            });
+
+            // 4. Manejo de Selección de Optimizador
+            optimizerSelect.addEventListener('change', (e) => {
+                params.optimizer = e.target.value;
+                updateUI(params.optimizer);
+                resetSimulation();
+            });
+
+            // 5. Manejo del Botón de Reinicio
+            resetButton.addEventListener('click', () => {
+                resetSimulation();
+            });
+
+            // 6. Manejo del click en el Canvas para reubicar el punto de partida
+            canvas.addEventListener('click', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+
+                // Convierte coordenadas de píxeles a coordenadas del modelo (x, y)
+                state.x = (clickX - center.x) / scale;
+                state.y = (center.y - clickY) / scale; // Y invertido
+
+                resetSimulation();
+            });
+
+            // Iniciar la simulación con los valores por defecto
+            resetSimulation();
+        };
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infografía del Ciclo de Entrenamiento de Redes Neuronales</title>
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#4f46e5',
+                        'secondary': '#8b5cf6',
+                        'success': '#10b981',
+                        'danger': '#ef4444',
+                        'info': '#3b82f6',
+                        'bg-light': '#f8fafc',
+                        'bg-dark': '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para el diagrama */
+        .step-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .step {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .step-active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+            border: 3px solid #4f46e5;
+        }
+        .arrow {
+            flex-grow: 1;
+            height: 2px;
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            margin: 0 1rem;
+            position: relative;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background: #a855f7;
+            clip-path: polygon(100% 50%, 0% 0%, 0% 100%);
+            transform: translateY(-50%);
+        }
+        
+        /* Estilo para la flecha de Retroceso (Loop) - NUEVO DISEÑO */
+        .arrow-feedback {
+            position: absolute;
+            top: 170px; /* Posiciona la línea horizontal debajo de los bloques */
+            left: 7.5%; 
+            width: 85%; 
+            height: 40px; 
+            border: none; 
+            
+            /* Dibuja la línea horizontal y la curva izquierda */
+            border-bottom: 3px solid #e5e7eb; /* Línea horizontal principal */
+            border-left: 3px solid #e5e7eb; /* Línea vertical izquierda (para subir) */
+            
+            /* Curva de retorno hacia el Paso 1 */
+            border-bottom-left-radius: 30px; 
+            
+            z-index: 0;
+            transition: all 0.5s ease-in-out;
+        }
+        .arrow-feedback-active {
+            /* Color de loop activo */
+            border-color: #f97316 !important; 
+        }
+        
+        /* Punta de Flecha - DIBUJADA CON CSS (AJUSTADA Y ROTADA) */
+        .arrow-feedback-head {
+            position: absolute;
+            top: 0; /* ALINEADO CON EL BORDE SUPERIOR DEL CONTENEDOR */
+            left: 0;
+            width: 0; 
+            height: 0;
+            /* Dibujamos un triángulo apuntando hacia la derecha por defecto */
+            border-top: 8px solid transparent; 
+            border-bottom: 8px solid transparent; 
+            border-right: 8px solid #94a3b8; /* Color inicial del triángulo */
+            /* CENTRADO Y ROTADO: */
+            transform: translateY(-50%) rotate(90deg); /* Rota 90 grados horario (apunta hacia abajo) */
+            transform-origin: center center; /* Asegura que la rotación sea sobre su centro */
+            z-index: 10;
+            transition: border-right-color 0.5s;
+            font-size: 0; /* Aseguramos que no haya texto */
+        }
+        .arrow-feedback-head-active {
+            /* Color del icono activo */
+            border-right-color: #f97316 !important;
+            color: transparent !important;
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen p-8 font-sans antialiased text-bg-dark">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-2xl p-8 lg:p-12">
+        
+        <header class="text-center mb-10">
+            <h1 class="text-4xl lg:text-5xl font-extrabold text-primary mb-2">Ciclo de Entrenamiento de Redes Neuronales</h1>
+            <p class="text-lg text-gray-600">Explore los 4 pasos clave del proceso de aprendizaje de una IA.</p>
+        </header>
+
+        <!-- Contenedor del Diagrama de Flujo --><div class="relative pb-28"> 
+            <div class="step-container">
+                
+                <!-- PASO 1: Forward Propagation --><div id="step-1" class="step bg-info/10 hover:bg-info/20 rounded-xl p-4 shadow-lg" onclick="setActiveStep(1)">
+                    <span class="text-4xl mb-2">➡️</span>
+                    <p class="font-bold text-info">1. Propagación Adelante</p>
+                    <small class="text-xs text-gray-500">Generación de Predicción</small>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- PASO 2: Loss Function --><div id="step-2" class="step bg-danger/10 hover:bg-danger/20 rounded-xl p-4 shadow-lg" onclick="setActiveStep(2)">
+                    <span class="text-4xl mb-2">📉</span>
+                    <p class="font-bold text-danger">2. Función de Pérdida</p>
+                    <small class="text-xs text-gray-500">Cálculo del Error</small>
+                </div>
+                
+                <div class="arrow"></div>
+
+                <!-- PASO 3: Backpropagation --><div id="step-3" class="step bg-secondary/10 hover:bg-secondary/20 rounded-xl p-4 shadow-lg" onclick="setActiveStep(3)">
+                    <span class="text-4xl mb-2">🔙</span>
+                    <p class="font-bold text-secondary">3. Retropropagación</p>
+                    <small class="text-xs text-gray-500">Cálculo de Gradientes</small>
+                </div>
+                
+                <div class="arrow"></div>
+
+                <!-- PASO 4: Optimizer -->
+                <div id="step-4" class="step bg-success/10 hover:bg-success/20 rounded-xl p-4 shadow-lg" onclick="setActiveStep(4)">
+                    <span class="text-4xl mb-2">⚙️</span>
+                    <p class="font-bold text-success">4. Optimizador</p>
+                    <small class="text-xs text-gray-500">Ajuste de Pesos (<span class="italic">w</span> y <span class="italic">b</span>)</small>
+                </div>
+            </div>
+
+            <!-- Flecha de Retroalimentación (Loop) --><div id="feedback-loop" class="arrow-feedback">
+                <!-- El span ahora dibuja la punta de flecha --><span id="feedback-head" class="arrow-feedback-head"></span> 
+            </div>
+            <!-- Texto "UNA ÉPOCA" ajustado a la nueva posición --><div class="absolute top-[170px] left-[45%] text-xs font-semibold text-gray-500 bg-white px-2 rounded-full shadow-md">
+                UNA ÉPOCA
+            </div>
+        </div>
+
+        <!-- Contenedor de Detalles Interactivos --><div id="details-panel" class="bg-bg-light border-l-4 border-primary p-6 rounded-lg shadow-inner mt-10 min-h-[250px] transition-all duration-500">
+            <h2 id="detail-title" class="text-3xl font-bold text-primary mb-4">Haga Clic en un Paso para Explorar</h2>
+            <div id="detail-content" class="text-gray-700 space-y-3">
+                <p>Seleccione uno de los cuatro pasos del diagrama de flujo anterior para ver una explicación detallada de su función dentro del ciclo de entrenamiento de la red neuronal.</p>
+                <ul class="list-disc list-inside text-sm text-gray-500">
+                    <li>El objetivo final es minimizar el error ajustando repetidamente los pesos y sesgos.</li>
+                    <li>Este proceso se repite por miles de "épocas".</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Datos de la Infografía con formato HTML
+        const stepsData = {
+            1: {
+                title: "1. Propagación Hacia Adelante (Forward Propagation)",
+                color: 'text-info',
+                description: [
+                    "Los datos de entrada (por ejemplo, una imagen o texto) se alimentan a la red a través de la capa de entrada.",
+                    "La información viaja a través de las capas ocultas, donde cada neurona realiza un cálculo (suma ponderada de entradas + sesgo, seguida de una función de activación).",
+                    // CORRECCIÓN FINAL VERIFICADA: Se asegura el espacio antes y después de cada <strong>
+                    "Finalmente, la <strong>capa de salida</strong> produce una <strong>predicción</strong> de lo que cree que es el resultado correcto."
+                ],
+                // FÓRMULA ACTUALIZADA A HTML PURO
+                formula: '<div class="text-xl font-mono p-1 border border-gray-300 rounded-md inline-block">Predicción = f(<span class="italic">w</span> &middot; Entrada + <span class="italic">b</span>)</div>',
+                icon: "➡️"
+            },
+            2: {
+                title: "2. Función de Pérdida (Loss Function)",
+                color: 'text-danger',
+                description: [
+                    // VERIFICADO
+                    "Esta función mide la discrepancia, o el <strong>error</strong>, entre la <strong>predicción</strong> de la red y el <strong>valor real</strong> (la 'etiqueta' o la verdad conocida).",
+                    "Un valor de pérdida alto significa que la red predijo mal; un valor bajo significa que predijo bien.",
+                    "El objetivo del entrenamiento es encontrar los pesos que minimicen esta función de pérdida (función de costo)."
+                ],
+                // FÓRMULA ACTUALIZADA A HTML PURO
+                formula: '<div class="text-xl font-mono p-1 border border-gray-300 rounded-md inline-block">Pérdida = (1/N) &Sigma; (Valor Real - Predicción)<sup>2</sup></div><small class="text-xs text-gray-500">(Error Cuadrático Medio)</small>',
+                icon: "📉"
+            },
+            3: {
+                title: "3. Retropropagación (Backpropagation)",
+                color: 'text-secondary',
+                description: [
+                    // VERIFICADO
+                    "Es la fase más crucial para el aprendizaje. El <strong>error</strong> calculado en el paso 2 se propaga hacia atrás a través de la red (de la capa de salida a la de entrada).",
+                    // VERIFICADO
+                    "Utiliza el concepto de la <strong>Regla de la Cadena</strong> (cálculo) para determinar con precisión cuánto contribuyó cada peso y cada sesgo individual al error total.",
+                    // VERIFICADO
+                    "El resultado de este cálculo es el <strong>gradiente</strong>, que indica la dirección en la que los pesos deben ajustarse para reducir el error."
+                ],
+                // FÓRMULA ACTUALIZADA A HTML PURO
+                formula: '<div class="text-2xl font-mono leading-none p-1 border border-gray-300 rounded-md inline-block">∂ Pérdida / ∂ <span class="italic">w</span><sub>ij</sub></div>',
+                icon: "🔙"
+            },
+            4: {
+                title: "4. Optimizador (Ajuste de Pesos)",
+                color: 'text-success',
+                description: [
+                    // VERIFICADO
+                    "El optimizador (generalmente <strong>Descenso de Gradiente</strong>) utiliza el <strong>gradiente</strong> calculado en la Retropropagación para actualizar los pesos y sesgos de la red.",
+                    "El ajuste se realiza en la dirección opuesta al gradiente (por eso es 'descenso') para moverse hacia el punto mínimo de la función de pérdida.",
+                    // VERIFICADO
+                    "La <strong>Tasa de Aprendizaje</strong> controla el tamaño del paso. Un valor muy alto puede 'saltar' el mínimo; un valor muy bajo hace que el entrenamiento sea muy lento."
+                ],
+                // FÓRMULA ACTUALIZADA A HTML PURO
+                formula: '<div class="text-xl font-mono p-1 border border-gray-300 rounded-md inline-block"><strong><span class="italic">w</span><sub>nuevo</sub></strong> = <strong><span class="italic">w</span><sub>anterior</sub></strong> - &alpha; &middot; (<span class="text-sm">∂ Pérdida / ∂ <span class="italic">w</span></span>)</div>',
+                icon: "⚙️"
+            }
+        };
+
+        const steps = document.querySelectorAll('.step');
+        const detailTitle = document.getElementById('detail-title');
+        const detailContent = document.getElementById('detail-content');
+        const detailsPanel = document.getElementById('details-panel');
+        const feedbackLoop = document.getElementById('feedback-loop');
+        const feedbackHead = document.getElementById('feedback-head'); // Referencia a la punta de flecha
+        
+        // Función principal para la interactividad
+        function setActiveStep(stepNumber) {
+            // 1. Eliminar estilos 'active' de todos los pasos
+            steps.forEach(step => step.classList.remove('step-active'));
+
+            // 2. Aplicar estilo 'active' al paso seleccionado
+            const activeStep = document.getElementById(`step-${stepNumber}`);
+            if (activeStep) {
+                activeStep.classList.add('step-active');
+            }
+
+            // 3. Actualizar el panel de detalles
+            const data = stepsData[stepNumber];
+            if (data) {
+                // Actualizar título y color del borde
+                detailTitle.className = `text-3xl font-bold mb-4 ${data.color}`;
+                detailsPanel.className = detailsPanel.className.replace(/border-(primary|info|danger|secondary|success)/, `border-${data.color.split('-')[1]}`);
+                
+                // Actualizar título
+                detailTitle.innerHTML = `<span class="mr-2">${data.icon}</span>${data.title}`;
+                
+                // Crear el contenido de la descripción
+                let contentHTML = data.description.map(p => `<p class="flex items-start"><span class="text-xl mr-2 ${data.color}">•</span>${p}</p>`).join('');
+                
+                // Añadir la fórmula (ya está en formato HTML en stepsData.formula)
+                contentHTML += `<div class="bg-gray-100 p-4 mt-4 rounded-lg border border-gray-200">
+                                    <p class="font-semibold text-sm mb-2 text-gray-500">Concepto Matemático Clave:</p>
+                                    ${data.formula}
+                                </div>`;
+                
+                detailContent.innerHTML = contentHTML;
+            }
+
+            // 4. Activar la animación de retroalimentación
+            if (stepNumber >= 3) {
+                feedbackLoop.classList.add('arrow-feedback-active');
+                feedbackHead.classList.add('arrow-feedback-head-active');
+            } else {
+                feedbackLoop.classList.remove('arrow-feedback-active');
+                feedbackHead.classList.remove('arrow-feedback-head-active');
+            }
+            
+            // Ya no es necesario llamar a renderLatex() porque el contenido es HTML
+        }
+
+        // Inicializar el primer paso al cargar
+        window.onload = function() {
+            setActiveStep(1);
+        };
+    </script>
+</body>
+</html>
+
