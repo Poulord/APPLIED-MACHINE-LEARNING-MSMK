@@ -144,23 +144,28 @@ function startProcessing() {
 }
 
 function processFrame() {
-  if (!appState.cap || !appState.canvasEl) {
+  if (!appState.cap || !appState.canvasEl || !appState.videoEl) {
     requestAnimationFrame(processFrame);
     return;
   }
 
-  if (!appState.videoEl.videoWidth || !appState.videoEl.videoHeight) {
-    requestAnimationFrame(processFrame);
-    return;
-  }
-
-  // Ajusta tamaño del canvas si cambia la orientación o resolución
+  // Asegura que el video tenga datos listos y dimensiones válidas
   if (
-    appState.canvasEl.width !== appState.videoEl.videoWidth ||
-    appState.canvasEl.height !== appState.videoEl.videoHeight
+    appState.videoEl.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA ||
+    !appState.videoEl.videoWidth ||
+    !appState.videoEl.videoHeight
   ) {
-    appState.canvasEl.width = appState.videoEl.videoWidth;
-    appState.canvasEl.height = appState.videoEl.videoHeight;
+    requestAnimationFrame(processFrame);
+    return;
+  }
+
+  const videoWidth = appState.videoEl.videoWidth;
+  const videoHeight = appState.videoEl.videoHeight;
+
+  // Ajusta tamaño del canvas si cambia la orientación o resolución del video
+  if (appState.canvasEl.width !== videoWidth || appState.canvasEl.height !== videoHeight) {
+    appState.canvasEl.width = videoWidth;
+    appState.canvasEl.height = videoHeight;
   }
 
   // Reduce la carga procesando 1 de cada 2 frames
@@ -171,8 +176,8 @@ function processFrame() {
   }
   appState.frameSkip += 1;
 
-  const width = appState.canvasEl.width;
-  const height = appState.canvasEl.height;
+  const width = videoWidth;
+  const height = videoHeight;
   const src = new cv.Mat(height, width, cv.CV_8UC4);
   const gray = new cv.Mat();
   const blurred = new cv.Mat();
