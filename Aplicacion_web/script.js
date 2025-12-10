@@ -176,14 +176,25 @@ function processFrame() {
   }
   appState.frameSkip += 1;
 
-// ...
+  // ... (Ajuste del canvas y frameSkip se mantienen igual) ...
+
   const width = videoWidth;
   const height = videoHeight;
+  
+  // NUEVO PASO DE SEGURIDAD (Para evitar el error de tamaño original si width/height es 0)
+  if (width === 0 || height === 0) {
+    requestAnimationFrame(processFrame);
+    return;
+  }
 
   // Declaraciones (Aseguramos que existen para el bloque finally)
-  const src = new cv.Mat(); // Corregido LÍNEA 187
+  // <<<< CORRECCIÓN FINAL: Volvemos a crearla con el tipo correcto (CV_8UC4) 
+  //                       pero garantizamos que el tamaño no es cero. >>>>
+  const src = new cv.Mat(height, width, cv.CV_8UC4); // <<-- ESTA ES LA LÍNEA CRUCIAL
   const gray = new cv.Mat();
   const blurred = new cv.Mat();
+
+  
   const edges = new cv.Mat();
   const dilated = new cv.Mat();
   let kernel = new cv.Mat(); // Lo definimos antes del try 
