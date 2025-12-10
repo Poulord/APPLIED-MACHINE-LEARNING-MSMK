@@ -1,16 +1,11 @@
-const DETECTION_LABELS = ['persona', 'bicicleta', 'auto', 'perro', 'gato', 'monitor', 'celular', 'botella'];
-
 const appState = {
-  totalDetections: 0,
-  detections: [],
+  faceCount: 0,
   isCameraReady: false,
   isSending: false,
   stream: null,
   videoEl: null,
   canvasEl: null,
-  overlayCtx: null,
-  detectionListEl: null,
-  totalDetectionsEl: null,
+  faceCountEl: null,
   statusMessageEl: null,
   sendButtonEl: null,
   cameraStatusEl: null,
@@ -27,15 +22,10 @@ function initApp() {
 function initAppState() {
   appState.videoEl = document.getElementById('video');
   appState.canvasEl = document.getElementById('canvas');
-  appState.detectionListEl = document.getElementById('detectionList');
-  appState.totalDetectionsEl = document.getElementById('totalDetections');
+  appState.faceCountEl = document.getElementById('faceCount');
   appState.statusMessageEl = document.getElementById('statusMessage');
   appState.sendButtonEl = document.getElementById('sendButton');
   appState.cameraStatusEl = document.getElementById('cameraStatus');
-
-  if (appState.canvasEl) {
-    appState.overlayCtx = appState.canvasEl.getContext('2d');
-  }
 }
 
 async function initCamera() {
@@ -53,10 +43,8 @@ async function initCamera() {
     appState.videoEl.onloadedmetadata = () => {
       appState.videoEl.play();
       if (appState.canvasEl) {
-        const width = appState.videoEl.videoWidth || 640;
-        const height = appState.videoEl.videoHeight || 360;
-        appState.canvasEl.width = width;
-        appState.canvasEl.height = height;
+        appState.canvasEl.width = appState.videoEl.videoWidth || 640;
+        appState.canvasEl.height = appState.videoEl.videoHeight || 360;
       }
     };
     appState.isCameraReady = true;
@@ -72,10 +60,7 @@ async function initCamera() {
 
 function setupEvents() {
   if (appState.canvasEl) {
-    appState.canvasEl.addEventListener('click', () => {
-      const detections = simulateDetections();
-      updateDetections(detections);
-    });
+    appState.canvasEl.addEventListener('click', () => updateFaceCount(1));
   }
 
   if (appState.sendButtonEl) {
@@ -93,86 +78,13 @@ function stopCameraStream() {
   }
 }
 
-function simulateDetections() {
-  const amount = Math.max(1, Math.floor(Math.random() * 5));
-  const width = appState.canvasEl?.width || 640;
-  const height = appState.canvasEl?.height || 360;
-
-  const detections = Array.from({ length: amount }).map(() => {
-    const label = DETECTION_LABELS[Math.floor(Math.random() * DETECTION_LABELS.length)];
-    const confidence = Math.random() * 0.4 + 0.55; // 0.55 - 0.95
-    const boxWidth = Math.max(60, Math.random() * (width / 2));
-    const boxHeight = Math.max(40, Math.random() * (height / 2));
-    const x = Math.max(0, Math.random() * (width - boxWidth));
-    const y = Math.max(0, Math.random() * (height - boxHeight));
-
-    return { label, confidence: Number(confidence.toFixed(2)), box: { x, y, width: boxWidth, height: boxHeight } };
-  });
-
-  return detections;
-}
-
-function updateDetections(detections) {
-  appState.detections = detections;
-  appState.totalDetections += detections.length;
-
-  renderOverlay();
-  renderDetectionList();
-  updateStatus('Detecciones simuladas listas para enviar.');
-
-  if (appState.totalDetectionsEl) {
-    appState.totalDetectionsEl.textContent = appState.totalDetections.toString();
+function updateFaceCount(increment = 1) {
+  appState.faceCount += increment;
+  if (appState.faceCount < 0) appState.faceCount = 0;
+  if (appState.faceCountEl) {
+    appState.faceCountEl.textContent = appState.faceCount.toString();
   }
-}
-
-function renderOverlay() {
-  if (!appState.overlayCtx || !appState.canvasEl) return;
-  const ctx = appState.overlayCtx;
-  ctx.clearRect(0, 0, appState.canvasEl.width, appState.canvasEl.height);
-
-  ctx.strokeStyle = 'rgba(93, 252, 141, 0.9)';
-  ctx.lineWidth = 2;
-  ctx.font = '14px "Space Grotesk", system-ui';
-  ctx.fillStyle = 'rgba(93, 252, 141, 0.2)';
-
-  appState.detections.forEach((det) => {
-    const { x, y, width, height } = det.box;
-    ctx.strokeRect(x, y, width, height);
-    ctx.fillRect(x, y, width, height);
-    const label = `${det.label} ${(det.confidence * 100).toFixed(1)}%`;
-    const textWidth = ctx.measureText(label).width;
-    const padding = 6;
-    ctx.fillStyle = 'rgba(6, 8, 15, 0.85)';
-    ctx.fillRect(x, Math.max(0, y - 24), textWidth + padding * 2, 22);
-    ctx.fillStyle = '#5dfc8d';
-    ctx.fillText(label, x + padding, Math.max(14, y - 8));
-    ctx.fillStyle = 'rgba(93, 252, 141, 0.2)';
-  });
-}
-
-function renderDetectionList() {
-  if (!appState.detectionListEl) return;
-
-  appState.detectionListEl.innerHTML = '';
-  if (appState.detections.length === 0) {
-    appState.detectionListEl.innerHTML = '<li class="muted">Sin detecciones aún. Haz click en el lienzo para simular.</li>';
-    return;
-  }
-
-  appState.detections.forEach((det, index) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <div class="label-row">
-        <span class="pill">${String(index + 1).padStart(2, '0')}</span>
-        <span class="label">${det.label}</span>
-        <span class="confidence">${(det.confidence * 100).toFixed(1)}%</span>
-      </div>
-      <div class="bar">
-        <span class="fill" style="width:${Math.min(100, det.confidence * 100)}%"></span>
-      </div>
-    `;
-    appState.detectionListEl.appendChild(li);
-  });
+  updateStatus('Conteo actualizado. Listo para enviar.');
 }
 
 async function sendLog() {
@@ -186,8 +98,7 @@ async function sendLog() {
   }
 
   const payload = {
-    totalDetections: appState.totalDetections,
-    detections: appState.detections,
+    faces: appState.faceCount,
     clientTimestamp: new Date().toISOString(),
   };
 

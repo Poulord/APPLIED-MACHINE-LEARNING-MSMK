@@ -4,18 +4,15 @@ export default function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   }
 
-  const { totalDetections, detections, clientTimestamp } = req.body || {};
-  const parsedTotal = typeof totalDetections === 'number' ? totalDetections : Number(totalDetections);
-  const isTotalValid = Number.isFinite(parsedTotal) && parsedTotal >= 0;
+  const { faces, clientTimestamp } = req.body || {};
+  const parsedFaces = typeof faces === 'number' ? faces : Number(faces);
+  const isFacesValid = Number.isFinite(parsedFaces);
   const isTimestampValid = typeof clientTimestamp === 'string' && !Number.isNaN(Date.parse(clientTimestamp));
-  const isDetectionsValid = Array.isArray(detections)
-    && detections.every((d) => typeof d?.label === 'string' && Number.isFinite(Number(d?.confidence)));
 
-  if (!isTotalValid || !isTimestampValid || !isDetectionsValid) {
-    return res.status(400).json({
-      ok: false,
-      error: 'Payload inválido: se requieren "totalDetections" numérico, "detections" válidos y "clientTimestamp".',
-    });
+  if (!isFacesValid || !isTimestampValid) {
+    return res
+      .status(400)
+      .json({ ok: false, error: 'Payload inválido: se requieren "faces" numérico y "clientTimestamp" válido.' });
   }
 
   const serverTimestamp = new Date().toISOString();
@@ -23,8 +20,7 @@ export default function handler(req, res) {
   const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
 
   console.log('Log de interacción', {
-    totalDetections: parsedTotal,
-    detectionsSample: detections.slice(0, 3),
+    faces: parsedFaces,
     clientTimestamp,
     serverTimestamp,
     userAgent,
@@ -33,8 +29,7 @@ export default function handler(req, res) {
 
   return res.status(200).json({
     ok: true,
-    totalDetections: parsedTotal,
-    detections,
+    faces: parsedFaces,
     clientTimestamp,
     serverTimestamp,
   });
