@@ -1,23 +1,3 @@
-const COLOR_RANGES = [
-  {
-    label: 'objeto rojo',
-    lower: [0, 120, 70],
-    upper: [10, 255, 255],
-    secondaryLower: [170, 120, 70],
-    secondaryUpper: [180, 255, 255],
-  },
-  {
-    label: 'objeto verde',
-    lower: [35, 80, 60],
-    upper: [85, 255, 255],
-  },
-  {
-    label: 'objeto azul',
-    lower: [90, 80, 60],
-    upper: [130, 255, 255],
-  },
-];
-
 const appState = {
   totalDetections: 0,
   detections: [],
@@ -83,7 +63,7 @@ async function waitForOpenCv() {
           resolve();
           return;
         }
-        cv['onRuntimeInitialized'] = () => resolve();
+        cv.onRuntimeInitialized = () => resolve();
         return;
       }
 
@@ -113,16 +93,22 @@ async function initCamera() {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
     appState.stream = stream;
     appState.videoEl.srcObject = stream;
-    appState.videoEl.onloadedmetadata = () => {
-      appState.videoEl.play();
-      if (appState.canvasEl) {
+
+    await new Promise((resolve, reject) => {
+      appState.videoEl.onloadedmetadata = () => {
         const width = appState.videoEl.videoWidth || 640;
         const height = appState.videoEl.videoHeight || 360;
-        appState.canvasEl.width = width;
-        appState.canvasEl.height = height;
-      }
-      appState.cap = new cv.VideoCapture(appState.videoEl);
-    };
+        if (appState.canvasEl) {
+          appState.canvasEl.width = width;
+          appState.canvasEl.height = height;
+        }
+        appState.cap = new cv.VideoCapture(appState.videoEl);
+        resolve();
+      };
+      appState.videoEl.onerror = reject;
+    });
+
+    await appState.videoEl.play();
     appState.isCameraReady = true;
     updateCameraStatus('Cámara lista');
     updateStatus('Cámara inicializada. Procesando con OpenCV...');
@@ -163,83 +149,84 @@ function processFrame() {
     return;
   }
 
+  if (!appState.videoEl.videoWidth || !appState.videoEl.videoHeight) {
+    requestAnimationFrame(processFrame);
+    return;
+  }
+
+  // Ajusta tamaño del canvas si cambia la orientación o resolución
+  if (
+    appState.canvasEl.width !== appState.videoEl.videoWidth ||
+    appState.canvasEl.height !== appState.videoEl.videoHeight
+  ) {
+    appState.canvasEl.width = appState.videoEl.videoWidth;
+    appState.canvasEl.height = appState.videoEl.videoHeight;
+  }
+
   // Reduce la carga procesando 1 de cada 2 frames
   if (appState.frameSkip % 2 !== 0) {
     appState.frameSkip += 1;
     requestAnimationFrame(processFrame);
     return;
   }
-
   appState.frameSkip += 1;
 
   const width = appState.canvasEl.width;
   const height = appState.canvasEl.height;
   const src = new cv.Mat(height, width, cv.CV_8UC4);
-  const hsv = new cv.Mat();
+  const gray = new cv.Mat();
+  const blurred = new cv.Mat();
+  const edges = new cv.Mat();
+  const dilated = new cv.Mat();
 
   try {
     appState.cap.read(src);
-    cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
-    cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+    cv.Canny(blurred, edges, 60, 120, 3, false);
+
+    const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+    cv.dilate(edges, dilated, kernel);
+
+    const contours = new cv.MatVector();
+    const hierarchy = new cv.Mat();
+    cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
     const detections = [];
+    const frameArea = width * height;
+    for (let i = 0; i < contours.size(); i += 1) {
+      const contour = contours.get(i);
+      const rect = cv.boundingRect(contour);
+      const area = rect.width * rect.height;
 
-    COLOR_RANGES.forEach((range) => {
-      const lower = cv.matFromArray(1, 3, cv.CV_8U, range.lower);
-      const upper = cv.matFromArray(1, 3, cv.CV_8U, range.upper);
-      const mask = new cv.Mat();
-      cv.inRange(hsv, lower, upper, mask);
-
-      // Mezcla para rojo que cruza 180 grados
-      if (range.secondaryLower && range.secondaryUpper) {
-        const lower2 = cv.matFromArray(1, 3, cv.CV_8U, range.secondaryLower);
-        const upper2 = cv.matFromArray(1, 3, cv.CV_8U, range.secondaryUpper);
-        const mask2 = new cv.Mat();
-        cv.inRange(hsv, lower2, upper2, mask2);
-        cv.add(mask, mask2, mask);
-        lower2.delete();
-        upper2.delete();
-        mask2.delete();
-      }
-
-      const contours = new cv.MatVector();
-      const hierarchy = new cv.Mat();
-      cv.findContours(mask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-      for (let i = 0; i < contours.size(); i += 1) {
-        const contour = contours.get(i);
-        const rect = cv.boundingRect(contour);
-        const area = rect.width * rect.height;
-        const frameArea = width * height;
-
-        if (area < frameArea * 0.01) {
-          contour.delete();
-          continue;
-        }
-
-        const confidence = Math.min(0.98, Math.max(0.45, (area / frameArea) * 2));
-        detections.push({
-          label: range.label,
-          confidence: Number(confidence.toFixed(2)),
-          box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
-        });
+      if (area < frameArea * 0.01) {
         contour.delete();
+        continue;
       }
 
-      lower.delete();
-      upper.delete();
-      mask.delete();
-      contours.delete();
-      hierarchy.delete();
-    });
+      const confidence = Math.min(0.98, Math.max(0.4, (area / frameArea) * 1.5));
+      detections.push({
+        label: `Objeto ${String(detections.length + 1).padStart(2, '0')}`,
+        confidence: Number(confidence.toFixed(2)),
+        box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      });
+      contour.delete();
+    }
 
     updateDetections(detections);
+
+    kernel.delete();
+    contours.delete();
+    hierarchy.delete();
   } catch (error) {
     console.error('Error procesando frame con OpenCV:', error);
     updateStatus('Error procesando frame.');
   } finally {
     src.delete();
-    hsv.delete();
+    gray.delete();
+    blurred.delete();
+    edges.delete();
+    dilated.delete();
   }
 
   requestAnimationFrame(processFrame);
@@ -290,7 +277,7 @@ function renderDetectionList() {
 
   appState.detectionListEl.innerHTML = '';
   if (appState.detections.length === 0) {
-    appState.detectionListEl.innerHTML = '<li class="muted">Sin detecciones aún. Apunta la cámara a objetos de colores primarios.</li>';
+    appState.detectionListEl.innerHTML = '<li class="muted">Sin detecciones aún. Mantén el encuadre estable o acerca objetos.</li>';
     return;
   }
 

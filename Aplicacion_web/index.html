@@ -14,10 +14,10 @@
         <p class="eyebrow">Demo · Visión por Computador</p>
         <h1>Scanner interactivo multi-objeto</h1>
         <p class="lede">
-          Esta demo activa tu cámara y ejecuta detección en vivo con OpenCV.js para localizar
-          múltiples objetos por color (rojo, verde, azul) mostrando etiqueta y confianza,
-          al estilo Ultralytics. Envía métricas anónimas a un backend serverless en Vercel
-          como práctica de Machine Learning / Visión por Computador.
+          Esta demo activa tu cámara y ejecuta detección en vivo con OpenCV.js para localizar objetos
+          generales mediante bordes y contornos, mostrando etiqueta y confianza al estilo Ultralytics.
+          Envía métricas anónimas a un backend serverless en Vercel como práctica de Machine Learning /
+          Visión por Computador.
         </p>
       </header>
 
@@ -31,7 +31,7 @@
             <video id="video" autoplay playsinline aria-label="Vista previa de la cámara"></video>
             <canvas id="canvas" aria-label="Lienzo con bounding boxes de OpenCV"></canvas>
           </div>
-          <p class="hint">Procesa en tiempo real: apunta la cámara a objetos de colores primarios.</p>
+          <p class="hint">Procesa en tiempo real: mantén el encuadre estable y acerca los objetos que quieras analizar.</p>
         </div>
 
         <div class="panel control-panel">
@@ -54,7 +54,7 @@
               <span class="status">Etiqueta + confianza (similar a Ultralytics)</span>
             </div>
             <ul class="detection-list" id="detectionList">
-              <li class="muted">Sin detecciones aún. Apunta la cámara a objetos de colores primarios.</li>
+              <li class="muted">Sin detecciones aún. Mantén el encuadre estable o acerca objetos al campo de visión.</li>
             </ul>
           </div>
           <ul class="legend">
