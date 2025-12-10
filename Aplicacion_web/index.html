@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo de Cámara | ML Vision HUD</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Demo · Visión por Computador</p>
+        <h1>Scanner interactivo multi-objeto</h1>
+        <p class="lede">
+          Esta demo activa tu cámara, simula la detección de múltiples objetos al estilo
+          Ultralytics (clase + confianza) y envía métricas anónimas a un backend
+          serverless en Vercel como parte de una práctica de Machine Learning / Visión
+          por Computador.
+        </p>
+      </header>
+
+      <section class="grid">
+        <div class="panel video-panel">
+          <div class="panel-header">
+            <span class="badge">Stream en vivo</span>
+            <span class="status" id="cameraStatus">Inicializando cámara...</span>
+          </div>
+          <div class="video-wrapper">
+            <video id="video" autoplay playsinline aria-label="Vista previa de la cámara"></video>
+            <canvas id="canvas" aria-label="Lienzo para detecciones y bounding boxes"></canvas>
+          </div>
+          <p class="hint">Haz click en el lienzo para simular detecciones y generar bounding boxes.</p>
+        </div>
+
+        <div class="panel control-panel">
+          <div class="stat">
+            <p class="label">Detecciones acumuladas</p>
+            <p class="value" id="totalDetections">0</p>
+          </div>
+          <button
+            id="sendButton"
+            class="primary"
+            aria-label="Enviar métricas anónimas"
+            title="Enviar métricas anónimas al servidor"
+          >
+            Enviar datos
+          </button>
+          <div class="status-block" id="statusMessage">Esperando interacción...</div>
+          <div class="detections-card">
+            <div class="panel-header small">
+              <span class="badge">Detecciones simuladas</span>
+              <span class="status">Similar a Ultralytics: clase + confianza</span>
+            </div>
+            <ul class="detection-list" id="detectionList">
+              <li class="muted">Sin detecciones aún. Haz click en el lienzo para simular.</li>
+            </ul>
+          </div>
+          <ul class="legend">
+            <li>La cámara se usa solo para mostrar el vídeo localmente.</li>
+            <li>Las detecciones simuladas incluyen etiqueta y confianza.</li>
+            <li>Los conteos enviados son anónimos y se registran en el servidor.</li>
+            <li>Puedes cerrar la pestaña en cualquier momento para detener el stream.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
