@@ -217,10 +217,41 @@ function processFrame() {
     cv.dilate(edges, dilated, kernel);
 
     cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    
+    // ----------------------------------------------------------------
+    // AÑADIR LÓGICA DE PROCESAMIENTO DE CONTOURS
+    // ----------------------------------------------------------------
+    const detections = [];
+    const frameArea = width * height;
 
-    // ... el resto de tu lógica de contornos sigue aquí ...
+    for (let i = 0; i < contours.size(); i += 1) {
+      const contour = contours.get(i);
+      const area = cv.contourArea(contour);
 
-    updateDetections(detections);
+      // Filtro por área mínima (ajustable) y limpieza
+      if (area < frameArea * 0.005) { // Contornos muy pequeños se ignoran
+        contour.delete();
+        continue;
+      }
+
+      const rect = cv.boundingRect(contour);
+      
+      // La confianza es el área del contorno respecto al área de la bounding box.
+      // Aquí usamos el área del contorno respecto al área total del frame como confianza
+      // para filtrar objetos grandes, tal como sugiere tu README.
+      const confidence = Math.min(1.0, area / frameArea); 
+
+      detections.push({
+        label: `Objeto ${(i + 1).toString().padStart(2, '0')}`,
+        confidence: confidence,
+        box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      });
+      
+      contour.delete(); // Liberar la memoria del contorno
+    }
+    // ----------------------------------------------------------------
+    
+    updateDetections(detections); // Ahora 'detections' está definida
     
     // **NUEVO: Mueve el delete del kernel, contours y hierarchy AL FINALLY**
     // kernel.delete(); // <-- Quitar de aquí
