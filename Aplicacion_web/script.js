@@ -1,31 +1,102 @@
+const COLOR_RANGES = [
+  {
+    label: 'objeto rojo',
+    lower: [0, 120, 70],
+    upper: [10, 255, 255],
+    secondaryLower: [170, 120, 70],
+    secondaryUpper: [180, 255, 255],
+  },
+  {
+    label: 'objeto verde',
+    lower: [35, 80, 60],
+    upper: [85, 255, 255],
+  },
+  {
+    label: 'objeto azul',
+    lower: [90, 80, 60],
+    upper: [130, 255, 255],
+  },
+];
+
 const appState = {
-  faceCount: 0,
+  totalDetections: 0,
+  detections: [],
   isCameraReady: false,
   isSending: false,
-  stream: null,
+  cvReady: false,
+  processing: false,
   videoEl: null,
   canvasEl: null,
-  faceCountEl: null,
+  overlayCtx: null,
+  detectionListEl: null,
+  totalDetectionsEl: null,
   statusMessageEl: null,
   sendButtonEl: null,
   cameraStatusEl: null,
+  cap: null,
+  frameSkip: 0,
+  lastDetectionCount: 0,
 };
 
 document.addEventListener('DOMContentLoaded', initApp);
 
-function initApp() {
+async function initApp() {
   initAppState();
   setupEvents();
-  initCamera();
+
+  try {
+    updateStatus('Cargando OpenCV.js...');
+    await waitForOpenCv();
+    appState.cvReady = true;
+    updateStatus('OpenCV listo. Solicitando cámara...');
+    await initCamera();
+    startProcessing();
+  } catch (error) {
+    console.error('Error al iniciar la aplicación:', error);
+    alert('No pudimos inicializar la app. Revisa la consola para más detalles.');
+    updateStatus('Error al iniciar la app.');
+  }
 }
 
 function initAppState() {
   appState.videoEl = document.getElementById('video');
   appState.canvasEl = document.getElementById('canvas');
-  appState.faceCountEl = document.getElementById('faceCount');
+  appState.detectionListEl = document.getElementById('detectionList');
+  appState.totalDetectionsEl = document.getElementById('totalDetections');
   appState.statusMessageEl = document.getElementById('statusMessage');
   appState.sendButtonEl = document.getElementById('sendButton');
   appState.cameraStatusEl = document.getElementById('cameraStatus');
+
+  if (appState.canvasEl) {
+    appState.overlayCtx = appState.canvasEl.getContext('2d');
+  }
+}
+
+async function waitForOpenCv() {
+  return new Promise((resolve, reject) => {
+    const maxWaitMs = 15000;
+    const start = Date.now();
+
+    const check = () => {
+      if (typeof cv !== 'undefined' && cv && cv.FS_createDataFile) {
+        if (cv.getBuildInformation) {
+          resolve();
+          return;
+        }
+        cv['onRuntimeInitialized'] = () => resolve();
+        return;
+      }
+
+      if (Date.now() - start > maxWaitMs) {
+        reject(new Error('OpenCV.js no se cargó a tiempo.'));
+        return;
+      }
+
+      requestAnimationFrame(check);
+    };
+
+    check();
+  });
 }
 
 async function initCamera() {
@@ -38,31 +109,33 @@ async function initCamera() {
   }
 
   try {
-    appState.stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    appState.videoEl.srcObject = appState.stream;
+    const constraints = { video: { facingMode: 'environment' } };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    appState.stream = stream;
+    appState.videoEl.srcObject = stream;
     appState.videoEl.onloadedmetadata = () => {
       appState.videoEl.play();
       if (appState.canvasEl) {
-        appState.canvasEl.width = appState.videoEl.videoWidth || 640;
-        appState.canvasEl.height = appState.videoEl.videoHeight || 360;
+        const width = appState.videoEl.videoWidth || 640;
+        const height = appState.videoEl.videoHeight || 360;
+        appState.canvasEl.width = width;
+        appState.canvasEl.height = height;
       }
+      appState.cap = new cv.VideoCapture(appState.videoEl);
     };
     appState.isCameraReady = true;
     updateCameraStatus('Cámara lista');
-    updateStatus('Cámara inicializada. Toca el lienzo para simular detecciones.');
+    updateStatus('Cámara inicializada. Procesando con OpenCV...');
   } catch (error) {
     console.error('Error al iniciar la cámara:', error);
     alert('No pudimos activar tu cámara. Revisa los permisos e inténtalo nuevamente.');
     updateCameraStatus('Error al activar la cámara');
     updateStatus('No se pudo iniciar la cámara.');
+    throw error;
   }
 }
 
 function setupEvents() {
-  if (appState.canvasEl) {
-    appState.canvasEl.addEventListener('click', () => updateFaceCount(1));
-  }
-
   if (appState.sendButtonEl) {
     appState.sendButtonEl.addEventListener('click', () => {
       void sendLog();
@@ -78,13 +151,163 @@ function stopCameraStream() {
   }
 }
 
-function updateFaceCount(increment = 1) {
-  appState.faceCount += increment;
-  if (appState.faceCount < 0) appState.faceCount = 0;
-  if (appState.faceCountEl) {
-    appState.faceCountEl.textContent = appState.faceCount.toString();
+function startProcessing() {
+  if (!appState.cvReady || !appState.isCameraReady || appState.processing) return;
+  appState.processing = true;
+  requestAnimationFrame(processFrame);
+}
+
+function processFrame() {
+  if (!appState.cap || !appState.canvasEl) {
+    requestAnimationFrame(processFrame);
+    return;
   }
-  updateStatus('Conteo actualizado. Listo para enviar.');
+
+  // Reduce la carga procesando 1 de cada 2 frames
+  if (appState.frameSkip % 2 !== 0) {
+    appState.frameSkip += 1;
+    requestAnimationFrame(processFrame);
+    return;
+  }
+
+  appState.frameSkip += 1;
+
+  const width = appState.canvasEl.width;
+  const height = appState.canvasEl.height;
+  const src = new cv.Mat(height, width, cv.CV_8UC4);
+  const hsv = new cv.Mat();
+
+  try {
+    appState.cap.read(src);
+    cv.cvtColor(src, hsv, cv.COLOR_RGBA2RGB);
+    cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
+
+    const detections = [];
+
+    COLOR_RANGES.forEach((range) => {
+      const lower = cv.matFromArray(1, 3, cv.CV_8U, range.lower);
+      const upper = cv.matFromArray(1, 3, cv.CV_8U, range.upper);
+      const mask = new cv.Mat();
+      cv.inRange(hsv, lower, upper, mask);
+
+      // Mezcla para rojo que cruza 180 grados
+      if (range.secondaryLower && range.secondaryUpper) {
+        const lower2 = cv.matFromArray(1, 3, cv.CV_8U, range.secondaryLower);
+        const upper2 = cv.matFromArray(1, 3, cv.CV_8U, range.secondaryUpper);
+        const mask2 = new cv.Mat();
+        cv.inRange(hsv, lower2, upper2, mask2);
+        cv.add(mask, mask2, mask);
+        lower2.delete();
+        upper2.delete();
+        mask2.delete();
+      }
+
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+      cv.findContours(mask, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      for (let i = 0; i < contours.size(); i += 1) {
+        const contour = contours.get(i);
+        const rect = cv.boundingRect(contour);
+        const area = rect.width * rect.height;
+        const frameArea = width * height;
+
+        if (area < frameArea * 0.01) {
+          contour.delete();
+          continue;
+        }
+
+        const confidence = Math.min(0.98, Math.max(0.45, (area / frameArea) * 2));
+        detections.push({
+          label: range.label,
+          confidence: Number(confidence.toFixed(2)),
+          box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        });
+        contour.delete();
+      }
+
+      lower.delete();
+      upper.delete();
+      mask.delete();
+      contours.delete();
+      hierarchy.delete();
+    });
+
+    updateDetections(detections);
+  } catch (error) {
+    console.error('Error procesando frame con OpenCV:', error);
+    updateStatus('Error procesando frame.');
+  } finally {
+    src.delete();
+    hsv.delete();
+  }
+
+  requestAnimationFrame(processFrame);
+}
+
+function updateDetections(detections) {
+  appState.detections = detections;
+  const newDetections = Math.max(0, detections.length - appState.lastDetectionCount);
+  appState.totalDetections += newDetections;
+  appState.lastDetectionCount = detections.length;
+
+  renderOverlay();
+  renderDetectionList();
+  updateStatus('Procesamiento en vivo con OpenCV.');
+
+  if (appState.totalDetectionsEl) {
+    appState.totalDetectionsEl.textContent = appState.totalDetections.toString();
+  }
+}
+
+function renderOverlay() {
+  if (!appState.overlayCtx || !appState.canvasEl) return;
+  const ctx = appState.overlayCtx;
+  ctx.clearRect(0, 0, appState.canvasEl.width, appState.canvasEl.height);
+
+  ctx.strokeStyle = 'rgba(93, 252, 141, 0.9)';
+  ctx.lineWidth = 2;
+  ctx.font = '14px "Space Grotesk", system-ui';
+  ctx.fillStyle = 'rgba(93, 252, 141, 0.2)';
+
+  appState.detections.forEach((det) => {
+    const { x, y, width, height } = det.box;
+    ctx.strokeRect(x, y, width, height);
+    ctx.fillRect(x, y, width, height);
+    const label = `${det.label} ${(det.confidence * 100).toFixed(1)}%`;
+    const textWidth = ctx.measureText(label).width;
+    const padding = 6;
+    ctx.fillStyle = 'rgba(6, 8, 15, 0.85)';
+    ctx.fillRect(x, Math.max(0, y - 24), textWidth + padding * 2, 22);
+    ctx.fillStyle = '#5dfc8d';
+    ctx.fillText(label, x + padding, Math.max(14, y - 8));
+    ctx.fillStyle = 'rgba(93, 252, 141, 0.2)';
+  });
+}
+
+function renderDetectionList() {
+  if (!appState.detectionListEl) return;
+
+  appState.detectionListEl.innerHTML = '';
+  if (appState.detections.length === 0) {
+    appState.detectionListEl.innerHTML = '<li class="muted">Sin detecciones aún. Apunta la cámara a objetos de colores primarios.</li>';
+    return;
+  }
+
+  appState.detections.forEach((det, index) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="label-row">
+        <span class="pill">${String(index + 1).padStart(2, '0')}</span>
+        <span class="label">${det.label}</span>
+        <span class="confidence">${(det.confidence * 100).toFixed(1)}%</span>
+      </div>
+      <div class="bar">
+        <span class="fill" style="width:${Math.min(100, det.confidence * 100)}%"></span>
+      </div>
+    `;
+    appState.detectionListEl.appendChild(li);
+  });
 }
 
 async function sendLog() {
@@ -98,7 +321,8 @@ async function sendLog() {
   }
 
   const payload = {
-    faces: appState.faceCount,
+    totalDetections: appState.totalDetections,
+    detections: appState.detections,
     clientTimestamp: new Date().toISOString(),
   };
 
