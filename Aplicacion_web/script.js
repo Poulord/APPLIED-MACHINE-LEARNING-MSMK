@@ -16,6 +16,7 @@ const appState = {
   cap: null,
   frameSkip: 0,
   lastDetectionCount: 0,
+  lastFrameSize: { width: 0, height: 0 },
 };
 
 document.addEventListener('DOMContentLoaded', initApp);
@@ -98,10 +99,7 @@ async function initCamera() {
       appState.videoEl.onloadedmetadata = () => {
         const width = appState.videoEl.videoWidth || 640;
         const height = appState.videoEl.videoHeight || 360;
-        if (appState.canvasEl) {
-          appState.canvasEl.width = width;
-          appState.canvasEl.height = height;
-        }
+        syncCanvasAndVideoSize(width, height);
         appState.cap = new cv.VideoCapture(appState.videoEl);
         resolve();
       };
@@ -162,10 +160,24 @@ function processFrame() {
   const videoWidth = appState.videoEl.videoWidth;
   const videoHeight = appState.videoEl.videoHeight;
 
+  if (videoWidth <= 0 || videoHeight <= 0) {
+    requestAnimationFrame(processFrame);
+    return;
+  }
+
   // Ajusta tamaño del canvas si cambia la orientación o resolución del video
-  if (appState.canvasEl.width !== videoWidth || appState.canvasEl.height !== videoHeight) {
-    appState.canvasEl.width = videoWidth;
-    appState.canvasEl.height = videoHeight;
+  if (
+    appState.canvasEl.width !== videoWidth ||
+    appState.canvasEl.height !== videoHeight ||
+    appState.lastFrameSize.width !== videoWidth ||
+    appState.lastFrameSize.height !== videoHeight
+  ) {
+    syncCanvasAndVideoSize(videoWidth, videoHeight);
+    appState.cap = new cv.VideoCapture(appState.videoEl);
+    console.info('Reinicializando captura por cambio de tamaño', {
+      videoWidth,
+      videoHeight,
+    });
   }
 
   // Reduce la carga procesando 1 de cada 2 frames
@@ -176,108 +188,73 @@ function processFrame() {
   }
   appState.frameSkip += 1;
 
-  // ... (Ajuste del canvas y frameSkip se mantienen igual) ...
-
   const width = videoWidth;
   const height = videoHeight;
-  
-  // NUEVO PASO DE SEGURIDAD (Para evitar el error de tamaño original si width/height es 0)
-  if (width === 0 || height === 0) {
-    requestAnimationFrame(processFrame);
-    return;
-  }
-
-  // Declaraciones (Aseguramos que existen para el bloque finally)
-  // <<<< CORRECCIÓN FINAL: Volvemos a crearla con el tipo correcto (CV_8UC4) 
-  //                       pero garantizamos que el tamaño no es cero. >>>>
-  const src = new cv.Mat(height, width, cv.CV_8UC4); // <<-- ESTA ES LA LÍNEA CRUCIAL
+  const src = new cv.Mat(height, width, cv.CV_8UC4);
   const gray = new cv.Mat();
   const blurred = new cv.Mat();
-
-  
   const edges = new cv.Mat();
   const dilated = new cv.Mat();
-  let kernel = new cv.Mat(); // Lo definimos antes del try 
-  const contours = new cv.MatVector();
-  const hierarchy = new cv.Mat();
 
   try {
-    appState.cap.read(src);
-    
-    // **NUEVO: Check de seguridad por si la lectura falló**
-    if (src.empty()) {
-        throw new Error("Frame read failed or is empty.");
+    try {
+      appState.cap.read(src);
+    } catch (error) {
+      console.error('Fallo en cap.read; reintentando con reinicialización', {
+        videoWidth,
+        videoHeight,
+        matSize: { rows: src.rows, cols: src.cols },
+      });
+      appState.cap = new cv.VideoCapture(appState.videoEl);
+      src.create(videoHeight, videoWidth, cv.CV_8UC4);
+      appState.cap.read(src);
     }
-    
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
     cv.Canny(blurred, edges, 60, 120, 3, false);
 
-    kernel = cv.Mat.ones(3, 3, cv.CV_8U); // Asignación dentro del try
+    const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
     cv.dilate(edges, dilated, kernel);
 
+    const contours = new cv.MatVector();
+    const hierarchy = new cv.Mat();
     cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-    
-    // ----------------------------------------------------------------
-    // AÑADIR LÓGICA DE PROCESAMIENTO DE CONTOURS
-    // ----------------------------------------------------------------
+
     const detections = [];
     const frameArea = width * height;
-
     for (let i = 0; i < contours.size(); i += 1) {
       const contour = contours.get(i);
-      const area = cv.contourArea(contour);
+      const rect = cv.boundingRect(contour);
+      const area = rect.width * rect.height;
 
-      // Filtro por área mínima (ajustable) y limpieza
-      if (area < frameArea * 0.005) { // Contornos muy pequeños se ignoran
+      if (area < frameArea * 0.01) {
         contour.delete();
         continue;
       }
 
-      const rect = cv.boundingRect(contour);
-      
-      // La confianza es el área del contorno respecto al área de la bounding box.
-      // Aquí usamos el área del contorno respecto al área total del frame como confianza
-      // para filtrar objetos grandes, tal como sugiere tu README.
-      const confidence = Math.min(1.0, area / frameArea); 
-
+      const confidence = Math.min(0.98, Math.max(0.4, (area / frameArea) * 1.5));
       detections.push({
-        label: `Objeto ${(i + 1).toString().padStart(2, '0')}`,
-        confidence: confidence,
+        label: `Objeto ${String(detections.length + 1).padStart(2, '0')}`,
+        confidence: Number(confidence.toFixed(2)),
         box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
       });
-      
-      contour.delete(); // Liberar la memoria del contorno
+      contour.delete();
     }
-    // ----------------------------------------------------------------
-    
-    updateDetections(detections); // Ahora 'detections' está definida
-    
-    // **NUEVO: Mueve el delete del kernel, contours y hierarchy AL FINALLY**
-    // kernel.delete(); // <-- Quitar de aquí
-    // contours.delete(); // <-- Quitar de aquí
-    // hierarchy.delete(); // <-- Quitar de aquí
-    
+
+    updateDetections(detections);
+
+    kernel.delete();
+    contours.delete();
+    hierarchy.delete();
   } catch (error) {
     console.error('Error procesando frame con OpenCV:', error);
     updateStatus('Error procesando frame.');
-} finally {
-    // Aseguramos que todas las Mats se eliminen al salir de try/catch
-    // **NOTA: Eliminamos las comprobaciones isDeleted() ya que no son estándar y causan TypeError.**
-    
-    // Si la Mat fue inicializada (const src = new cv.Mat()), es seguro llamar a delete()
-    // Si la lógica del try falla, estas variables todavía existen y deben ser liberadas.
-    
+  } finally {
     src.delete();
     gray.delete();
     blurred.delete();
     edges.delete();
     dilated.delete();
-    kernel.delete(); 
-
-    // Los MatVector
-    contours.delete();
-    hierarchy.delete();
   }
 
   requestAnimationFrame(processFrame);
@@ -410,4 +387,15 @@ function updateCameraStatus(message) {
   if (appState.cameraStatusEl) {
     appState.cameraStatusEl.textContent = message;
   }
+}
+
+function syncCanvasAndVideoSize(width, height) {
+  if (!appState.canvasEl || !appState.videoEl) return;
+
+  appState.canvasEl.width = width;
+  appState.canvasEl.height = height;
+  appState.videoEl.width = width;
+  appState.videoEl.height = height;
+  appState.lastFrameSize = { width, height };
+  console.info('Sincronizando tamaños de video y canvas', { width, height });
 }
