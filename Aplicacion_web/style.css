@@ -222,6 +222,12 @@ button.primary:hover:not(:disabled) {
   margin-bottom: 6px;
 }
 
+.caption {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 6px 0;
+}
+
 .pill {
   display: inline-block;
   padding: 4px 10px;

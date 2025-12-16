@@ -14,9 +14,25 @@ const appState = {
   sendButtonEl: null,
   cameraStatusEl: null,
   cap: null,
+  detectors: {
+    hog: null,
+  },
   frameSkip: 0,
   lastDetectionCount: 0,
   lastFrameSize: { width: 0, height: 0 },
+};
+
+const objectLibrary = {
+  person: {
+    id: 'person',
+    label: 'Persona (HOG)',
+    description: 'Detector HOG pre-entrenado en OpenCV para peatones.',
+  },
+  motion: {
+    id: 'motion',
+    label: 'Objeto en movimiento',
+    description: 'Contornos y bordes para objetos generales.',
+  },
 };
 
 document.addEventListener('DOMContentLoaded', initApp);
@@ -29,6 +45,7 @@ async function initApp() {
     updateStatus('Cargando OpenCV.js...');
     await waitForOpenCv();
     appState.cvReady = true;
+    await loadDetectors();
     updateStatus('OpenCV listo. Solicitando cámara...');
     await initCamera();
     startProcessing();
@@ -195,6 +212,8 @@ function processFrame() {
   const blurred = new cv.Mat();
   const edges = new cv.Mat();
   const dilated = new cv.Mat();
+  const foundLocations = new cv.RectVector();
+  const foundWeights = new cv.DoubleVector();
 
   try {
     try {
@@ -210,9 +229,29 @@ function processFrame() {
       appState.cap.read(src);
     }
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
-    cv.Canny(blurred, edges, 60, 120, 3, false);
+    cv.equalizeHist(gray, gray);
+    cv.GaussianBlur(gray, blurred, new cv.Size(3, 3), 0, 0, cv.BORDER_DEFAULT);
 
+    const detections = [];
+
+    // Detector HOG integrado (biblioteca real de OpenCV)
+    if (appState.detectors.hog) {
+      appState.detectors.hog.detectMultiScale(blurred, foundLocations, foundWeights);
+      for (let i = 0; i < foundLocations.size(); i += 1) {
+        const rect = foundLocations.get(i);
+        const weight = foundWeights.get(i) || 0.6;
+        const confidence = Number((1 / (1 + Math.exp(-weight))).toFixed(2));
+        detections.push({
+          label: objectLibrary.person.label,
+          type: objectLibrary.person.description,
+          confidence,
+          box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+        });
+      }
+    }
+
+    // Contornos para objetos generales con biblioteca de etiquetas
+    cv.Canny(blurred, edges, 60, 120, 3, false);
     const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
     cv.dilate(edges, dilated, kernel);
 
@@ -220,7 +259,6 @@ function processFrame() {
     const hierarchy = new cv.Mat();
     cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    const detections = [];
     const frameArea = width * height;
     for (let i = 0; i < contours.size(); i += 1) {
       const contour = contours.get(i);
@@ -232,14 +270,22 @@ function processFrame() {
         continue;
       }
 
-      const confidence = Math.min(0.98, Math.max(0.4, (area / frameArea) * 1.5));
+      const confidence = Math.min(0.98, Math.max(0.4, (area / frameArea) * 1.4));
       detections.push({
-        label: `Objeto ${String(detections.length + 1).padStart(2, '0')}`,
+        label: objectLibrary.motion.label,
+        type: objectLibrary.motion.description,
         confidence: Number(confidence.toFixed(2)),
         box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
       });
       contour.delete();
     }
+
+    logFrameDiagnostics({
+      width,
+      height,
+      hogDetections: foundLocations.size(),
+      contourDetections: detections.length,
+    });
 
     updateDetections(detections);
 
@@ -255,6 +301,8 @@ function processFrame() {
     blurred.delete();
     edges.delete();
     dilated.delete();
+    foundLocations.delete();
+    foundWeights.delete();
   }
 
   requestAnimationFrame(processFrame);
@@ -317,6 +365,7 @@ function renderDetectionList() {
         <span class="label">${det.label}</span>
         <span class="confidence">${(det.confidence * 100).toFixed(1)}%</span>
       </div>
+      <p class="caption">${det.type || 'Detección en vivo con OpenCV.js'}</p>
       <div class="bar">
         <span class="fill" style="width:${Math.min(100, det.confidence * 100)}%"></span>
       </div>
@@ -398,4 +447,30 @@ function syncCanvasAndVideoSize(width, height) {
   appState.videoEl.height = height;
   appState.lastFrameSize = { width, height };
   console.info('Sincronizando tamaños de video y canvas', { width, height });
+}
+
+async function loadDetectors() {
+  if (!cv || typeof cv.HOGDescriptor === 'undefined') {
+    throw new Error('OpenCV.js no incluye HOGDescriptor en esta build.');
+  }
+
+  appState.detectors.hog = new cv.HOGDescriptor();
+  appState.detectors.hog.setSVMDetector(cv.HOGDescriptor.getDefaultPeopleDetector());
+  console.info('Detector HOG inicializado (biblioteca OpenCV de peatones).');
+}
+
+function logFrameDiagnostics(info) {
+  if (appState.frameSkip % 30 !== 0) return;
+  console.debug('Diagnóstico de frame', {
+    videoSize: {
+      width: appState.videoEl?.videoWidth,
+      height: appState.videoEl?.videoHeight,
+    },
+    canvasSize: {
+      width: appState.canvasEl?.width,
+      height: appState.canvasEl?.height,
+    },
+    hogDetections: info.hogDetections,
+    contourDetections: info.contourDetections,
+  });
 }
