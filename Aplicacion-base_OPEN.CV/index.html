@@ -4,245 +4,84 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>OpenCV.js — Image Arithmetics Demo</title>
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 16px; line-height: 1.35; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
-    canvas { border: 1px solid #ccc; border-radius: 8px; max-width: 100%; height: auto; }
-    label { display: inline-flex; gap: 8px; align-items: center; }
-    .controls { display: grid; gap: 10px; min-width: 320px; }
-    .muted { color: #666; font-size: 0.92rem; }
-    button { cursor: pointer; padding: 8px 10px; }
-    select, input[type="range"] { width: 100%; }
-    .status { padding: 8px 10px; background: #f6f6f6; border-radius: 8px; }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-  <h1>OpenCV.js — Operaciones aritméticas con imágenes</h1>
-  <p class="muted">
-    Suma, resta, operaciones bitwise y blending. Basado en el tutorial de OpenCV.js “Arithmetic Operations on Images”.
-  </p>
+  <div class="page">
+    <header class="header">
+      <span class="badge">OpenCV.js Playground</span>
+      <h1>Operaciones aritméticas con imágenes</h1>
+      <p>
+        Suma, resta, operaciones bitwise y blending. Usa dos imágenes y explora las
+        combinaciones más comunes del tutorial de OpenCV.js.
+      </p>
+    </header>
 
-  <div class="row">
-    <div class="card">
-      <h3>Imagen A</h3>
-      <input id="fileA" type="file" accept="image/*" />
-      <div style="height:10px"></div>
-      <canvas id="canvasA"></canvas>
-    </div>
+    <main class="grid">
+      <section class="card">
+        <h3>Imagen A</h3>
+        <div class="upload">
+          <span>Selecciona una imagen base.</span>
+          <input id="fileA" type="file" accept="image/*" />
+        </div>
+        <canvas id="canvasA"></canvas>
+      </section>
 
-    <div class="card">
-      <h3>Imagen B</h3>
-      <input id="fileB" type="file" accept="image/*" />
-      <div style="height:10px"></div>
-      <canvas id="canvasB"></canvas>
-    </div>
+      <section class="card">
+        <h3>Imagen B</h3>
+        <div class="upload">
+          <span>Selecciona la imagen secundaria.</span>
+          <input id="fileB" type="file" accept="image/*" />
+        </div>
+        <canvas id="canvasB"></canvas>
+      </section>
 
-    <div class="card controls">
-      <h3>Controles</h3>
+      <section class="card controls-card">
+        <h3>Controles</h3>
+        <div class="controls">
+          <div class="status" id="status">Cargando OpenCV.js…</div>
 
-      <div class="status" id="status">Cargando OpenCV.js…</div>
+          <label>
+            Operación
+            <select id="op">
+              <option value="add">add (A + B)</option>
+              <option value="subtract">subtract (A - B)</option>
+              <option value="absdiff">absdiff |A - B|</option>
+              <option value="and">bitwise AND</option>
+              <option value="or">bitwise OR</option>
+              <option value="xor">bitwise XOR</option>
+              <option value="notA">bitwise NOT (A)</option>
+              <option value="blend">blend (addWeighted)</option>
+            </select>
+          </label>
 
-      <label>
-        Operación
-        <select id="op">
-          <option value="add">add (A + B)</option>
-          <option value="subtract">subtract (A - B)</option>
-          <option value="absdiff">absdiff |A - B|</option>
-          <option value="and">bitwise AND</option>
-          <option value="or">bitwise OR</option>
-          <option value="xor">bitwise XOR</option>
-          <option value="notA">bitwise NOT (A)</option>
-          <option value="blend">blend (addWeighted)</option>
-        </select>
-      </label>
+          <div id="blendControls" style="display: none;">
+            <label>
+              Alpha (A)
+              <input id="alpha" type="range" min="0" max="1" value="0.5" step="0.01" />
+            </label>
+            <div class="footer-note">Beta (B) = 1 - alpha</div>
+          </div>
 
-      <div id="blendControls" style="display:none">
-        <label>Alpha (A)
-          <input id="alpha" type="range" min="0" max="1" value="0.5" step="0.01" />
-        </label>
-        <div class="muted">Beta (B) = 1 - alpha</div>
-      </div>
+          <label class="toggle">
+            <input id="autoResize" type="checkbox" checked />
+            Ajustar tamaños automáticamente
+          </label>
 
-      <label>
-        Ajustar tamaños automáticamente
-        <input id="autoResize" type="checkbox" checked />
-      </label>
+          <div class="buttons">
+            <button class="primary" id="run">Aplicar operación</button>
+            <button class="secondary" id="clear">Limpiar</button>
+          </div>
+        </div>
+      </section>
 
-      <button id="run">Aplicar operación</button>
-      <button id="clear">Limpiar</button>
-    </div>
-
-    <div class="card">
-      <h3>Resultado</h3>
-      <canvas id="canvasOut"></canvas>
-    </div>
+      <section class="card">
+        <h3>Resultado</h3>
+        <canvas id="canvasOut"></canvas>
+      </section>
+    </main>
   </div>
-
-  <!-- OpenCV.js desde docs.opencv.org -->
-  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-  <script>
-    const els = {
-      fileA: document.getElementById('fileA'),
-      fileB: document.getElementById('fileB'),
-      canvasA: document.getElementById('canvasA'),
-      canvasB: document.getElementById('canvasB'),
-      canvasOut: document.getElementById('canvasOut'),
-      status: document.getElementById('status'),
-      op: document.getElementById('op'),
-      run: document.getElementById('run'),
-      clear: document.getElementById('clear'),
-      autoResize: document.getElementById('autoResize'),
-      blendControls: document.getElementById('blendControls'),
-      alpha: document.getElementById('alpha'),
-    };
-
-    function setStatus(msg) { els.status.textContent = msg; }
-
-    function loadImageToCanvas(file, canvas) {
-      return new Promise((resolve, reject) => {
-        if (!file) return reject(new Error("No file"));
-        const img = new Image();
-        img.onload = () => {
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
-      });
-    }
-
-    function ensureSameSize(matA, matB) {
-      // Requisito típico: mismas dimensiones/tipo para muchas operaciones. :contentReference[oaicite:1]{index=1}
-      if (matA.rows === matB.rows && matA.cols === matB.cols) return { A: matA, B: matB, resized: false };
-
-      if (!els.autoResize.checked) {
-        throw new Error(`Tamaños distintos: A=${matA.cols}x${matA.rows}, B=${matB.cols}x${matB.rows}. Activa auto-resize o usa imágenes iguales.`);
-      }
-
-      const b2 = new cv.Mat();
-      const dsize = new cv.Size(matA.cols, matA.rows);
-      cv.resize(matB, b2, dsize, 0, 0, cv.INTER_AREA);
-      return { A: matA, B: b2, resized: true };
-    }
-
-    function applyOperation() {
-      // Validación básica
-      if (els.canvasA.width === 0 || els.canvasB.width === 0) {
-        setStatus("Carga ambas imágenes (A y B) antes de aplicar.");
-        return;
-      }
-
-      let A = null, B = null, Bout = null, dst = null, mask = null;
-
-      try {
-        A = cv.imread(els.canvasA);          // RGBA en OpenCV.js :contentReference[oaicite:2]{index=2}
-        B = cv.imread(els.canvasB);
-
-        // Asegurar mismo tamaño (opcional)
-        const { A: A2, B: B2, resized } = ensureSameSize(A, B);
-        if (resized) { Bout = B2; } // B2 es nuevo Mat a liberar luego
-
-        dst = new cv.Mat();
-        mask = new cv.Mat(); // máscara vacía (sin ROI), como en el tutorial :contentReference[oaicite:3]{index=3}
-        const dtype = -1;
-
-        const op = els.op.value;
-        if (op === "add") {
-          cv.add(A2, B2, dst, mask, dtype);                // :contentReference[oaicite:4]{index=4}
-        } else if (op === "subtract") {
-          cv.subtract(A2, B2, dst, mask, dtype);           // :contentReference[oaicite:5]{index=5}
-        } else if (op === "absdiff") {
-          cv.absdiff(A2, B2, dst);
-        } else if (op === "and") {
-          cv.bitwise_and(A2, B2, dst, mask);
-        } else if (op === "or") {
-          cv.bitwise_or(A2, B2, dst, mask);
-        } else if (op === "xor") {
-          cv.bitwise_xor(A2, B2, dst, mask);
-        } else if (op === "notA") {
-          cv.bitwise_not(A2, dst);
-        } else if (op === "blend") {
-          const a = parseFloat(els.alpha.value);
-          const b = 1.0 - a;
-          const gamma = 0.0;
-          cv.addWeighted(A2, a, B2, b, gamma, dst);
-        } else {
-          throw new Error("Operación no soportada");
-        }
-
-        cv.imshow(els.canvasOut, dst); // Mostrar resultado :contentReference[oaicite:6]{index=6}
-        setStatus(`OK: operación "${op}" aplicada.`);
-      } catch (err) {
-        console.error(err);
-        setStatus("Error: " + (err && err.message ? err.message : String(err)));
-      } finally {
-        // Liberar memoria (muy importante en OpenCV.js)
-        if (A) A.delete();
-        if (B) B.delete();
-        if (Bout) Bout.delete();
-        if (dst) dst.delete();
-        if (mask) mask.delete();
-      }
-    }
-
-    function clearAll() {
-      for (const c of [els.canvasA, els.canvasB, els.canvasOut]) {
-        const ctx = c.getContext('2d');
-        ctx.clearRect(0, 0, c.width, c.height);
-        c.width = 0; c.height = 0;
-      }
-      els.fileA.value = "";
-      els.fileB.value = "";
-      setStatus("Listo. Carga imágenes para empezar.");
-    }
-
-    // UI
-    els.op.addEventListener('change', () => {
-      els.blendControls.style.display = (els.op.value === "blend") ? "block" : "none";
-    });
-
-    els.fileA.addEventListener('change', async () => {
-      if (!els.fileA.files?.[0]) return;
-      await loadImageToCanvas(els.fileA.files[0], els.canvasA);
-      setStatus("Imagen A cargada.");
-    });
-
-    els.fileB.addEventListener('change', async () => {
-      if (!els.fileB.files?.[0]) return;
-      await loadImageToCanvas(els.fileB.files[0], els.canvasB);
-      setStatus("Imagen B cargada.");
-    });
-
-    els.run.addEventListener('click', applyOperation);
-    els.clear.addEventListener('click', clearAll);
-
-    // OpenCV.js init
-    function waitForCV() {
-      if (typeof cv === "undefined") return false;
-      if (cv && cv.Mat) return true;
-      return false;
-    }
-
-    const cvReadyCheck = setInterval(() => {
-      if (!waitForCV()) return;
-
-      // onRuntimeInitialized suele existir cuando opencv.js terminó de cargar
-      if (cv.onRuntimeInitialized) {
-        cv.onRuntimeInitialized = () => {
-          clearInterval(cvReadyCheck);
-          setStatus("OpenCV.js listo. Carga 2 imágenes y aplica una operación.");
-        };
-      } else {
-        // fallback
-        clearInterval(cvReadyCheck);
-        setStatus("OpenCV.js listo. Carga 2 imágenes y aplica una operación.");
-      }
-    }, 50);
-  </script>
 </body>
 </html>
