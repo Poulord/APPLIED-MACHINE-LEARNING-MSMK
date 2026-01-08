@@ -11,6 +11,7 @@ const els = {
   autoResize: document.getElementById('autoResize'),
   blendControls: document.getElementById('blendControls'),
   alpha: document.getElementById('alpha'),
+  filterExplanation: document.getElementById('filterExplanation'),
 };
 
 function setStatus(msg) {
@@ -127,8 +128,66 @@ function clearAll() {
   setStatus('Listo. Carga imágenes para empezar.');
 }
 
+const filterDetails = {
+  add: {
+    title: '➕ Add (A + B)',
+    description:
+      'Suma los valores de los píxeles de ambas imágenes. Se usa para aumentar brillo ' +
+      'o combinar imágenes claras. Los valores se saturan en 255.',
+  },
+  subtract: {
+    title: '➖ Subtract (A - B)',
+    description:
+      'Resta los píxeles de la imagen B a la imagen A. Se utiliza para resaltar ' +
+      'diferencias o eliminar fondos.',
+  },
+  absdiff: {
+    title: '📏 AbsDiff |A - B|',
+    description:
+      'Calcula la diferencia absoluta entre imágenes. Es muy usado en detección ' +
+      'de movimiento y comparación de frames.',
+  },
+  and: {
+    title: '🎭 Bitwise AND',
+    description:
+      'Aplica una máscara lógica, mostrando solo las zonas donde ambas imágenes ' +
+      'tienen información. Muy usado para recortar objetos.',
+  },
+  or: {
+    title: '🧩 Bitwise OR',
+    description:
+      'Combina las regiones visibles de ambas imágenes. Se utiliza para unir ' +
+      'formas o capas binarias.',
+  },
+  xor: {
+    title: '⚡ Bitwise XOR',
+    description:
+      'Muestra únicamente las diferencias entre imágenes. Útil para detectar ' +
+      'cambios y depuración visual.',
+  },
+  notA: {
+    title: '🔄 Bitwise NOT',
+    description:
+      'Invierte los colores de la imagen. Se usa para crear negativos ' +
+      'o preparar máscaras.',
+  },
+  blend: {
+    title: '🎚️ Blend (addWeighted)',
+    description:
+      'Mezcla dos imágenes usando pesos (alpha y beta). Se utiliza para ' +
+      'transiciones suaves, superposiciones y efectos visuales.',
+  },
+};
+
+function updateFilterExplanation() {
+  const detail = filterDetails[els.op.value];
+  if (!detail || !els.filterExplanation) return;
+  els.filterExplanation.innerHTML = `<strong>${detail.title}</strong><br>${detail.description}`;
+}
+
 els.op.addEventListener('change', () => {
   els.blendControls.style.display = els.op.value === 'blend' ? 'block' : 'none';
+  updateFilterExplanation();
 });
 
 els.fileA.addEventListener('change', async () => {
@@ -165,3 +224,5 @@ const cvReadyCheck = setInterval(() => {
     setStatus('OpenCV.js listo. Carga 2 imágenes y aplica una operación.');
   }
 }, 50);
+
+updateFilterExplanation();
