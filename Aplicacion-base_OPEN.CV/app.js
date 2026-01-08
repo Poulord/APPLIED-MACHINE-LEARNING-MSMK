@@ -116,6 +116,11 @@ function ensureSameSize(matA, matB) {
 }
 
 function applyOperation() {
+  if (els.canvasA.width === 0 || els.canvasB.width === 0) {
+    setStatus('Carga ambas imágenes (A y B) antes de aplicar.');
+    return;
+  }
+
   setRunState('processing');
   let A = null;
   let B = null;
