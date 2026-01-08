@@ -20,20 +20,6 @@
     </header>
 
     <main class="grid">
-      <section class="card intro-card">
-        <h3>¿Qué es esta aplicación?</h3>
-        <p class="info-text">
-          Esta demo usa OpenCV.js para mostrar cómo combinar dos imágenes usando operaciones
-          aritméticas y lógicas. Es útil para entender conceptos básicos de visión por computador
-          como mezcla, resta, detección de cambios y uso de máscaras.
-        </p>
-        <p class="info-text">
-          Carga dos imágenes, elige un filtro y observa el resultado en tiempo real. Si las
-          imágenes no tienen el mismo tamaño, puedes ajustar automáticamente con la opción de
-          auto-resize.
-        </p>
-      </section>
-
       <section class="card">
         <h3>Imagen A</h3>
         <div class="upload">
@@ -89,40 +75,6 @@
             <button class="secondary" id="clear">Limpiar</button>
           </div>
         </div>
-      </section>
-
-      <section class="card info-card">
-        <h3>¿Qué hace cada filtro?</h3>
-        <p class="info-text">
-          Estas operaciones combinan dos imágenes (A y B) o aplican un efecto directo sobre una sola.
-          Úsalas como guía para elegir el filtro adecuado según tu objetivo.
-        </p>
-        <ul class="filter-list">
-          <li>
-            <strong>add (A + B):</strong> suma píxeles para aumentar brillo o fusionar contenido.
-          </li>
-          <li>
-            <strong>subtract (A - B):</strong> resta píxeles para resaltar diferencias o oscurecer zonas.
-          </li>
-          <li>
-            <strong>absdiff |A - B|:</strong> diferencia absoluta para detectar cambios entre imágenes.
-          </li>
-          <li>
-            <strong>bitwise AND:</strong> conserva solo las áreas comunes (ideal para aplicar máscaras).
-          </li>
-          <li>
-            <strong>bitwise OR:</strong> combina ambas imágenes, mostrando cualquier píxel activo.
-          </li>
-          <li>
-            <strong>bitwise XOR:</strong> muestra diferencias exclusivas entre A y B.
-          </li>
-          <li>
-            <strong>bitwise NOT (A):</strong> invierte los colores de la imagen A.
-          </li>
-          <li>
-            <strong>blend (addWeighted):</strong> mezcla controlada con alpha para superponer imágenes.
-          </li>
-        </ul>
       </section>
 
       <section class="card">
