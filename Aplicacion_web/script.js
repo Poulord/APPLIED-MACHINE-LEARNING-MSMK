@@ -213,7 +213,6 @@ function processFrame() {
   const edges = new cv.Mat();
   const dilated = new cv.Mat();
   const foundLocations = new cv.RectVector();
-  const foundWeights = new cv.DoubleVector();
 
   try {
     try {
@@ -236,11 +235,15 @@ function processFrame() {
 
     // Detector HOG integrado (biblioteca real de OpenCV)
     if (appState.detectors.hog) {
-      appState.detectors.hog.detectMultiScale(blurred, foundLocations, foundWeights);
+      try {
+        appState.detectors.hog.detectMultiScale(blurred, foundLocations);
+      } catch (hogError) {
+        console.warn('Error en HOG detectMultiScale, usando solo contornos:', hogError);
+      }
+      
       for (let i = 0; i < foundLocations.size(); i += 1) {
         const rect = foundLocations.get(i);
-        const weight = foundWeights.get(i) || 0.6;
-        const confidence = Number((1 / (1 + Math.exp(-weight))).toFixed(2));
+        const confidence = 0.85; // Confianza por defecto
         detections.push({
           label: objectLibrary.person.label,
           type: objectLibrary.person.description,
@@ -302,7 +305,6 @@ function processFrame() {
     edges.delete();
     dilated.delete();
     foundLocations.delete();
-    foundWeights.delete();
   }
 
   requestAnimationFrame(processFrame);
