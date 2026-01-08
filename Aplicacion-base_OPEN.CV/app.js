@@ -129,19 +129,37 @@ function applyOperation() {
   let mask = null;
 
   try {
-    A = cv.imread(els.canvasA);
-    B = cv.imread(els.canvasB);
+    const op = els.op.value;
+    if (op === 'notA') {
+      if (els.canvasA.width === 0) {
+        setStatus('Carga la imagen A antes de aplicar la operación.');
+        setRunState('idle');
+        return;
+      }
+    } else if (els.canvasA.width === 0 || els.canvasB.width === 0) {
+      setStatus('Carga ambas imágenes (A y B) antes de aplicar.');
+      setRunState('idle');
+      return;
+    }
 
-    const { A: A2, B: B2, resized } = ensureSameSize(A, B);
-    if (resized) {
-      Bout = B2;
+    A = cv.imread(els.canvasA);
+    const opNeedsB = op !== 'notA';
+    let A2 = A;
+    let B2 = null;
+    if (opNeedsB) {
+      B = cv.imread(els.canvasB);
+      const resizedResult = ensureSameSize(A, B);
+      A2 = resizedResult.A;
+      B2 = resizedResult.B;
+      if (resizedResult.resized) {
+        Bout = B2;
+      }
     }
 
     dst = new cv.Mat();
     mask = new cv.Mat();
     const dtype = -1;
 
-    const op = els.op.value;
     if (op === 'add') {
       cv.add(A2, B2, dst, mask, dtype);
     } else if (op === 'subtract') {
