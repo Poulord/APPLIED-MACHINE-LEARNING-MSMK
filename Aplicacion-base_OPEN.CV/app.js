@@ -168,6 +168,31 @@ async function applyOperation() {
       }
     }
 
+    const prepareForOps = (mat) => {
+      const channels = mat.channels();
+      if (channels === 4) {
+        const converted = new cv.Mat();
+        cv.cvtColor(mat, converted, cv.COLOR_RGBA2RGB);
+        return converted;
+      }
+      if (channels === 1) {
+        const converted = new cv.Mat();
+        cv.cvtColor(mat, converted, cv.COLOR_GRAY2RGB);
+        return converted;
+      }
+      return mat;
+    };
+
+    Aprep = prepareForOps(A2);
+    if (needsB) {
+      Bprep = prepareForOps(B2);
+      if (Aprep.type() !== Bprep.type()) {
+        Btmp = new cv.Mat();
+        Bprep.convertTo(Btmp, Aprep.type());
+        Bprep = Btmp;
+      }
+    }
+
     dst = new cv.Mat();
 
     if (op === 'add') {
@@ -175,7 +200,7 @@ async function applyOperation() {
     } else if (op === 'subtract') {
       cv.subtract(A2, B2, dst);
     } else if (op === 'absdiff') {
-      cv.absdiff(A2, B2, dst);
+      cv.absdiff(Aprep, Bprep, dst);
     } else if (op === 'and') {
       cv.bitwise_and(A2, B2, dst);
     } else if (op === 'or') {
@@ -183,17 +208,27 @@ async function applyOperation() {
     } else if (op === 'xor') {
       cv.bitwise_xor(A2, B2, dst);
     } else if (op === 'notA') {
-      cv.bitwise_not(A2, dst);
+      cv.bitwise_not(Aprep, dst);
     } else if (op === 'blend') {
       const a = parseFloat(els.alpha.value);
       const b = 1.0 - a;
       const gamma = 0.0;
-      cv.addWeighted(A2, a, B2, b, gamma, dst);
+      cv.addWeighted(Aprep, a, Bprep, b, gamma, dst);
     } else {
       throw new Error('Operación no soportada');
     }
 
-    cv.imshow(els.canvasOut, dst);
+    if (dst.channels() === 3) {
+      display = new cv.Mat();
+      cv.cvtColor(dst, display, cv.COLOR_RGB2RGBA);
+      cv.imshow(els.canvasOut, display);
+    } else if (dst.channels() === 1) {
+      display = new cv.Mat();
+      cv.cvtColor(dst, display, cv.COLOR_GRAY2RGBA);
+      cv.imshow(els.canvasOut, display);
+    } else {
+      cv.imshow(els.canvasOut, dst);
+    }
     setStatus(`OK: operación "${op}" aplicada.`);
     updateDownloadState();
     updateComparisonImages();
