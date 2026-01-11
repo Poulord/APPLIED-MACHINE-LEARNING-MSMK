@@ -153,6 +153,12 @@ async function applyOperation() {
   let B = null;
   let Bout = null;
   let dst = null;
+  let display = null;
+  let Aprep = null;
+  let Bprep = null;
+  let AprepConverted = null;
+  let BprepConverted = null;
+  let Btmp = null;
 
   try {
     A = cv.imread(els.canvasA);
@@ -173,19 +179,27 @@ async function applyOperation() {
       if (channels === 4) {
         const converted = new cv.Mat();
         cv.cvtColor(mat, converted, cv.COLOR_RGBA2RGB);
-        return converted;
+        return { mat: converted, converted: true };
       }
       if (channels === 1) {
         const converted = new cv.Mat();
         cv.cvtColor(mat, converted, cv.COLOR_GRAY2RGB);
-        return converted;
+        return { mat: converted, converted: true };
       }
-      return mat;
+      return { mat, converted: false };
     };
 
-    Aprep = prepareForOps(A2);
+    const preparedA = prepareForOps(A2);
+    Aprep = preparedA.mat;
+    if (preparedA.converted) {
+      AprepConverted = Aprep;
+    }
     if (needsB) {
-      Bprep = prepareForOps(B2);
+      const preparedB = prepareForOps(B2);
+      Bprep = preparedB.mat;
+      if (preparedB.converted) {
+        BprepConverted = Bprep;
+      }
       if (Aprep.type() !== Bprep.type()) {
         Btmp = new cv.Mat();
         Bprep.convertTo(Btmp, Aprep.type());
@@ -196,17 +210,17 @@ async function applyOperation() {
     dst = new cv.Mat();
 
     if (op === 'add') {
-      cv.add(A2, B2, dst);
+      cv.add(Aprep, Bprep, dst);
     } else if (op === 'subtract') {
-      cv.subtract(A2, B2, dst);
+      cv.subtract(Aprep, Bprep, dst);
     } else if (op === 'absdiff') {
       cv.absdiff(Aprep, Bprep, dst);
     } else if (op === 'and') {
-      cv.bitwise_and(A2, B2, dst);
+      cv.bitwise_and(Aprep, Bprep, dst);
     } else if (op === 'or') {
-      cv.bitwise_or(A2, B2, dst);
+      cv.bitwise_or(Aprep, Bprep, dst);
     } else if (op === 'xor') {
-      cv.bitwise_xor(A2, B2, dst);
+      cv.bitwise_xor(Aprep, Bprep, dst);
     } else if (op === 'notA') {
       cv.bitwise_not(Aprep, dst);
     } else if (op === 'blend') {
@@ -244,6 +258,10 @@ async function applyOperation() {
     if (A) A.delete();
     if (B) B.delete();
     if (Bout) Bout.delete();
+    if (display) display.delete();
+    if (Btmp) Btmp.delete();
+    if (AprepConverted) AprepConverted.delete();
+    if (BprepConverted) BprepConverted.delete();
     if (dst) dst.delete();
   }
 }
