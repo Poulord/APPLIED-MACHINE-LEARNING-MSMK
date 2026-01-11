@@ -35,18 +35,24 @@ function setStatus(msg) {
 
 function loadImageToCanvas(file, canvas) {
   return new Promise((resolve, reject) => {
-    if (!file) return reject(new Error("No file"));
+    if (!file) return reject(new Error('No file'));
     const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
     img.onload = () => {
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      cleanup();
       resolve();
     };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    img.onerror = (err) => {
+      cleanup();
+      reject(err);
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -115,38 +121,48 @@ function ensureSameSize(matA, matB) {
   return { A: matA, B: b2, resized: true };
 }
 
-function applyOperation() {
-  if (els.canvasA.width === 0 || els.canvasB.width === 0) {
-    setStatus('Carga ambas imágenes (A y B) antes de aplicar.');
+let cvReady = false;
+
+function setCvReadyState(ready) {
+  cvReady = ready;
+  els.run.disabled = !ready;
+  els.op.disabled = !ready;
+  els.alpha.disabled = !ready;
+  els.compareToggle.disabled = !ready;
+}
+
+async function applyOperation() {
+  const op = els.op.value;
+  if (!cvReady) {
+    setStatus('OpenCV.js aún está cargando. Espera un momento.');
+    return;
+  }
+  if (els.canvasA.width === 0) {
+    setStatus('Carga la imagen A antes de aplicar la operación.');
+    return;
+  }
+  const needsB = op !== 'notA';
+  if (needsB && els.canvasB.width === 0) {
+    setStatus('Carga la imagen B antes de aplicar la operación.');
     return;
   }
 
   setRunState('processing');
+  await new Promise(requestAnimationFrame);
   let A = null;
   let B = null;
   let Bout = null;
   let dst = null;
-  let mask = null;
+  let display = null;
+  let Aprep = null;
+  let Bprep = null;
+  let Btmp = null;
 
   try {
-    const op = els.op.value;
-    if (op === 'notA') {
-      if (els.canvasA.width === 0) {
-        setStatus('Carga la imagen A antes de aplicar la operación.');
-        setRunState('idle');
-        return;
-      }
-    } else if (els.canvasA.width === 0 || els.canvasB.width === 0) {
-      setStatus('Carga ambas imágenes (A y B) antes de aplicar.');
-      setRunState('idle');
-      return;
-    }
-
     A = cv.imread(els.canvasA);
-    const opNeedsB = op !== 'notA';
     let A2 = A;
     let B2 = null;
-    if (opNeedsB) {
+    if (needsB) {
       B = cv.imread(els.canvasB);
       const resizedResult = ensureSameSize(A, B);
       A2 = resizedResult.A;
@@ -156,34 +172,67 @@ function applyOperation() {
       }
     }
 
+    const prepareForOps = (mat) => {
+      const channels = mat.channels();
+      if (channels === 4) {
+        const converted = new cv.Mat();
+        cv.cvtColor(mat, converted, cv.COLOR_RGBA2RGB);
+        return converted;
+      }
+      if (channels === 1) {
+        const converted = new cv.Mat();
+        cv.cvtColor(mat, converted, cv.COLOR_GRAY2RGB);
+        return converted;
+      }
+      return mat;
+    };
+
+    Aprep = prepareForOps(A2);
+    if (needsB) {
+      Bprep = prepareForOps(B2);
+      if (Aprep.type() !== Bprep.type()) {
+        Btmp = new cv.Mat();
+        Bprep.convertTo(Btmp, Aprep.type());
+        Bprep = Btmp;
+      }
+    }
+
     dst = new cv.Mat();
-    mask = new cv.Mat();
-    const dtype = -1;
 
     if (op === 'add') {
-      cv.add(A2, B2, dst, mask, dtype);
+      cv.add(Aprep, Bprep, dst);
     } else if (op === 'subtract') {
-      cv.subtract(A2, B2, dst, mask, dtype);
+      cv.subtract(Aprep, Bprep, dst);
     } else if (op === 'absdiff') {
-      cv.absdiff(A2, B2, dst);
+      cv.absdiff(Aprep, Bprep, dst);
     } else if (op === 'and') {
-      cv.bitwise_and(A2, B2, dst, mask);
+      cv.bitwise_and(Aprep, Bprep, dst);
     } else if (op === 'or') {
-      cv.bitwise_or(A2, B2, dst, mask);
+      cv.bitwise_or(Aprep, Bprep, dst);
     } else if (op === 'xor') {
-      cv.bitwise_xor(A2, B2, dst, mask);
+      cv.bitwise_xor(Aprep, Bprep, dst);
     } else if (op === 'notA') {
-      cv.bitwise_not(A2, dst);
+      cv.bitwise_not(Aprep, dst);
     } else if (op === 'blend') {
       const a = parseFloat(els.alpha.value);
       const b = 1.0 - a;
       const gamma = 0.0;
-      cv.addWeighted(A2, a, B2, b, gamma, dst);
+      cv.addWeighted(Aprep, a, Bprep, b, gamma, dst);
     } else {
       throw new Error('Operación no soportada');
     }
 
-    cv.imshow(els.canvasOut, dst);
+    if (dst.channels() === 3) {
+      display = new cv.Mat();
+      cv.cvtColor(dst, display, cv.COLOR_RGB2RGBA);
+      cv.imshow(els.canvasOut, display);
+    } else if (dst.channels() === 1) {
+      display = new cv.Mat();
+      cv.cvtColor(dst, display, cv.COLOR_GRAY2RGBA);
+      cv.imshow(els.canvasOut, display);
+    } else {
+      cv.imshow(els.canvasOut, dst);
+    }
     setStatus(`OK: operación "${op}" aplicada.`);
     updateDownloadState();
     updateComparisonImages();
@@ -200,7 +249,10 @@ function applyOperation() {
     if (B) B.delete();
     if (Bout) Bout.delete();
     if (dst) dst.delete();
-    if (mask) mask.delete();
+    if (display) display.delete();
+    if (Btmp) Btmp.delete();
+    if (Aprep && Aprep !== A2) Aprep.delete();
+    if (Bprep && Bprep !== B2) Bprep.delete();
   }
 }
 
@@ -357,23 +409,26 @@ els.download.addEventListener('click', () => {
   link.click();
 });
 
-function waitForCV() {
-  if (typeof cv === 'undefined') return false;
-  if (cv && cv.Mat) return true;
-  return false;
+setCvReadyState(false);
+setStatus('Cargando OpenCV.js...');
+
+function markCvReady() {
+  if (cvReady) return;
+  setCvReadyState(true);
+  setStatus('OpenCV.js listo. Carga 2 imágenes y aplica una operación.');
 }
 
 const cvReadyCheck = setInterval(() => {
-  if (!waitForCV()) return;
+  if (typeof cv === 'undefined') return;
 
-  if (cv.onRuntimeInitialized) {
-    cv.onRuntimeInitialized = () => {
-      clearInterval(cvReadyCheck);
-      setStatus('OpenCV.js listo. Carga 2 imágenes y aplica una operación.');
-    };
-  } else {
+  cv.onRuntimeInitialized = () => {
+    markCvReady();
     clearInterval(cvReadyCheck);
-    setStatus('OpenCV.js listo. Carga 2 imágenes y aplica una operación.');
+  };
+
+  if (cv && cv.Mat) {
+    markCvReady();
+    clearInterval(cvReadyCheck);
   }
 }, 50);
 
