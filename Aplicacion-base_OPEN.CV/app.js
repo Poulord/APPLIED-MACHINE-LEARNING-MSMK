@@ -153,17 +153,11 @@ async function applyOperation() {
   let B = null;
   let Bout = null;
   let dst = null;
-  let display = null;
-  let Aprep = null;
-  let Bprep = null;
-  let Btmp = null;
-  let A2 = null;
-  let B2 = null;
 
   try {
     A = cv.imread(els.canvasA);
-    A2 = A;
-    B2 = null;
+    let A2 = A;
+    let B2 = null;
     if (needsB) {
       B = cv.imread(els.canvasB);
       const resizedResult = ensureSameSize(A, B);
@@ -202,17 +196,17 @@ async function applyOperation() {
     dst = new cv.Mat();
 
     if (op === 'add') {
-      cv.add(Aprep, Bprep, dst);
+      cv.add(A2, B2, dst);
     } else if (op === 'subtract') {
-      cv.subtract(Aprep, Bprep, dst);
+      cv.subtract(A2, B2, dst);
     } else if (op === 'absdiff') {
       cv.absdiff(Aprep, Bprep, dst);
     } else if (op === 'and') {
-      cv.bitwise_and(Aprep, Bprep, dst);
+      cv.bitwise_and(A2, B2, dst);
     } else if (op === 'or') {
-      cv.bitwise_or(Aprep, Bprep, dst);
+      cv.bitwise_or(A2, B2, dst);
     } else if (op === 'xor') {
-      cv.bitwise_xor(Aprep, Bprep, dst);
+      cv.bitwise_xor(A2, B2, dst);
     } else if (op === 'notA') {
       cv.bitwise_not(Aprep, dst);
     } else if (op === 'blend') {
@@ -251,10 +245,6 @@ async function applyOperation() {
     if (B) B.delete();
     if (Bout) Bout.delete();
     if (dst) dst.delete();
-    if (display) display.delete();
-    if (Btmp) Btmp.delete();
-    if (Aprep && Aprep !== A2) Aprep.delete();
-    if (Bprep && Bprep !== B2) Bprep.delete();
   }
 }
 
