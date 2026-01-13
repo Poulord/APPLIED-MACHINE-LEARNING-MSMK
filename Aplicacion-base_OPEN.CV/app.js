@@ -29,6 +29,57 @@ const els = {
   resultCard: document.getElementById('resultCard'),
 };
 
+
+//TELEMETRIA (cliente -> /api/track)
+
+// --- Telemetría (cliente -> /api/track) ---
+const TELEMETRY_ENDPOINT = "/api/track";
+
+function getSessionId() {
+  const key = "cv_demo_session_id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = (crypto?.randomUUID?.() || String(Math.random()).slice(2)) + "-" + Date.now();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+function safeNumber(n) {
+  return Number.isFinite(n) ? n : null;
+}
+
+function track(eventName, data = {}) {
+  const payload = {
+    event: eventName,
+    sessionId: getSessionId(),
+    page: location.pathname,
+    ...data,
+  };
+
+  // 1) Intento con sendBeacon (ideal para eventos rápidos y cierre de página)
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+      navigator.sendBeacon(TELEMETRY_ENDPOINT, blob);
+      return;
+    }
+  } catch (_) {}
+
+  // 2) Fallback a fetch (keepalive ayuda a que se mande aunque navegue)
+  fetch(TELEMETRY_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {
+    // No rompas la app si falla telemetría
+  });
+}
+// --- Fin telemetría ---
+
+
+
 function setStatus(msg) {
   els.status.textContent = msg;
 }
@@ -132,6 +183,7 @@ function setCvReadyState(ready) {
 }
 
 async function applyOperation() {
+  const start = performance.now();
   const op = els.op.value;
   if (!cvReady) {
     setStatus('OpenCV.js aún está cargando. Espera un momento.');
@@ -243,17 +295,45 @@ async function applyOperation() {
     } else {
       cv.imshow(els.canvasOut, dst);
     }
+
     setStatus(`OK: operación "${op}" aplicada.`);
     updateDownloadState();
     updateComparisonImages();
+
+    const ms = Math.round(performance.now() - start);
+    track("operation_applied", {
+      op,
+      ms,
+      autoResize: !!els.autoResize.checked,
+      alpha: op === "blend" ? Number.parseFloat(els.alpha.value) : null,
+
+      // Inputs
+      aW: els.canvasA.width,
+      aH: els.canvasA.height,
+      bW: els.canvasB.width,
+      bH: els.canvasB.height,
+
+      // Output
+      outW: els.canvasOut.width,
+      outH: els.canvasOut.height
+    });
+
+
     els.resultCard.classList.remove('result-ready');
     requestAnimationFrame(() => els.resultCard.classList.add('result-ready'));
     setRunState('ready');
     setTimeout(() => setRunState('idle'), 1500);
   } catch (err) {
     console.error(err);
+
+    track("operation_error", {
+      op,
+      message: err && err.message ? String(err.message) : String(err)
+    });
+
     setStatus('Error: ' + (err && err.message ? err.message : String(err)));
     setRunState('idle');
+
   } finally {
     if (A) A.delete();
     if (B) B.delete();
@@ -281,6 +361,9 @@ function clearAll() {
   updateDownloadState();
   els.resultCard.classList.remove('result-ready');
   setStatus('Listo. Carga imágenes para empezar.');
+
+  track("clear_clicked");
+
 }
 
 const filterDetails = {
@@ -358,9 +441,18 @@ function updateFilterExplanation() {
   els.operationIcon.textContent = detail.icon;
 }
 
+// Evento: visita (sirve para "log del acceso del profesor")
+track("page_view", {
+  userAgent: navigator.userAgent,
+  lang: navigator.language,
+});
+
+
 els.op.addEventListener('change', () => {
   els.blendControls.style.display = els.op.value === 'blend' ? 'block' : 'none';
   updateFilterExplanation();
+
+  track("op_changed", { op: els.op.value });
 });
 
 async function handleImageFile(file, canvas, nameEl, resEl, zoneEl, label) {
@@ -370,6 +462,15 @@ async function handleImageFile(file, canvas, nameEl, resEl, zoneEl, label) {
   updateComparisonImages();
   updateDownloadState();
   setStatus(`Imagen ${label} cargada.`);
+
+  track("image_loaded", {
+    label,
+    fileName: file.name,
+    fileType: file.type || null,
+    fileSizeKB: safeNumber(Math.round((file.size / 1024) * 10) / 10),
+    width: canvas.width,
+    height: canvas.height,
+  });
 }
 
 function setupDropZone(zoneEl, inputEl, canvas, nameEl, resEl, label) {
@@ -409,9 +510,11 @@ els.clear.addEventListener('click', clearAll);
 
 els.compareToggle.addEventListener('change', () => {
   els.comparisonGrid.classList.toggle('is-visible', els.compareToggle.checked);
+  track("compare_toggled", { enabled: !!els.compareToggle.checked });
 });
 
 els.download.addEventListener('click', () => {
+  track("download_clicked", { hasResult: !!els.canvasOut.width });
   if (!els.canvasOut.width) return;
   const link = document.createElement('a');
   link.download = 'resultado-opencv.png';
@@ -426,6 +529,8 @@ function markCvReady() {
   if (cvReady) return;
   setCvReadyState(true);
   setStatus('OpenCV.js listo. Carga 2 imágenes y aplica una operación.');
+
+  track("cv_ready");
 }
 
 const cvReadyCheck = setInterval(() => {
