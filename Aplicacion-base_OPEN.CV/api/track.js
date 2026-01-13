@@ -2,7 +2,7 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({ ok: false, error: "Use POST" });
+    return res.status(405).json({ ok: false, error: "Use POST (updated)" });
   }
 
   try {
